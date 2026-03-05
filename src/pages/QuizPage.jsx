@@ -1,18 +1,17 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { LEVELS, BADGES, getXPForScore } from "../components/game/gameData";
+import { LEVELS, BADGES, getXPForScore, DIFFICULTIES } from "../components/game/gameData";
 import QuizScreen from "../components/game/QuizScreen";
+import DifficultyPicker from "../components/game/DifficultyPicker";
 import { motion } from "framer-motion";
-
-function getXPForNextLevel(xp) {
-  return (Math.floor(xp / 200) + 1) * 200;
-}
 
 export default function QuizPage() {
   const { levelId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [difficulty, setDifficulty] = useState(null);
 
   const level = LEVELS.find((l) => l.id === Number(levelId));
 
@@ -44,26 +43,45 @@ export default function QuizPage() {
     );
   }
 
-  const handleComplete = ({ score, total, stars, xp }) => {
-    const levelId = level.id;
-    const prevScores = progress.level_scores || {};
-    const prevLevelScore = prevScores[String(levelId)];
-    const isNewBest = !prevLevelScore || score > prevLevelScore.score;
+  // Show difficulty picker if none selected
+  if (!difficulty) {
+    const levelScores = (progress.level_scores || {})[String(level.id)] || {};
+    return (
+      <DifficultyPicker
+        level={level}
+        levelScores={levelScores}
+        onSelect={setDifficulty}
+        onBack={() => navigate(-1)}
+      />
+    );
+  }
 
-    const newScores = {
+  const handleComplete = ({ score, total, stars, xp }) => {
+    const diff = DIFFICULTIES[difficulty];
+    const prevScores = progress.level_scores || {};
+    const prevLevelScores = prevScores[String(level.id)] || {};
+    const prevDiffScore = prevLevelScores[difficulty];
+    const isNewBest = !prevDiffScore || score > prevDiffScore.score;
+
+    // Update level scores (nested by difficulty)
+    const newLevelScores = {
       ...prevScores,
-      [String(levelId)]: isNewBest ? { score, stars } : prevLevelScore,
+      [String(level.id)]: {
+        ...prevLevelScores,
+        [difficulty]: isNewBest ? { score, stars } : prevDiffScore,
+      },
     };
 
     const completed = progress.completed_levels || [];
-    const newCompleted = completed.includes(levelId) ? completed : [...completed, levelId];
+    const newCompleted = completed.includes(level.id) ? completed : [...completed, level.id];
 
-    const starDiff = isNewBest ? stars - (prevLevelScore?.stars || 0) : 0;
-    const xpDiff = isNewBest ? xp - (prevLevelScore ? getXPForScore(prevLevelScore.score, total) : 0) : 0;
+    const starDiff = isNewBest ? stars - (prevDiffScore?.stars || 0) : 0;
+    const prevXP = prevDiffScore ? Math.round(getXPForScore(prevDiffScore.score, total) * diff.xpMultiplier) : 0;
+    const xpDiff = isNewBest ? xp - prevXP : 0;
 
     const newXP = (progress.total_xp || 0) + Math.max(xpDiff, 0);
     const newStars = (progress.stars_earned || 0) + Math.max(starDiff, 0);
-    const newCurrentLevel = Math.max(progress.current_level || 1, levelId + 1);
+    const newCurrentLevel = Math.max(progress.current_level || 1, level.id + 1);
 
     const currentBadges = progress.badges || [];
     const newBadges = [...currentBadges];
@@ -92,7 +110,7 @@ export default function QuizPage() {
         stars_earned: newStars,
         completed_levels: newCompleted,
         badges: newBadges,
-        level_scores: newScores,
+        level_scores: newLevelScores,
         streak_days: streakDays,
         last_played: today,
       },
@@ -104,8 +122,9 @@ export default function QuizPage() {
   return (
     <QuizScreen
       level={level}
+      difficulty={difficulty}
       onComplete={handleComplete}
-      onBack={() => navigate(-1)}
+      onBack={() => setDifficulty(null)}
     />
   );
 }
