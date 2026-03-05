@@ -8,6 +8,7 @@ import { useT } from "../i18n";
 const DIFF_ORDER = ["easy", "medium", "hard"];
 
 export default function LevelCard({ level, isUnlocked, isCompleted, levelScores, onClick, index }) {
+  const t = useT();
   // levelScores = { easy: {score, stars}, medium: {...}, hard: {...} }
   const bestStars = levelScores ? Math.max(...DIFF_ORDER.map(d => levelScores[d]?.stars || 0)) : 0;
   return (
