@@ -41,7 +41,7 @@ export default function LevelCard({ level, isUnlocked, isCompleted, levelScores,
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Level {level.id}
+              {useT().level} {level.id}
             </span>
             <span className="text-[10px] font-medium text-slate-400">•</span>
             <span className="text-[10px] font-medium text-slate-400">{level.region}</span>
