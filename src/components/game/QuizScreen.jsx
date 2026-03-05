@@ -206,8 +206,9 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
 }
 
 function ResultsScreen({ level, difficulty, score, total, stars, xp, onComplete }) {
+  const t = useT();
   const pct = Math.round((score / total) * 100);
-  const message = pct === 100 ? "Perfect! 🎉" : pct >= 70 ? "Great Job! 🌟" : pct >= 50 ? "Good Try! 👍" : "Keep Practicing! 💪";
+  const message = pct === 100 ? t.perfect : pct >= 70 ? t.greatJob : pct >= 50 ? t.goodTry : t.keepPracticing;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
