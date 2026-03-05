@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, Clock, Zap, Star } from "lucide-react";
 import { DIFFICULTIES } from "./gameData";
+import { useT } from "../i18n";
 
 export default function DifficultyPicker({ level, levelScores, onSelect, onBack }) {
   return (
