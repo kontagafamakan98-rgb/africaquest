@@ -1,0 +1,102 @@
+export const translations = {
+  en: {
+    appTitle: "Africa History Quest",
+    appSubtitle: "Explore the amazing history of Africa!",
+    stars: "Stars",
+    levels: "Levels",
+    of: "of",
+    dayStreak: "Day Streak",
+    levelsTab: "Levels",
+    badgesTab: "Badges",
+    badgesEarned: "Badges Earned",
+    settings: "Settings",
+    about: "Africa History Quest",
+    aboutDesc: "An educational game helping kids explore the rich history of Africa through interactive challenges.",
+    signOut: "Sign Out",
+    deleteProgress: "Delete Progress",
+    deleteProgressDesc: "Reset all levels, XP and badges",
+    deleteConfirm: "This will permanently delete all your progress. Are you sure?",
+    cancel: "Cancel",
+    yesDelete: "Yes, Delete",
+    deleting: "Deleting…",
+    language: "Language",
+    chooseDifficulty: "Choose Difficulty",
+    chooseDifficultyDesc: "Harder = more XP & less time!",
+    perQuestion: "s per question",
+    xpMultiplier: "× XP",
+    continue: "Continue",
+    seeResults: "See Results",
+    correct: "Correct",
+    xpEarned: "XP Earned",
+    levelComplete: "Complete",
+    perfect: "Perfect! 🎉",
+    greatJob: "Great Job! 🌟",
+    goodTry: "Good Try! 👍",
+    keepPracticing: "Keep Practicing! 💪",
+    mode: "Mode",
+    level: "Level",
+    playNow: "Play Now",
+    easyDesc: "No time limit · 1× XP",
+    mediumDesc: "30s per question · 1.5× XP",
+    hardDesc: "15s per question · 2× XP",
+  },
+  fr: {
+    appTitle: "Quête Historique Africaine",
+    appSubtitle: "Explore l'incroyable histoire de l'Afrique !",
+    stars: "Étoiles",
+    levels: "Niveaux",
+    of: "sur",
+    dayStreak: "Série de jours",
+    levelsTab: "Niveaux",
+    badgesTab: "Badges",
+    badgesEarned: "Badges obtenus",
+    settings: "Paramètres",
+    about: "Quête Historique Africaine",
+    aboutDesc: "Un jeu éducatif aidant les enfants à explorer la riche histoire de l'Afrique à travers des défis interactifs.",
+    signOut: "Se déconnecter",
+    deleteProgress: "Supprimer la progression",
+    deleteProgressDesc: "Réinitialiser tous les niveaux, XP et badges",
+    deleteConfirm: "Cela supprimera définitivement toute votre progression. Êtes-vous sûr ?",
+    cancel: "Annuler",
+    yesDelete: "Oui, supprimer",
+    deleting: "Suppression…",
+    language: "Langue",
+    chooseDifficulty: "Choisir la difficulté",
+    chooseDifficultyDesc: "Plus difficile = plus de XP et moins de temps !",
+    perQuestion: "s par question",
+    xpMultiplier: "× XP",
+    continue: "Continuer",
+    seeResults: "Voir les résultats",
+    correct: "Corrects",
+    xpEarned: "XP gagnés",
+    levelComplete: "Terminé",
+    perfect: "Parfait ! 🎉",
+    greatJob: "Excellent ! 🌟",
+    goodTry: "Bien essayé ! 👍",
+    keepPracticing: "Continue de t'entraîner ! 💪",
+    mode: "Mode",
+    level: "Niveau",
+    playNow: "Jouer",
+    easyDesc: "Sans limite de temps · 1× XP",
+    mediumDesc: "30s par question · 1.5× XP",
+    hardDesc: "15s par question · 2× XP",
+  },
+};
+
+export const LANGUAGES = [
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+];
+
+export function getLang() {
+  return localStorage.getItem("aq_lang") || "en";
+}
+
+export function setLang(code) {
+  localStorage.setItem("aq_lang", code);
+}
+
+export function useT() {
+  const lang = getLang();
+  return translations[lang] || translations.en;
+}
