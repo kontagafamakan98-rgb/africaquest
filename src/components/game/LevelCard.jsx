@@ -48,9 +48,14 @@ export default function LevelCard({ level, isUnlocked, isCompleted, levelScores,
           <h3 className="font-bold text-slate-800 mt-0.5 truncate">{level.title}</h3>
           <p className="text-xs text-slate-500 mt-0.5">{level.subtitle}</p>
           
-          {isCompleted && stars > 0 && (
-            <div className="mt-2">
-              <StarDisplay count={stars} size="sm" />
+          {isCompleted && (
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              {bestStars > 0 && <StarDisplay count={bestStars} size="sm" />}
+              {levelScores && DIFF_ORDER.map((d) => levelScores[d] && (
+                <span key={d} className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", DIFFICULTIES[d].bgColor, DIFFICULTIES[d].textColor)}>
+                  {DIFFICULTIES[d].icon}
+                </span>
+              ))}
             </div>
           )}
           
