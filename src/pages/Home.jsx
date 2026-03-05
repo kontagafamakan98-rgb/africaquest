@@ -136,14 +136,14 @@ export default function Home() {
                   {LEVELS.map((level, i) => {
                     const isUnlocked = level.id <= (progress.current_level || 1);
                     const isCompleted = completedLevels.includes(level.id);
-                    const stars = levelScores[String(level.id)]?.stars || 0;
+                    const perLevelScores = levelScores[String(level.id)] || null;
                     return (
                       <LevelCard
                         key={level.id}
                         level={level}
                         isUnlocked={isUnlocked}
                         isCompleted={isCompleted}
-                        stars={stars}
+                        levelScores={perLevelScores}
                         onClick={(lvl) => navigate(`/quiz/${lvl.id}`)}
                         index={i}
                       />
