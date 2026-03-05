@@ -2,8 +2,13 @@ import { Lock, CheckCircle2, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import StarDisplay from "./StarDisplay";
 import { motion } from "framer-motion";
+import { DIFFICULTIES } from "./gameData";
 
-export default function LevelCard({ level, isUnlocked, isCompleted, stars, onClick, index }) {
+const DIFF_ORDER = ["easy", "medium", "hard"];
+
+export default function LevelCard({ level, isUnlocked, isCompleted, levelScores, onClick, index }) {
+  // levelScores = { easy: {score, stars}, medium: {...}, hard: {...} }
+  const bestStars = levelScores ? Math.max(...DIFF_ORDER.map(d => levelScores[d]?.stars || 0)) : 0;
   return (
     <motion.button
       initial={{ opacity: 0, y: 20 }}
