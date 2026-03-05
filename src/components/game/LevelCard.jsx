@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import StarDisplay from "./StarDisplay";
 import { motion } from "framer-motion";
 import { DIFFICULTIES } from "./gameData";
+import { useT } from "../i18n";
 
 const DIFF_ORDER = ["easy", "medium", "hard"];
 
