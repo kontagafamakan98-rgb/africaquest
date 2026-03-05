@@ -220,9 +220,9 @@ function ResultsScreen({ level, difficulty, score, total, stars, xp, onComplete 
       >
         <div className="text-6xl mb-4">{level.icon}</div>
         <h2 className="text-2xl font-extrabold text-slate-800 mb-1">{message}</h2>
-        <p className="text-slate-500 mb-2">{level.title} Complete</p>
+        <p className="text-slate-500 mb-2">{level.title} {t.levelComplete}</p>
         <span className={cn("text-sm font-bold px-3 py-1 rounded-full inline-block mb-8", difficulty.bgColor, difficulty.textColor)}>
-          {difficulty.icon} {difficulty.label} Mode · {difficulty.xpMultiplier}× XP
+          {difficulty.icon} {difficulty.label} {t.mode} · {difficulty.xpMultiplier}{t.xpMultiplier}
         </span>
 
         <div className="bg-white rounded-2xl border-2 border-slate-100 p-6 shadow-sm mb-6">
