@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { LEVELS, getXPForScore } from "../components/game/gameData";
+import { LEVELS, BADGES, getXPForScore } from "../components/game/gameData";
 import QuizScreen from "../components/game/QuizScreen";
 import { motion } from "framer-motion";
 
