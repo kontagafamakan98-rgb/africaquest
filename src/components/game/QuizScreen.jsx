@@ -192,8 +192,8 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
                     className="w-full h-12 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold text-base shadow-lg shadow-violet-200"
                   >
                     {currentQ < questions.length - 1 ? (
-                      <>Continue <ArrowRight className="w-4 h-4 ml-2" /></>
-                    ) : "See Results"}
+                      <>{t.continue} <ArrowRight className="w-4 h-4 ml-2" /></>
+                    ) : t.seeResults}
                   </Button>
                 </motion.div>
               )}
