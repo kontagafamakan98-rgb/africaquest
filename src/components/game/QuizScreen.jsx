@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, XCircle, Lightbulb, ChevronLeft, Clock } from "lucide-react";
 import StarDisplay from "./StarDisplay";
 import { calculateStars, getXPForScore, DIFFICULTIES } from "./gameData";
+import { useT } from "../i18n";
 
 export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
   const [currentQ, setCurrentQ] = useState(0);
