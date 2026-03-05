@@ -245,7 +245,7 @@ function ResultsScreen({ level, difficulty, score, total, stars, xp, onComplete 
           onClick={onComplete}
           className="w-full h-12 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold text-base shadow-lg shadow-violet-200"
         >
-          Continue
+          {t.continue}
         </Button>
       </motion.div>
     </div>
