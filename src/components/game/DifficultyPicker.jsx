@@ -56,11 +56,11 @@ export default function DifficultyPicker({ level, levelScores, onSelect, onBack 
                 <div className="flex gap-4 text-xs font-semibold text-slate-600">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
-                    {diff.timeLimit}s per question
+                    {diff.timeLimit > 0 ? `${diff.timeLimit}${t.perQuestion}` : (t.easyDesc?.split("·")[0]?.trim() || "No time limit")}
                   </span>
                   <span className="flex items-center gap-1">
                     <Zap className="w-3.5 h-3.5 text-amber-500" />
-                    {diff.xpMultiplier}× XP
+                    {diff.xpMultiplier}{t.xpMultiplier}
                   </span>
                 </div>
               </motion.button>
