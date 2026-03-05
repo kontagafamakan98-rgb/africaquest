@@ -1,29 +1,48 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, XCircle, Lightbulb, ChevronLeft } from "lucide-react";
+import { ArrowRight, CheckCircle2, XCircle, Lightbulb, ChevronLeft, Clock } from "lucide-react";
 import StarDisplay from "./StarDisplay";
-import { calculateStars, getXPForScore } from "./gameData";
+import { calculateStars, getXPForScore, DIFFICULTIES } from "./gameData";
 
-export default function QuizScreen({ level, onComplete, onBack }) {
+export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [showResults, setShowResults] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const timerRef = useRef(null);
 
+  const diff = DIFFICULTIES[difficulty] || DIFFICULTIES.easy;
   const questions = level.questions;
   const q = questions[currentQ];
   const progress = ((currentQ + (isAnswered ? 1 : 0)) / questions.length) * 100;
 
+  // Timer
+  useEffect(() => {
+    if (diff.timeLimit === 0 || isAnswered) return;
+    setTimeLeft(diff.timeLimit);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          handleSelect(-1); // time out = wrong
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [currentQ, isAnswered]);
+
   const handleSelect = (idx) => {
     if (isAnswered) return;
+    clearInterval(timerRef.current);
     setSelected(idx);
     setIsAnswered(true);
-    if (idx === q.correct) {
-      setScore((s) => s + 1);
-    }
+    if (idx === q.correct) setScore((s) => s + 1);
   };
 
   const handleNext = () => {
@@ -31,6 +50,7 @@ export default function QuizScreen({ level, onComplete, onBack }) {
       setCurrentQ((c) => c + 1);
       setSelected(null);
       setIsAnswered(false);
+      setTimeLeft(null);
     } else {
       setShowResults(true);
     }
@@ -38,10 +58,11 @@ export default function QuizScreen({ level, onComplete, onBack }) {
 
   if (showResults) {
     const stars = calculateStars(score, questions.length);
-    const xp = getXPForScore(score, questions.length);
+    const xp = Math.round(getXPForScore(score, questions.length) * diff.xpMultiplier);
     return (
       <ResultsScreen
         level={level}
+        difficulty={diff}
         score={score}
         total={questions.length}
         stars={stars}
@@ -51,11 +72,14 @@ export default function QuizScreen({ level, onComplete, onBack }) {
     );
   }
 
+  const timerPct = diff.timeLimit > 0 && timeLeft !== null ? (timeLeft / diff.timeLimit) * 100 : 100;
+  const timerColor = timerPct > 50 ? "bg-emerald-400" : timerPct > 25 ? "bg-amber-400" : "bg-red-400";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 py-6">
       <div className="max-w-lg mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
             <ChevronLeft className="w-5 h-5 text-slate-600" />
           </button>
@@ -68,10 +92,34 @@ export default function QuizScreen({ level, onComplete, onBack }) {
               />
             </div>
           </div>
-          <span className="text-sm font-bold text-slate-500 tabular-nums">
-            {currentQ + 1}/{questions.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", diff.bgColor, diff.textColor)}>
+              {diff.icon} {diff.label}
+            </span>
+            <span className="text-sm font-bold text-slate-500 tabular-nums">
+              {currentQ + 1}/{questions.length}
+            </span>
+          </div>
         </div>
+
+        {/* Timer bar */}
+        {diff.timeLimit > 0 && timeLeft !== null && !isAnswered && (
+          <div className="mb-4">
+            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <motion.div
+                className={cn("h-full rounded-full transition-colors", timerColor)}
+                animate={{ width: `${timerPct}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+            <div className="flex items-center gap-1 mt-1">
+              <Clock className="w-3 h-3 text-slate-400" />
+              <span className={cn("text-xs font-bold tabular-nums", timerPct <= 25 ? "text-red-500" : "text-slate-400")}>
+                {timeLeft}s
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Question */}
         <AnimatePresence mode="wait">
@@ -84,12 +132,9 @@ export default function QuizScreen({ level, onComplete, onBack }) {
           >
             <div className="text-center mb-8">
               <span className="text-4xl mb-3 block">{level.icon}</span>
-              <h2 className="text-xl font-bold text-slate-800 leading-snug">
-                {q.question}
-              </h2>
+              <h2 className="text-xl font-bold text-slate-800 leading-snug">{q.question}</h2>
             </div>
 
-            {/* Options */}
             <div className="space-y-3">
               {q.options.map((opt, idx) => {
                 const isCorrect = idx === q.correct;
@@ -129,7 +174,6 @@ export default function QuizScreen({ level, onComplete, onBack }) {
               })}
             </div>
 
-            {/* Fact & Next */}
             <AnimatePresence>
               {isAnswered && (
                 <motion.div
@@ -159,7 +203,7 @@ export default function QuizScreen({ level, onComplete, onBack }) {
   );
 }
 
-function ResultsScreen({ level, score, total, stars, xp, onComplete }) {
+function ResultsScreen({ level, difficulty, score, total, stars, xp, onComplete }) {
   const pct = Math.round((score / total) * 100);
   const message = pct === 100 ? "Perfect! 🎉" : pct >= 70 ? "Great Job! 🌟" : pct >= 50 ? "Good Try! 👍" : "Keep Practicing! 💪";
 
@@ -173,7 +217,10 @@ function ResultsScreen({ level, score, total, stars, xp, onComplete }) {
       >
         <div className="text-6xl mb-4">{level.icon}</div>
         <h2 className="text-2xl font-extrabold text-slate-800 mb-1">{message}</h2>
-        <p className="text-slate-500 mb-8">{level.title} Complete</p>
+        <p className="text-slate-500 mb-2">{level.title} Complete</p>
+        <span className={cn("text-sm font-bold px-3 py-1 rounded-full inline-block mb-8", difficulty.bgColor, difficulty.textColor)}>
+          {difficulty.icon} {difficulty.label} Mode · {difficulty.xpMultiplier}× XP
+        </span>
 
         <div className="bg-white rounded-2xl border-2 border-slate-100 p-6 shadow-sm mb-6">
           <div className="flex justify-center mb-4">
