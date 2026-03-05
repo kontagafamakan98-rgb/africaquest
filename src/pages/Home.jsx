@@ -12,11 +12,7 @@ import { Map, Award, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
-
-const TABS = [
-  { id: "map", label: "Levels", icon: Map },
-  { id: "badges", label: "Badges", icon: Award },
-];
+import { useT, getLang } from "../components/i18n";
 
 function getPlayerLevel(xp) { return Math.floor(xp / 200) + 1; }
 
@@ -24,8 +20,15 @@ export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "map";
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [, forceUpdate] = useState(0);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const t = useT();
+
+  const TABS = [
+    { id: "map", label: t.levelsTab, icon: Map },
+    { id: "badges", label: t.badgesTab, icon: Award },
+  ];
 
   const { data: progressList, isLoading } = useQuery({
     queryKey: ["progress"],
@@ -35,7 +38,6 @@ export default function Home() {
 
   const progress = progressList?.[0] || null;
 
-  // Auto-create progress if missing
   useEffect(() => {
     if (!isLoading && !progress) {
       base44.entities.PlayerProgress.create({
@@ -84,9 +86,9 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-3xl">🌍</span>
-                <h1 className="text-2xl font-extrabold tracking-tight">Africa History Quest</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight">{t.appTitle}</h1>
               </div>
-              <p className="text-violet-200 text-sm font-medium mt-0.5">Explore the amazing history of Africa!</p>
+              <p className="text-violet-200 text-sm font-medium mt-0.5">{t.appSubtitle}</p>
             </div>
             <button
               onClick={() => setSettingsOpen(true)}
@@ -97,9 +99,9 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-3 gap-3 mb-5 mt-5">
-            <StatBox icon="⭐" value={totalStars} label="Stars" />
-            <StatBox icon="🏆" value={completedLevels.length} label={`of ${LEVELS.length} Levels`} />
-            <StatBox icon="🔥" value={streakDays} label="Day Streak" />
+            <StatBox icon="⭐" value={totalStars} label={t.stars} />
+            <StatBox icon="🏆" value={`${completedLevels.length} ${t.of} ${LEVELS.length}`} label={t.levels} />
+            <StatBox icon="🔥" value={streakDays} label={t.dayStreak} />
           </div>
 
           <XPBar current={xpInCurrentLevel} max={200} level={playerLevel}
@@ -126,7 +128,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Scrollable content with pull-to-refresh */}
+      {/* Scrollable content */}
       <div className="flex-1 overflow-hidden" style={{ paddingBottom: "var(--sab)" }}>
         <PullToRefresh onRefresh={handleRefresh}>
           <div className="max-w-lg mx-auto px-4 py-6 pb-10">
@@ -156,7 +158,7 @@ export default function Home() {
                 <motion.div key="badges" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   <div className="flex items-center gap-2 mb-4">
                     <Award className="w-5 h-5 text-amber-500" />
-                    <h3 className="font-bold text-slate-700">{badges.length} of {BADGES.length} Badges Earned</h3>
+                    <h3 className="font-bold text-slate-700">{badges.length} {t.of} {BADGES.length} {t.badgesEarned}</h3>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     {BADGES.map((badge, i) => (
@@ -170,8 +172,12 @@ export default function Home() {
         </PullToRefresh>
       </div>
 
-      {/* Settings modal */}
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} progressId={progress?.id} />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        progressId={progress?.id}
+        onLangChange={() => forceUpdate(n => n + 1)}
+      />
     </div>
   );
 }
