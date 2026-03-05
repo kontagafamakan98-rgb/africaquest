@@ -65,7 +65,6 @@ export default function QuizPage() {
     const newStars = (progress.stars_earned || 0) + Math.max(starDiff, 0);
     const newCurrentLevel = Math.max(progress.current_level || 1, levelId + 1);
 
-    const { BADGES } = require("../components/game/gameData");
     const currentBadges = progress.badges || [];
     const newBadges = [...currentBadges];
     BADGES.forEach((b) => {
