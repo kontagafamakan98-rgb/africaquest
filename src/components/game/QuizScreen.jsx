@@ -232,11 +232,11 @@ function ResultsScreen({ level, difficulty, score, total, stars, xp, onComplete 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-slate-50 rounded-xl p-3">
               <p className="text-2xl font-extrabold text-slate-800">{score}/{total}</p>
-              <p className="text-xs text-slate-500 font-medium">Correct</p>
+              <p className="text-xs text-slate-500 font-medium">{t.correct}</p>
             </div>
             <div className="bg-violet-50 rounded-xl p-3">
               <p className="text-2xl font-extrabold text-violet-600">+{xp}</p>
-              <p className="text-xs text-violet-500 font-medium">XP Earned</p>
+              <p className="text-xs text-violet-500 font-medium">{t.xpEarned}</p>
             </div>
           </div>
         </div>
