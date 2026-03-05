@@ -64,7 +64,7 @@ export default function LevelCard({ level, isUnlocked, isCompleted, levelScores,
           {isUnlocked && !isCompleted && (
             <div className="mt-2 flex items-center gap-1 text-xs font-semibold text-violet-600 group-hover:text-violet-700">
               <Play className="w-3.5 h-3.5 fill-current" />
-              Play Now
+              {t.playNow}
             </div>
           )}
         </div>
