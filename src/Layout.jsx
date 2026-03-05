@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
-import QuizPage from "./pages/QuizPage";
+import QuizPage from "./pages/QuizPage.jsx";
 
 export default function Layout({ children, currentPageName }) {
   // We override Base44 routing with our own BrowserRouter for deep-link + back-gesture support
