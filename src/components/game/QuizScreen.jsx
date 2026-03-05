@@ -8,6 +8,7 @@ import { calculateStars, getXPForScore, DIFFICULTIES } from "./gameData";
 import { useT } from "../i18n";
 
 export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
+  const t = useT();
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
