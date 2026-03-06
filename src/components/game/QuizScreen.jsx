@@ -234,7 +234,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
           </motion.div>
         </AnimatePresence>
         </div>{/* end px-4 */}
-      </div>
+        </div>{/* end max-w-lg */}
     </div>
   );
 }
