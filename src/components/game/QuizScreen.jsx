@@ -137,7 +137,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
 
         {/* Timer bar */}
         {diff.timeLimit > 0 && timeLeft !== null && !isAnswered && (
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
               <motion.div
                 className={cn("h-full rounded-full transition-colors", timerColor)}
