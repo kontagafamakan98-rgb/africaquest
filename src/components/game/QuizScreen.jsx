@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, XCircle, Lightbulb, ChevronLeft, Clock } from "lucide-react";
+import { ArrowRight, CheckCircle2, XCircle, Lightbulb, ChevronLeft, Clock, Search } from "lucide-react";
 import StarDisplay from "./StarDisplay";
 import { calculateStars, getXPForScore, DIFFICULTIES } from "./gameData";
 import { useT } from "../i18n";
+import WebSearchModal from "./WebSearchModal";
 
 export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
   const t = useT();
