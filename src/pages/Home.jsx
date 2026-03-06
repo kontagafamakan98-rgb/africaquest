@@ -189,12 +189,12 @@ export default function Home() {
   );
 }
 
-function StatBox({ icon, value, label }) {
+function StatBox({ icon, value, label, color }) {
   return (
-    <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
-      <span className="text-lg">{icon}</span>
-      <p className="text-xl font-extrabold mt-0.5">{value}</p>
-      <p className="text-[10px] text-violet-200 font-medium uppercase tracking-wide">{label}</p>
+    <div className={`bg-gradient-to-br ${color} backdrop-blur-sm border border-white/20 rounded-xl p-3 text-center`}>
+      <span className="text-xl">{icon}</span>
+      <p className="text-lg font-extrabold mt-0.5 leading-tight">{value}</p>
+      <p className="text-[10px] text-purple-100 font-semibold uppercase tracking-wide">{label}</p>
     </div>
   );
 }
