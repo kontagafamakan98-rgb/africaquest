@@ -4,7 +4,6 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEVELS, BADGES } from "../components/game/gameData";
 import LevelCard from "../components/game/LevelCard.jsx";
-
 import XPBar from "../components/game/XPBar";
 import BadgeCard from "../components/game/BadgeCard";
 import PullToRefresh from "../components/game/PullToRefresh";
