@@ -79,8 +79,10 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
   const timerPct = diff.timeLimit > 0 && timeLeft !== null ? (timeLeft / diff.timeLimit) * 100 : 100;
   const timerColor = timerPct > 50 ? "bg-emerald-400" : timerPct > 25 ? "bg-amber-400" : "bg-red-400";
 
+  const img = LEVEL_IMAGES[level.id];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 py-6">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-lg mx-auto">
         {/* Search modal */}
         <WebSearchModal
@@ -89,38 +91,49 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
           question={q.question}
         />
 
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
-            <ChevronLeft className="w-5 h-5 text-slate-600" />
-          </button>
-          <div className="flex-1">
-            <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
-              <motion.div
-                className={`h-full rounded-full bg-gradient-to-r ${level.color}`}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.4 }}
-              />
+        {/* Hero image strip with header overlaid */}
+        <div className="relative h-36 overflow-hidden">
+          {img && <img src={img} alt={level.title} className="w-full h-full object-cover" />}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/10" />
+          <div className="absolute inset-0 px-4 py-3 flex flex-col justify-between">
+            {/* Top row */}
+            <div className="flex items-center gap-3">
+              <button onClick={onBack} className="p-1.5 rounded-xl bg-black/30 backdrop-blur-sm text-white hover:bg-black/50">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="flex-1">
+                <div className="h-2 bg-white/30 rounded-full overflow-hidden">
+                  <motion.div
+                    className={`h-full rounded-full bg-white`}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.4 }}
+                  />
+                </div>
+              </div>
+              <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full backdrop-blur-sm bg-black/30 text-white")}>
+                {diff.icon} {diff.label}
+              </span>
+              {!isAnswered && (
+                <button
+                  onClick={() => setShowSearch(true)}
+                  className="p-1.5 rounded-xl bg-black/30 backdrop-blur-sm text-white hover:bg-black/50"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {/* Bottom: title + counter */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-white font-extrabold text-sm drop-shadow">{level.title}</p>
+                <p className="text-white/60 text-xs">{level.region}</p>
+              </div>
+              <span className="text-2xl">{level.icon}</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", diff.bgColor, diff.textColor)}>
-              {diff.icon} {diff.label}
-            </span>
-            <span className="text-sm font-bold text-slate-500 tabular-nums">
-              {currentQ + 1}/{questions.length}
-            </span>
-            {!isAnswered && (
-              <button
-                onClick={() => setShowSearch(true)}
-                className="p-1.5 rounded-xl hover:bg-blue-50 transition-colors"
-                title="Research hints"
-              >
-                <Search className="w-4 h-4 text-blue-400" />
-              </button>
-            )}
-          </div>
         </div>
+
+        <div className="px-4 pt-4">
 
         {/* Timer bar */}
         {diff.timeLimit > 0 && timeLeft !== null && !isAnswered && (
