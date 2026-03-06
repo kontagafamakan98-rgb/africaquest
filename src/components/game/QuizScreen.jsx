@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle2, XCircle, Lightbulb, ChevronLeft, Clock, Search } from "lucide-react";
 import StarDisplay from "./StarDisplay";
-import { calculateStars, getXPForScore, DIFFICULTIES } from "./gameData";
+import { calculateStars, getXPForScore, DIFFICULTIES, LEVEL_IMAGES } from "./gameData";
 import { useT } from "../i18n";
 import WebSearchModal from "./WebSearchModal";
 
