@@ -1,26 +1,40 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, Clock, Zap, Star } from "lucide-react";
-import { DIFFICULTIES } from "./gameData";
+import { DIFFICULTIES, LEVEL_IMAGES } from "./gameData";
 import { useT } from "../i18n";
 import AudioNarrator from "./AudioNarrator";
 
 export default function DifficultyPicker({ level, levelScores, onSelect, onBack }) {
   const t = useT();
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 py-6">
-      <div className="max-w-lg mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
-            <ChevronLeft className="w-5 h-5 text-slate-600" />
-          </button>
-          <div>
-            <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{level.region}</p>
-            <h2 className="text-xl font-extrabold text-slate-800">{level.title}</h2>
-          </div>
-          <span className="text-3xl ml-auto">{level.icon}</span>
-        </div>
+  const img = LEVEL_IMAGES[level.id];
 
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Hero image header */}
+      <div className="relative h-52 overflow-hidden">
+        {img && (
+          <img src={img} alt={level.title} className="w-full h-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
+        <button
+          onClick={onBack}
+          className="absolute top-4 left-4 p-2 rounded-xl bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+          style={{ marginTop: "var(--sat)" }}
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
+          <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-0.5">{level.region}</p>
+          <div className="flex items-end justify-between">
+            <h2 className="text-2xl font-extrabold text-white drop-shadow">{level.title}</h2>
+            <span className="text-4xl">{level.icon}</span>
+          </div>
+          <p className="text-white/70 text-sm">{level.subtitle}</p>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 py-5">
         <AudioNarrator levelId={level.id} />
 
         <h3 className="text-center text-lg font-bold text-slate-700 mb-2">{t.chooseDifficulty}</h3>
