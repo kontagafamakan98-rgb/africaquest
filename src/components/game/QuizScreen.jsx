@@ -110,6 +110,15 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
             <span className="text-sm font-bold text-slate-500 tabular-nums">
               {currentQ + 1}/{questions.length}
             </span>
+            {!isAnswered && (
+              <button
+                onClick={() => setShowSearch(true)}
+                className="p-1.5 rounded-xl hover:bg-blue-50 transition-colors"
+                title="Research hints"
+              >
+                <Search className="w-4 h-4 text-blue-400" />
+              </button>
+            )}
           </div>
         </div>
 
