@@ -1,3 +1,15 @@
+// Hero images per level (Unsplash)
+export const LEVEL_IMAGES = {
+  1: "https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=800&q=80", // Egypt pyramids
+  2: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&q=80",    // Sudan pyramids / desert
+  3: "https://images.unsplash.com/photo-1504598318550-17eba1008a68?w=800&q=80", // Zimbabwe stone ruins
+  4: "https://images.unsplash.com/photo-1590086782957-93c06ef21604?w=800&q=80", // West Africa landscape
+  5: "https://images.unsplash.com/photo-1627816651201-d7eeecd75dd2?w=800&q=80", // Ethiopia obelisk
+  6: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&q=80", // Niger river / Sahara
+  7: "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=800&q=80", // South Africa savanna
+  8: "https://images.unsplash.com/photo-1489392191049-fc10c97e64b6?w=800&q=80", // Africa freedom / flag
+};
+
 export const LEVELS = [
   {
     id: 1,
