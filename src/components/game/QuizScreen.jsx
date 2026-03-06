@@ -163,8 +163,10 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
             exit={{ opacity: 0, x: -30 }}
             transition={{ duration: 0.25 }}
           >
-            <div className="text-center mb-8">
-              <span className="text-4xl mb-3 block">{level.icon}</span>
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-violet-100 text-xs font-extrabold text-violet-600 mb-3">
+                {currentQ + 1}/{questions.length}
+              </div>
               <h2 className="text-xl font-bold text-slate-800 leading-snug">{q.question}</h2>
             </div>
 
