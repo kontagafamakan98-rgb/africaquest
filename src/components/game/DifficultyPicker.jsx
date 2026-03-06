@@ -21,6 +21,8 @@ export default function DifficultyPicker({ level, levelScores, onSelect, onBack 
           <span className="text-3xl ml-auto">{level.icon}</span>
         </div>
 
+        <AudioNarrator levelId={level.id} />
+
         <h3 className="text-center text-lg font-bold text-slate-700 mb-2">{t.chooseDifficulty}</h3>
         <p className="text-center text-sm text-slate-500 mb-8">{t.chooseDifficultyDesc}</p>
 
