@@ -37,10 +37,10 @@ export default function DifficultyPicker({ level, levelScores, onSelect, onBack 
       <div className="max-w-lg mx-auto px-4 py-5">
         <AudioNarrator levelId={level.id} />
 
-        <h3 className="text-center text-lg font-bold text-slate-700 mb-2">{t.chooseDifficulty}</h3>
-        <p className="text-center text-sm text-slate-500 mb-8">{t.chooseDifficultyDesc}</p>
+        <h3 className="text-center text-lg font-bold text-slate-700 mb-1">{t.chooseDifficulty}</h3>
+        <p className="text-center text-sm text-slate-500 mb-5">{t.chooseDifficultyDesc}</p>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {Object.values(DIFFICULTIES).map((diff, i) => {
             const best = levelScores?.[diff.id];
             return (
