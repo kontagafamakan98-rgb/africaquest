@@ -16,6 +16,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
   const [score, setScore] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
   const timerRef = useRef(null);
 
   const diff = DIFFICULTIES[difficulty] || DIFFICULTIES.easy;
