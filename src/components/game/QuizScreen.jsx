@@ -82,6 +82,13 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white px-4 py-6">
       <div className="max-w-lg mx-auto">
+        {/* Search modal */}
+        <WebSearchModal
+          open={showSearch}
+          onClose={() => setShowSearch(false)}
+          question={q.question}
+        />
+
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
