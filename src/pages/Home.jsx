@@ -74,38 +74,45 @@ export default function Home() {
   const streakDays = progress.streak_days || 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-slate-50 overflow-hidden">
       {/* Hero */}
       <div
-        className="bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 text-white px-4 pb-16 relative overflow-hidden shrink-0"
-        style={{ paddingTop: "calc(2.5rem + var(--sat))" }}
+        className="relative text-white px-4 pb-16 overflow-hidden shrink-0"
+        style={{
+          paddingTop: "calc(2.5rem + var(--sat))",
+          background: "linear-gradient(135deg, #4c1d95 0%, #7c3aed 40%, #a21caf 70%, #c026d3 100%)"
+        }}
       >
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/svg%3E\")" }} />
+        {/* Decorative continent silhouette */}
+        <div className="absolute right-0 top-0 h-full opacity-10 pointer-events-none select-none text-[160px] leading-none">🌍</div>
+        {/* Dotted pattern */}
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+
         <div className="max-w-lg mx-auto relative">
-          <div className="flex items-start justify-between mb-1">
+          <div className="flex items-start justify-between mb-4">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-3xl">🌍</span>
-                <h1 className="text-2xl font-extrabold tracking-tight">{t.appTitle}</h1>
+                <h1 className="text-xl font-extrabold tracking-tight leading-tight">{t.appTitle}</h1>
               </div>
-              <p className="text-violet-200 text-sm font-medium mt-0.5">{t.appSubtitle}</p>
+              <p className="text-purple-200 text-xs font-medium">{t.appSubtitle}</p>
             </div>
             <button
               onClick={() => setSettingsOpen(true)}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors mt-1"
+              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/25 border border-white/20 transition-colors mt-0.5"
             >
               <Settings className="w-5 h-5 text-white" />
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-5 mt-5">
-            <StatBox icon="⭐" value={totalStars} label={t.stars} />
-            <StatBox icon="🏆" value={`${completedLevels.length} ${t.of} ${LEVELS.length}`} label={t.levels} />
-            <StatBox icon="🔥" value={streakDays} label={t.dayStreak} />
+          <div className="grid grid-cols-3 gap-2.5 mb-4">
+            <StatBox icon="⭐" value={totalStars} label={t.stars} color="from-amber-400/30 to-yellow-400/20" />
+            <StatBox icon="🏆" value={`${completedLevels.length}/${LEVELS.length}`} label={t.levels} color="from-emerald-400/30 to-teal-400/20" />
+            <StatBox icon="🔥" value={streakDays} label={t.dayStreak} color="from-orange-400/30 to-red-400/20" />
           </div>
 
           <XPBar current={xpInCurrentLevel} max={200} level={playerLevel}
-            className="[&_span]:text-violet-200 [&_span]:font-normal [&_.font-bold]:text-white [&>div:last-child]:bg-white/20" />
+            className="[&_span]:text-purple-200 [&_span]:font-normal [&_.font-bold]:text-white [&>div:last-child]:bg-white/20" />
         </div>
       </div>
 
