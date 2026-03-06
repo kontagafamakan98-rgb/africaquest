@@ -243,45 +243,67 @@ function ResultsScreen({ level, difficulty, score, total, stars, xp, onComplete 
   const t = useT();
   const pct = Math.round((score / total) * 100);
   const message = pct === 100 ? t.perfect : pct >= 70 ? t.greatJob : pct >= 50 ? t.goodTry : t.keepPracticing;
+  const img = LEVEL_IMAGES[level.id];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", duration: 0.6 }}
-        className="w-full max-w-sm text-center"
-      >
-        <div className="text-6xl mb-4">{level.icon}</div>
-        <h2 className="text-2xl font-extrabold text-slate-800 mb-1">{message}</h2>
-        <p className="text-slate-500 mb-2">{level.title} {t.levelComplete}</p>
-        <span className={cn("text-sm font-bold px-3 py-1 rounded-full inline-block mb-8", difficulty.bgColor, difficulty.textColor)}>
-          {difficulty.icon} {difficulty.label} {t.mode} · {difficulty.xpMultiplier}{t.xpMultiplier}
-        </span>
-
-        <div className="bg-white rounded-2xl border-2 border-slate-100 p-6 shadow-sm mb-6">
-          <div className="flex justify-center mb-4">
-            <StarDisplay count={stars} size="lg" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-50 rounded-xl p-3">
-              <p className="text-2xl font-extrabold text-slate-800">{score}/{total}</p>
-              <p className="text-xs text-slate-500 font-medium">{t.correct}</p>
-            </div>
-            <div className="bg-violet-50 rounded-xl p-3">
-              <p className="text-2xl font-extrabold text-violet-600">+{xp}</p>
-              <p className="text-xs text-violet-500 font-medium">{t.xpEarned}</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Hero */}
+      <div className="relative h-48 overflow-hidden">
+        {img && <img src={img} alt={level.title} className="w-full h-full object-cover" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 text-center">
+          <p className="text-white/70 text-xs uppercase tracking-widest font-bold">{level.region}</p>
+          <h3 className="text-white font-extrabold text-lg">{level.title}</h3>
         </div>
+      </div>
 
-        <Button
-          onClick={onComplete}
-          className="w-full h-12 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold text-base shadow-lg shadow-violet-200"
+      <div className="px-4 pb-8 max-w-sm mx-auto">
+        <motion.div
+          initial={{ scale: 0.85, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ type: "spring", duration: 0.6 }}
+          className="text-center"
         >
-          {t.continue}
-        </Button>
-      </motion.div>
+          {/* Result banner */}
+          <div className={cn(
+            "rounded-2xl p-5 mt-5 mb-4 shadow-lg",
+            pct === 100 ? "bg-gradient-to-br from-amber-400 to-yellow-500"
+            : pct >= 70 ? "bg-gradient-to-br from-violet-500 to-fuchsia-500"
+            : pct >= 50 ? "bg-gradient-to-br from-blue-400 to-cyan-500"
+            : "bg-gradient-to-br from-slate-400 to-slate-500"
+          )}>
+            <div className="text-4xl mb-2">{level.icon}</div>
+            <h2 className="text-2xl font-extrabold text-white mb-1">{message}</h2>
+            <span className={cn("text-sm font-bold px-3 py-1 rounded-full bg-white/20 text-white inline-block")}>
+              {difficulty.icon} {difficulty.label} · {difficulty.xpMultiplier}{t.xpMultiplier}
+            </span>
+          </div>
+
+          {/* Stars + stats */}
+          <div className="bg-white rounded-2xl border-2 border-slate-100 p-5 shadow-sm mb-5">
+            <div className="flex justify-center mb-4">
+              <StarDisplay count={stars} size="lg" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-50 rounded-xl p-3">
+                <p className="text-3xl font-extrabold text-slate-800">{score}/{total}</p>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">{t.correct}</p>
+              </div>
+              <div className="bg-violet-50 rounded-xl p-3">
+                <p className="text-3xl font-extrabold text-violet-600">+{xp}</p>
+                <p className="text-xs text-violet-500 font-medium mt-0.5">{t.xpEarned}</p>
+              </div>
+            </div>
+          </div>
+
+          <Button
+            onClick={onComplete}
+            className="w-full h-13 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white font-bold text-base shadow-lg shadow-violet-200"
+          >
+            {t.continue} <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </motion.div>
+      </div>
     </div>
   );
 }
