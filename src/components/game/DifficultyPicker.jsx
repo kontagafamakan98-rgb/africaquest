@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, Clock, Zap, Star } from "lucide-react";
 import { DIFFICULTIES } from "./gameData";
 import { useT } from "../i18n";
+import AudioNarrator from "./AudioNarrator";
 
 export default function DifficultyPicker({ level, levelScores, onSelect, onBack }) {
   const t = useT();
