@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { LEVELS, BADGES, getXPForScore, DIFFICULTIES } from "../components/game/gameData";
@@ -7,9 +6,7 @@ import QuizScreen from "../components/game/QuizScreen";
 import DifficultyPicker from "../components/game/DifficultyPicker";
 import { motion } from "framer-motion";
 
-export default function QuizPage() {
-  const { levelId } = useParams();
-  const navigate = useNavigate();
+export default function QuizPage({ levelId, onBack }) {
   const queryClient = useQueryClient();
   const [difficulty, setDifficulty] = useState(null);
 
@@ -29,13 +26,13 @@ export default function QuizPage() {
   });
 
   if (!level) {
-    navigate("/", { replace: true });
+    onBack();
     return null;
   }
 
   if (isLoading || !progress) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f0a1e" }}>
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
           <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full" />
         </motion.div>
@@ -43,7 +40,6 @@ export default function QuizPage() {
     );
   }
 
-  // Show difficulty picker if none selected
   if (!difficulty) {
     const levelScores = (progress.level_scores || {})[String(level.id)] || {};
     return (
@@ -51,7 +47,7 @@ export default function QuizPage() {
         level={level}
         levelScores={levelScores}
         onSelect={setDifficulty}
-        onBack={() => navigate(-1)}
+        onBack={onBack}
       />
     );
   }
@@ -63,7 +59,6 @@ export default function QuizPage() {
     const prevDiffScore = prevLevelScores[difficulty];
     const isNewBest = !prevDiffScore || score > prevDiffScore.score;
 
-    // Update level scores (nested by difficulty)
     const newLevelScores = {
       ...prevScores,
       [String(level.id)]: {
@@ -116,7 +111,7 @@ export default function QuizPage() {
       },
     });
 
-    navigate("/", { replace: true });
+    onBack();
   };
 
   return (

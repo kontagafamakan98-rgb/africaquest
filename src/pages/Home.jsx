@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEVELS, BADGES } from "../components/game/gameData";
@@ -8,20 +7,20 @@ import XPBar from "../components/game/XPBar";
 import BadgeCard from "../components/game/BadgeCard";
 import PullToRefresh from "../components/game/PullToRefresh";
 import SettingsModal from "../components/game/SettingsModal";
+import QuizPage from "./QuizPage";
 import { Map, Award, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
-import { useT, getLang } from "../components/i18n";
+import { useT } from "../components/i18n";
 
 function getPlayerLevel(xp) { return Math.floor(xp / 200) + 1; }
 
 export default function Home() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "map";
+  const [activeTab, setActiveTab] = useState("map");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [selectedLevelId, setSelectedLevelId] = useState(null);
   const [, forceUpdate] = useState(0);
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const t = useT();
 
@@ -52,7 +51,15 @@ export default function Home() {
     await queryClient.invalidateQueries({ queryKey: ["progress"] });
   }, [queryClient]);
 
-  const setTab = (id) => setSearchParams({ tab: id }, { replace: true });
+  // Show quiz page inline
+  if (selectedLevelId !== null) {
+    return (
+      <QuizPage
+        levelId={selectedLevelId}
+        onBack={() => setSelectedLevelId(null)}
+      />
+    );
+  }
 
   if (isLoading || !progress) {
     return (
@@ -83,10 +90,8 @@ export default function Home() {
           background: "linear-gradient(160deg, #1a0533 0%, #3b0764 30%, #581c87 60%, #7c3aed 100%)"
         }}
       >
-        {/* Background orbs */}
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 pointer-events-none" style={{ background: "radial-gradient(circle, #a855f7, transparent 70%)", transform: "translate(30%, -30%)" }} />
         <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-15 pointer-events-none" style={{ background: "radial-gradient(circle, #ec4899, transparent 70%)", transform: "translate(-30%, 30%)" }} />
-        {/* Grid pattern */}
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
 
         <div className="max-w-lg mx-auto relative">
@@ -124,7 +129,7 @@ export default function Home() {
           {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setTab(tab.id)}
+              onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200",
                 activeTab === tab.id
@@ -160,7 +165,7 @@ export default function Home() {
                         isUnlocked={isUnlocked}
                         isCompleted={isCompleted}
                         levelScores={perLevelScores}
-                        onClick={(lvl) => navigate(`/quiz/${lvl.id}`)}
+                        onClick={(lvl) => setSelectedLevelId(lvl.id)}
                         index={i}
                       />
                     );
