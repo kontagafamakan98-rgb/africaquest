@@ -201,12 +201,15 @@ export default function Home() {
   );
 }
 
-function StatBox({ icon, value, label, color }) {
+function StatBox({ icon, value, label, gradient }) {
   return (
-    <div className={`bg-gradient-to-br ${color} backdrop-blur-sm border border-white/20 rounded-xl p-3 text-center`}>
-      <span className="text-xl">{icon}</span>
-      <p className="text-lg font-extrabold mt-0.5 leading-tight">{value}</p>
-      <p className="text-[10px] text-purple-100 font-semibold uppercase tracking-wide">{label}</p>
+    <div className="bg-white/6 backdrop-blur-sm border border-white/10 rounded-2xl p-3 text-center relative overflow-hidden">
+      <div className={`absolute inset-0 opacity-10 bg-gradient-to-br ${gradient}`} />
+      <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mx-auto mb-1.5 shadow-lg`}>
+        <span className="text-base">{icon}</span>
+      </div>
+      <p className="text-lg font-extrabold leading-tight text-white">{value}</p>
+      <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{label}</p>
     </div>
   );
 }
