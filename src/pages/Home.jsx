@@ -56,7 +56,7 @@ export default function Home() {
 
   if (isLoading || !progress) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f0a1e" }}>
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
           <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full" />
         </motion.div>
