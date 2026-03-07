@@ -74,58 +74,62 @@ export default function Home() {
   const streakDays = progress.streak_days || 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 overflow-hidden">
+    <div className="flex flex-col min-h-screen overflow-hidden" style={{ background: "#0f0a1e" }}>
       {/* Hero */}
       <div
-        className="relative text-white px-4 pb-16 overflow-hidden shrink-0"
+        className="relative text-white px-4 pb-20 overflow-hidden shrink-0"
         style={{
           paddingTop: "calc(2.5rem + var(--sat))",
-          background: "linear-gradient(135deg, #4c1d95 0%, #7c3aed 40%, #a21caf 70%, #c026d3 100%)"
+          background: "linear-gradient(160deg, #1a0533 0%, #3b0764 30%, #581c87 60%, #7c3aed 100%)"
         }}
       >
-        {/* Decorative continent silhouette */}
-        <div className="absolute right-0 top-0 h-full opacity-10 pointer-events-none select-none text-[160px] leading-none">🌍</div>
-        {/* Dotted pattern */}
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+        {/* Background orbs */}
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 pointer-events-none" style={{ background: "radial-gradient(circle, #a855f7, transparent 70%)", transform: "translate(30%, -30%)" }} />
+        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-15 pointer-events-none" style={{ background: "radial-gradient(circle, #ec4899, transparent 70%)", transform: "translate(-30%, 30%)" }} />
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
 
         <div className="max-w-lg mx-auto relative">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-3xl">🌍</span>
-                <h1 className="text-xl font-extrabold tracking-tight leading-tight">{t.appTitle}</h1>
+              <div className="flex items-center gap-2.5 mb-1">
+                <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
+                  <span className="text-xl">🌍</span>
+                </div>
+                <h1 className="text-xl font-extrabold tracking-tight leading-tight text-white">{t.appTitle}</h1>
               </div>
-              <p className="text-purple-200 text-xs font-medium">{t.appSubtitle}</p>
+              <p className="text-purple-300/70 text-xs font-medium pl-0.5">{t.appSubtitle}</p>
             </div>
             <button
               onClick={() => setSettingsOpen(true)}
-              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/25 border border-white/20 transition-colors mt-0.5"
+              className="p-2.5 rounded-xl bg-white/8 hover:bg-white/15 border border-white/15 transition-colors mt-0.5 backdrop-blur-sm"
             >
-              <Settings className="w-5 h-5 text-white" />
+              <Settings className="w-5 h-5 text-white/70" />
             </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2.5 mb-4">
-            <StatBox icon="⭐" value={totalStars} label={t.stars} color="from-amber-400/30 to-yellow-400/20" />
-            <StatBox icon="🏆" value={`${completedLevels.length}/${LEVELS.length}`} label={t.levels} color="from-emerald-400/30 to-teal-400/20" />
-            <StatBox icon="🔥" value={streakDays} label={t.dayStreak} color="from-orange-400/30 to-red-400/20" />
+          <div className="grid grid-cols-3 gap-2.5 mb-5">
+            <StatBox icon="⭐" value={totalStars} label={t.stars} gradient="from-amber-400 to-orange-500" />
+            <StatBox icon="🏆" value={`${completedLevels.length}/${LEVELS.length}`} label={t.levels} gradient="from-emerald-400 to-teal-500" />
+            <StatBox icon="🔥" value={streakDays} label={t.dayStreak} gradient="from-rose-400 to-pink-500" />
           </div>
 
-          <XPBar current={xpInCurrentLevel} max={200} level={playerLevel}
-            className="[&_span]:text-purple-200 [&_span]:font-normal [&_.font-bold]:text-white [&>div:last-child]:bg-white/20" />
+          <XPBar current={xpInCurrentLevel} max={200} level={playerLevel} />
         </div>
       </div>
 
       {/* Tab Switcher */}
-      <div className="max-w-lg w-full mx-auto px-4 -mt-6 shrink-0 z-10">
-        <div className="tab-bar-bg bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-100 p-1.5 flex gap-1">
+      <div className="max-w-lg w-full mx-auto px-4 -mt-7 shrink-0 z-10">
+        <div className="bg-[#1a1030] rounded-2xl shadow-2xl border border-white/8 p-1.5 flex gap-1">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setTab(tab.id)}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all",
-                activeTab === tab.id ? "bg-violet-100 text-violet-700" : "text-slate-400 hover:text-slate-600"
+                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-200",
+                activeTab === tab.id
+                  ? "bg-violet-600 text-white shadow-lg shadow-violet-900/50"
+                  : "text-white/40 hover:text-white/70"
               )}
             >
               <tab.icon className="w-4 h-4" />
@@ -138,10 +142,13 @@ export default function Home() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-hidden" style={{ paddingBottom: "var(--sab)" }}>
         <PullToRefresh onRefresh={handleRefresh}>
-          <div className="max-w-lg mx-auto px-4 py-6 pb-10">
+          <div className="max-w-lg mx-auto px-4 py-5 pb-10">
             <AnimatePresence mode="wait">
               {activeTab === "map" && (
                 <motion.div key="map" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
+                  <p className="text-white/30 text-xs font-bold uppercase tracking-widest mb-4 px-1">
+                    {completedLevels.length} of {LEVELS.length} Completed
+                  </p>
                   {LEVELS.map((level, i) => {
                     const isUnlocked = level.id <= (progress.current_level || 1);
                     const isCompleted = completedLevels.includes(level.id);
@@ -163,9 +170,14 @@ export default function Home() {
 
               {activeTab === "badges" && (
                 <motion.div key="badges" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Award className="w-5 h-5 text-amber-500" />
-                    <h3 className="font-bold text-slate-700">{badges.length} {t.of} {BADGES.length} {t.badgesEarned}</h3>
+                  <div className="flex items-center gap-2 mb-5 px-1">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                      <Award className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-white text-sm">{t.badgesEarned}</h3>
+                      <p className="text-white/30 text-xs">{badges.length} {t.of} {BADGES.length} unlocked</p>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     {BADGES.map((badge, i) => (
