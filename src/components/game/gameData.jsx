@@ -398,6 +398,36 @@ export const LEVELS = [
         options: ["Earthquake", "Moroccan invasion", "Flood", "Volcano"],
         correct: 1,
         fact: "In 1591, Morocco invaded with guns and cannons, which Songhai had never seen before!"
+      },
+      {
+        question: "Before Askia Muhammad, who was the warrior-king who built the Songhai Empire by conquering the Mali Empire?",
+        options: ["Sunni Ali", "Mansa Musa", "Sundiata", "Kankan Musa"],
+        correct: 0,
+        fact: "Sunni Ali (reigned 1464–1492) was a brilliant military genius who turned Songhai into the largest African empire through 28 years of near-constant warfare!"
+      },
+      {
+        question: "The Battle of Tondibi in 1591, which ended Songhai, was notable because Songhai's army used a secret weapon that backfired. What was it?",
+        options: ["Elephants that stampeded their own army", "Poison arrows that killed their own men", "Flaming arrows", "War drums that deafened soldiers"],
+        correct: 0,
+        fact: "Songhai deployed cattle as a shield against Moroccan guns, but the noise of firearms caused the cattle to stampede back through their own army!"
+      },
+      {
+        question: "Timbuktu's scholars preserved manuscripts on which advanced subjects?",
+        options: ["Only religion", "Astronomy, mathematics, medicine, and law", "Only history", "Only poetry"],
+        correct: 1,
+        fact: "Over 700,000 manuscripts survive from Timbuktu covering mathematics, astronomy, medicine — proving Africa's sophisticated intellectual tradition!"
+      },
+      {
+        question: "Askia Muhammad was eventually deposed. Who removed him from power?",
+        options: ["The Moroccan army", "His own son Musa", "A slave revolt", "A rival king from Mali"],
+        correct: 1,
+        fact: "In 1528, Askia Muhammad's own son Musa staged a coup and overthrew his aging father — beginning a period of instability that weakened Songhai!"
+      },
+      {
+        question: "The Moroccan invasion force at Tondibi was led by Judar Pasha. What was historically remarkable about him?",
+        options: ["He was a woman disguised as a man", "He was a Spanish-born enslaved person who rose to become a general", "He was only 14 years old", "He was blind"],
+        correct: 1,
+        fact: "Judar Pasha was a Spanish-born former enslaved person who rose through the Moroccan court to command the invasion — a remarkable life story!"
       }
     ]
   },
