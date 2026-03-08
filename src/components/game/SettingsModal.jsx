@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Trash2, LogOut, Info, AlertTriangle, Globe } from "lucide-react";
+import { X, Trash2, LogOut, Info, AlertTriangle, Globe, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT, LANGUAGES, getLang, setLang } from "../i18n";
 
 export default function SettingsModal({ open, onClose, progressId, onLangChange }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null); // null | "progress" | "account"
   const [deleting, setDeleting] = useState(false);
   const queryClient = useQueryClient();
   const t = useT();
   const currentLang = getLang();
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteProgress = async () => {
     setDeleting(true);
     try {
       if (progressId) {
@@ -22,7 +22,22 @@ export default function SettingsModal({ open, onClose, progressId, onLangChange 
       }
     } finally {
       setDeleting(false);
-      setConfirmDelete(false);
+      setConfirmDelete(null);
+      onClose();
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      if (progressId) {
+        await base44.entities.PlayerProgress.delete(progressId);
+        queryClient.invalidateQueries({ queryKey: ["progress"] });
+      }
+      await base44.auth.logout();
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(null);
       onClose();
     }
   };
@@ -50,13 +65,13 @@ export default function SettingsModal({ open, onClose, progressId, onLangChange 
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 modal-bg bg-white rounded-t-3xl shadow-2xl max-w-lg mx-auto"
-            style={{ paddingBottom: "calc(1.5rem + var(--sab))" }}
+            style={{ paddingBottom: "calc(4.5rem + var(--sab))" }}
           >
             <div className="flex justify-center pt-3 pb-2">
               <div className="w-10 h-1 bg-slate-200 rounded-full" />
             </div>
 
-            <div className="px-5 pb-2">
+            <div className="px-5 pb-2 max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-extrabold text-slate-800">{t.settings}</h2>
                 <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
@@ -108,49 +123,85 @@ export default function SettingsModal({ open, onClose, progressId, onLangChange 
                 <span className="font-semibold text-slate-700 text-sm">{t.signOut}</span>
               </button>
 
-              {/* Delete progress */}
-              {!confirmDelete ? (
+              {/* Delete Progress */}
+              {confirmDelete !== "progress" ? (
                 <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="w-full flex items-center gap-3 p-4 rounded-2xl hover:bg-red-50 transition-colors text-left"
+                  onClick={() => setConfirmDelete("progress")}
+                  className="w-full flex items-center gap-3 p-4 rounded-2xl hover:bg-orange-50 transition-colors text-left mb-2"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                  <div className="w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center">
+                    <Trash2 className="w-4 h-4 text-orange-500" />
                   </div>
                   <div>
-                    <p className="font-semibold text-red-600 text-sm">{t.deleteProgress}</p>
+                    <p className="font-semibold text-orange-600 text-sm">{t.deleteProgress}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{t.deleteProgressDesc}</p>
                   </div>
                 </button>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-red-50 border border-red-200 rounded-2xl p-4"
+                <ConfirmBox
+                  message={t.deleteProgressConfirm}
+                  onCancel={() => setConfirmDelete(null)}
+                  onConfirm={handleDeleteProgress}
+                  deleting={deleting}
+                  t={t}
+                />
+              )}
+
+              {/* Delete Account */}
+              {confirmDelete !== "account" ? (
+                <button
+                  onClick={() => setConfirmDelete("account")}
+                  className="w-full flex items-center gap-3 p-4 rounded-2xl hover:bg-red-50 transition-colors text-left"
                 >
-                  <div className="flex gap-2 items-start mb-3">
-                    <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-700 font-medium">{t.deleteConfirm}</p>
+                  <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+                    <UserX className="w-4 h-4 text-red-500" />
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)} className="flex-1 rounded-xl">
-                      {t.cancel}
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleDeleteAccount}
-                      disabled={deleting}
-                      className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 text-white"
-                    >
-                      {deleting ? t.deleting : t.yesDelete}
-                    </Button>
+                  <div>
+                    <p className="font-semibold text-red-600 text-sm">{t.deleteAccount}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{t.deleteAccountDesc}</p>
                   </div>
-                </motion.div>
+                </button>
+              ) : (
+                <ConfirmBox
+                  message={t.deleteAccountConfirm}
+                  onCancel={() => setConfirmDelete(null)}
+                  onConfirm={handleDeleteAccount}
+                  deleting={deleting}
+                  t={t}
+                />
               )}
             </div>
           </motion.div>
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function ConfirmBox({ message, onCancel, onConfirm, deleting, t }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-2"
+    >
+      <div className="flex gap-2 items-start mb-3">
+        <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+        <p className="text-sm text-red-700 font-medium">{message}</p>
+      </div>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={onCancel} className="flex-1 rounded-xl">
+          {t.cancel}
+        </Button>
+        <Button
+          size="sm"
+          onClick={onConfirm}
+          disabled={deleting}
+          className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 text-white"
+        >
+          {deleting ? t.deleting : t.yesDelete}
+        </Button>
+      </div>
+    </motion.div>
   );
 }
