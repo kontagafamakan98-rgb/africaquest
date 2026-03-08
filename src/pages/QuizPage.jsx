@@ -6,9 +6,14 @@ import QuizScreen from "../components/game/QuizScreen";
 import DifficultyPicker from "../components/game/DifficultyPicker";
 import { motion } from "framer-motion";
 
-export default function QuizPage({ levelId, onBack }) {
+export default function QuizPage({ levelId: levelIdProp, onBack }) {
   const queryClient = useQueryClient();
   const [difficulty, setDifficulty] = useState(null);
+
+  // Support both inline usage (props) and standalone page (URL params)
+  const urlParams = new URLSearchParams(window.location.search);
+  const levelId = levelIdProp ?? urlParams.get("levelId");
+  const handleBack = onBack ?? (() => window.history.back());
 
   const level = LEVELS.find((l) => l.id === Number(levelId));
 
