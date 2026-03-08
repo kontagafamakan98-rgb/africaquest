@@ -118,6 +118,36 @@ export const LEVELS = [
         options: ["Princesses", "Kandakes (Queens)", "Priestesses", "Warriors"],
         correct: 1,
         fact: "Kandakes were powerful queens who sometimes led armies into battle!"
+      },
+      {
+        question: "Which Kandake of Kush famously fought against the Roman army around 24 BC?",
+        options: ["Amanirenas", "Shanakdakhete", "Amanitore", "Nawidemak"],
+        correct: 0,
+        fact: "Kandake Amanirenas led her army against Rome after they tried to tax Nubian territory, and negotiated a favorable peace treaty!"
+      },
+      {
+        question: "The Meroitic script used in Kush was deciphered in terms of its sounds, but what remains a mystery?",
+        options: ["The alphabet", "The meaning of most words", "The direction of writing", "Who invented it"],
+        correct: 1,
+        fact: "Scholars can read Meroitic letters phonetically but still cannot fully understand the language — it remains largely undeciphered!"
+      },
+      {
+        question: "Kush conquered and ruled Egypt for nearly a century. Which dynasty did Kushite pharaohs form?",
+        options: ["24th Dynasty", "25th Dynasty", "26th Dynasty", "23rd Dynasty"],
+        correct: 1,
+        fact: "The Kushite 25th Dynasty, called the 'Black Pharaohs', ruled Egypt from around 747 to 656 BC!"
+      },
+      {
+        question: "What was the primary fuel source for Kush's iron-smelting industry at Meroë?",
+        options: ["Coal", "Charcoal from acacia trees", "Oil", "Wind power"],
+        correct: 1,
+        fact: "The forests around Meroë were so heavily used for iron smelting that the area eventually became deforested!"
+      },
+      {
+        question: "Kush adopted the Egyptian system of writing hieroglyphics, then developed their own script. What was unique about Meroitic script structurally?",
+        options: ["It was written in circles", "It used an alphabet with vowel signs", "It had no punctuation", "It was written vertically only"],
+        correct: 1,
+        fact: "Unlike Egyptian hieroglyphics, Meroitic was an alphabetic system with signs for vowels — a revolutionary linguistic development in Africa!"
       }
     ]
   },
