@@ -258,6 +258,36 @@ export const LEVELS = [
         options: ["Fish and wood", "Gold and salt", "Iron and copper", "Silk and spices"],
         correct: 1,
         fact: "Salt was so valuable in West Africa that it was sometimes worth its weight in gold!"
+      },
+      {
+        question: "Mansa Musa's pilgrimage to Mecca in 1324 included an enormous entourage. Approximately how many people accompanied him?",
+        options: ["1,000", "10,000", "60,000", "500,000"],
+        correct: 2,
+        fact: "Mansa Musa traveled with an estimated 60,000 people including soldiers, servants, and 12,000 enslaved people carrying gold!"
+      },
+      {
+        question: "The University of Sankore in Timbuktu could accommodate how many students at its peak?",
+        options: ["500", "5,000", "25,000", "100,000"],
+        correct: 2,
+        fact: "Sankore University had up to 25,000 students — it was one of the largest universities in the medieval world!"
+      },
+      {
+        question: "The epic of Sundiata Keita describes his childhood disability. What was it?",
+        options: ["He was blind", "He could not walk until age 7", "He could not speak", "He was deaf"],
+        correct: 1,
+        fact: "According to legend, Sundiata could not walk until age 7, then rose to become the greatest warrior-king of West Africa!"
+      },
+      {
+        question: "Which trans-Saharan trade route connected the Mali Empire to North Africa and the Mediterranean world?",
+        options: ["The Silk Road", "The Gold Road through Sijilmasa", "The Incense Route", "The Amber Road"],
+        correct: 1,
+        fact: "The route through Sijilmasa (Morocco) was the main artery connecting Mali's gold fields to Mediterranean merchants!"
+      },
+      {
+        question: "Ibn Battuta, who visited the Mali Empire in 1352, noted what unusual practice at the Malian court?",
+        options: ["Everyone wore masks", "Subjects covered themselves in dust when greeting the king", "The king ate alone in public", "Women ran all the markets"],
+        correct: 1,
+        fact: "Ibn Battuta described subjects prostrating themselves and throwing dust on their heads as a sign of respect before the Mali king!"
       }
     ]
   },
