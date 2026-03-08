@@ -48,6 +48,36 @@ export const LEVELS = [
         options: ["A type of boat", "A mythical creature statue", "A weapon", "A musical instrument"],
         correct: 1,
         fact: "The Great Sphinx has the body of a lion and the head of a human!"
+      },
+      {
+        question: "Which pharaoh is believed to have commissioned the Great Sphinx of Giza?",
+        options: ["Khufu", "Khafre", "Menkaure", "Ramesses II"],
+        correct: 1,
+        fact: "The Sphinx is widely believed to bear the face of Pharaoh Khafre, who built the second pyramid at Giza!"
+      },
+      {
+        question: "What is the ancient Egyptian word for pharaoh, meaning 'Great House'?",
+        options: ["Ankh", "Per-aa", "Maat", "Djed"],
+        correct: 1,
+        fact: "'Per-aa' originally referred to the royal palace, not the ruler — it later evolved to mean the king himself!"
+      },
+      {
+        question: "In what year did the Rosetta Stone allow scholars to finally decode hieroglyphics?",
+        options: ["1799", "1822", "1901", "1755"],
+        correct: 1,
+        fact: "Jean-François Champollion cracked the hieroglyphic code in 1822 using the Rosetta Stone, which had the same text in three scripts!"
+      },
+      {
+        question: "Which goddess of Ancient Egypt was associated with magic, motherhood, and was the sister-wife of Osiris?",
+        options: ["Hathor", "Sekhmet", "Isis", "Nephthys"],
+        correct: 2,
+        fact: "Isis was one of the most important goddesses — her cult spread beyond Egypt into the Roman Empire!"
+      },
+      {
+        question: "The 'Book of the Dead' was a collection of magical spells used for what purpose?",
+        options: ["Cursing enemies", "Guiding the soul through the afterlife", "Teaching children", "Predicting harvests"],
+        correct: 1,
+        fact: "The Book of the Dead contained over 200 spells to help the deceased navigate the dangers of the Duat (underworld)!"
       }
     ]
   },
