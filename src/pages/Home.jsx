@@ -6,7 +6,7 @@ import LevelCard from "../components/game/LevelCard.jsx";
 import XPBar from "../components/game/XPBar";
 import BadgeCard from "../components/game/BadgeCard";
 import PullToRefresh from "../components/game/PullToRefresh";
-import SettingsModal from "../components/game/SettingsModal";
+import SettingsModal from "../components/game/SettingsModal.jsx";
 import QuizPage from "./QuizPage";
 import { Map, Award, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
