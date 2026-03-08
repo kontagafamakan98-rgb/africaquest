@@ -188,6 +188,36 @@ export const LEVELS = [
         options: ["Eagle", "Zimbabwe Bird", "Flamingo", "Parrot"],
         correct: 1,
         fact: "The Zimbabwe Bird is now the national emblem of Zimbabwe and appears on their flag!"
+      },
+      {
+        question: "The people who built Great Zimbabwe belonged to which ethnic group?",
+        options: ["Zulu", "Shona", "Xhosa", "Ndebele"],
+        correct: 1,
+        fact: "The Shona people built and inhabited Great Zimbabwe — their descendants still live in Zimbabwe today!"
+      },
+      {
+        question: "Chinese porcelain was found at Great Zimbabwe. What does this tell us?",
+        options: ["Chinese people built it", "Zimbabwe traded across the Indian Ocean", "It was a gift from Egypt", "Porcelain was made locally"],
+        correct: 1,
+        fact: "Chinese and Persian artifacts at Great Zimbabwe prove it was connected to vast Indian Ocean trade networks!"
+      },
+      {
+        question: "The 'Great Enclosure' at Great Zimbabwe is the largest ancient structure south of the Sahara. What was its wall height?",
+        options: ["3 metres", "6 metres", "11 metres", "20 metres"],
+        correct: 2,
+        fact: "The Great Enclosure's walls reach up to 11 metres high and stretch over 250 metres — built with over a million granite blocks!"
+      },
+      {
+        question: "European colonizers in the 19th century falsely claimed Great Zimbabwe was built by which civilization?",
+        options: ["Romans", "Phoenicians or Queen of Sheba's people", "Greeks", "Persians"],
+        correct: 1,
+        fact: "Racist colonial theories denied African authorship of Great Zimbabwe, claiming Phoenicians or the Queen of Sheba built it — all debunked by archaeology!"
+      },
+      {
+        question: "What was the Mutapa state, which succeeded Great Zimbabwe's power?",
+        options: ["A kingdom in West Africa", "A successor Shona kingdom controlling gold trade", "An Egyptian colony", "A Swahili city-state"],
+        correct: 1,
+        fact: "The Kingdom of Mutapa (or Mwene Mutapa) emerged after Great Zimbabwe's decline and controlled the gold-rich plateau until Portuguese interference in the 1600s!"
       }
     ]
   },
