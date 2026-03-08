@@ -328,6 +328,36 @@ export const LEVELS = [
         options: ["Coins", "Computers", "Cars", "Telephones"],
         correct: 0,
         fact: "Axum was one of the first African kingdoms to mint its own coins!"
+      },
+      {
+        question: "The Axumite king who converted to Christianity in the 4th century was:",
+        options: ["Ezana", "Kaleb", "Gadarat", "Zoscales"],
+        correct: 0,
+        fact: "King Ezana of Axum converted to Christianity around 330 AD and inscribed the cross on Axumite coins!"
+      },
+      {
+        question: "Axum's port city, essential for its Indian Ocean trade, was called:",
+        options: ["Mogadishu", "Adulis", "Zanzibar", "Mombasa"],
+        correct: 1,
+        fact: "Adulis on the Red Sea was Axum's main port, making it a hub connecting Africa, Arabia, India, and the Roman Empire!"
+      },
+      {
+        question: "The Axumites are traditionally believed to have been the guardians of which famous religious relic?",
+        options: ["The Holy Grail", "The Ark of the Covenant", "The Shroud of Turin", "The True Cross"],
+        correct: 1,
+        fact: "Ethiopian tradition holds that the Ark of the Covenant was brought to Axum by Menelik I, son of King Solomon and the Queen of Sheba!"
+      },
+      {
+        question: "Which ancient script used exclusively in Ethiopia and Eritrea was developed from the Axumite writing system?",
+        options: ["Arabic", "Ge'ez (Ethiopic)", "Coptic", "Amharic alphabet"],
+        correct: 1,
+        fact: "Ge'ez is one of the oldest continuously used writing systems in the world, still used today in Ethiopian Orthodox Church liturgy!"
+      },
+      {
+        question: "Axum's King Kaleb invaded the Arabian Peninsula in 525 AD to defend which persecuted group?",
+        options: ["Muslims", "Jewish traders", "Christians in Yemen", "Buddhist monks"],
+        correct: 2,
+        fact: "King Kaleb crossed the Red Sea to defeat the Yemeni king Dhu Nuwas who was massacring Christians — an extraordinary projection of African military power!"
       }
     ]
   },
