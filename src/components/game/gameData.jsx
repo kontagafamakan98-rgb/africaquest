@@ -468,6 +468,36 @@ export const LEVELS = [
         options: ["Battle of Waterloo", "Battle of Isandlwana", "Battle of Hastings", "Battle of Adwa"],
         correct: 1,
         fact: "At Isandlwana, 20,000 Zulu warriors defeated a well-armed British force — a stunning victory!"
+      },
+      {
+        question: "The same day as Isandlwana, the British successfully defended which small outpost against 4,000 Zulu warriors?",
+        options: ["Ulundi", "Rorke's Drift", "Durban", "Pretoria"],
+        correct: 1,
+        fact: "At Rorke's Drift, just 150 British soldiers held off 4,000 Zulu warriors — 11 Victoria Crosses were awarded, the most for any single engagement!"
+      },
+      {
+        question: "Shaka Zulu abolished a traditional Zulu custom requiring warriors to do what before they could marry?",
+        options: ["Build their own home", "Pay cattle to the bride's father", "Kill a lion", "Serve 10 years in the army"],
+        correct: 3,
+        fact: "Shaka reformed the age-regiment system — warriors could not marry until he gave permission, keeping them loyal to the state rather than families!"
+      },
+      {
+        question: "What was the name of the Zulu king who fought the British at the Anglo-Zulu War in 1879?",
+        options: ["Shaka", "Dingane", "Cetshwayo", "Mpande"],
+        correct: 2,
+        fact: "King Cetshwayo kaMpande led the Zulu nation during the 1879 war — he was later captured, exiled to London, and met Queen Victoria!"
+      },
+      {
+        question: "The 'Mfecane' (crushing/scattering) refers to a period of widespread chaos triggered partly by Zulu expansion. Which regions were most affected?",
+        options: ["North Africa and Egypt", "Southern and Central Africa", "East Africa coast", "West Africa"],
+        correct: 1,
+        fact: "The Mfecane displaced millions across southern and central Africa in the 1820s-1830s, creating new kingdoms like the Sotho nation and Swazi kingdom!"
+      },
+      {
+        question: "Shaka's assassination in 1828 was carried out by whom?",
+        options: ["British soldiers", "His half-brothers Dingane and Mhlangana", "A rival Zulu chief", "His personal bodyguard"],
+        correct: 1,
+        fact: "Shaka was stabbed to death by his half-brothers Dingane and Mhlangana, with the help of his personal servant — ending his 12-year reign!"
       }
     ]
   },
