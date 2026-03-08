@@ -538,6 +538,36 @@ export const LEVELS = [
         options: ["United Nations", "NATO", "African Union", "European Union"],
         correct: 2,
         fact: "The African Union, founded in 2002, works to promote unity and cooperation among all 55 African nations!"
+      },
+      {
+        question: "Which African leader was assassinated in 1961, with the involvement of Belgium and the CIA, just months after his country's independence?",
+        options: ["Kwame Nkrumah", "Patrice Lumumba", "Jomo Kenyatta", "Julius Nyerere"],
+        correct: 1,
+        fact: "Patrice Lumumba, Congo's first elected Prime Minister, was killed just 10 weeks after independence — his murder remains one of Africa's most tragic political assassinations!"
+      },
+      {
+        question: "The 'Berlin Conference' of 1884–1885 is historically significant because it:",
+        options: ["United African kingdoms", "European powers divided Africa among themselves with no African representation", "Ended the slave trade", "Established the first African currency"],
+        correct: 1,
+        fact: "14 European nations met in Berlin and drew Africa's borders arbitrarily — splitting tribes, uniting enemies — creating conflicts that still affect Africa today!"
+      },
+      {
+        question: "The African National Congress (ANC) was founded in which year, making it one of the oldest liberation movements?",
+        options: ["1948", "1960", "1912", "1990"],
+        correct: 2,
+        fact: "The ANC was founded in 1912, 82 years before Mandela became president — it fought apartheid for decades through non-violence and armed resistance!"
+      },
+      {
+        question: "Which African country was ruled by a system called 'Ujamaa' (familyhood), a form of African socialism?",
+        options: ["Kenya", "Tanzania", "Ghana", "Senegal"],
+        correct: 1,
+        fact: "Julius Nyerere's Ujamaa policy in Tanzania attempted to build an African socialist state — it had mixed results but became a model of pan-African thought!"
+      },
+      {
+        question: "The 'Year of Africa' in 1960 saw 17 African nations gain independence. Which former colonial power granted the most independence that year?",
+        options: ["Britain", "France", "Belgium", "Portugal"],
+        correct: 1,
+        fact: "France granted independence to 14 of its African territories in 1960 alone — though many retained economic and political ties to France through 'Françafrique'!"
       }
     ]
   }
