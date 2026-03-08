@@ -116,7 +116,7 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
       },
     });
 
-    onBack();
+    handleBack();
   };
 
   return (
