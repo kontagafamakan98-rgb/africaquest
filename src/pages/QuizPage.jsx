@@ -52,7 +52,7 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
         level={level}
         levelScores={levelScores}
         onSelect={setDifficulty}
-        onBack={onBack}
+        onBack={handleBack}
       />
     );
   }
