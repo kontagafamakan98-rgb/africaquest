@@ -31,7 +31,7 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
   });
 
   if (!level) {
-    onBack();
+    handleBack();
     return null;
   }
 
