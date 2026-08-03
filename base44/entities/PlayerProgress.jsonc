@@ -1,0 +1,52 @@
+{
+  "name": "PlayerProgress",
+  "type": "object",
+  "properties": {
+    "current_level": {
+      "type": "number",
+      "default": 1,
+      "description": "Current level the player is on"
+    },
+    "total_xp": {
+      "type": "number",
+      "default": 0,
+      "description": "Total experience points earned"
+    },
+    "stars_earned": {
+      "type": "number",
+      "default": 0,
+      "description": "Total stars earned"
+    },
+    "completed_levels": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "default": [],
+      "description": "List of completed level IDs"
+    },
+    "badges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of earned badge IDs"
+    },
+    "level_scores": {
+      "type": "object",
+      "description": "Scores per level per difficulty, e.g. {\"1\": {\"easy\": {\"score\": 5, \"stars\": 3}, \"medium\": {...}}}"
+    },
+    "streak_days": {
+      "type": "number",
+      "default": 0,
+      "description": "Current daily streak"
+    },
+    "last_played": {
+      "type": "string",
+      "format": "date",
+      "description": "Last date the player played"
+    }
+  },
+  "required": []
+}
