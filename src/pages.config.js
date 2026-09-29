@@ -47,14 +47,31 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import QuizPage from './pages/QuizPage';
+import { lazy } from 'react';
 import Home from './pages/Home';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import __Layout from './Layout.jsx';
+
+// The quiz, the teacher space, the credits and the bibliography are only ever
+// opened on purpose, so they ship as their own chunks instead of weighing down
+// the map every player loads. Home opens the quiz the same way, so the two share
+// the one file, the credits read the same photograph table a lesson does, and
+// the bibliography reads the questions every other screen asks.
+const QuizPage = lazy(() => import('./pages/QuizPage'));
+const TeacherPage = lazy(() => import('./pages/TeacherPage'));
+const PhotoCredits = lazy(() => import('./pages/PhotoCredits'));
+const Bibliography = lazy(() => import('./pages/Bibliography'));
 
 
 export const PAGES = {
     "QuizPage": QuizPage,
     "Home": Home,
+    "PrivacyPolicy": PrivacyPolicy,
+    "TermsOfService": TermsOfService,
+    "PhotoCredits": PhotoCredits,
+    "Bibliography": Bibliography,
+    "TeacherPage": TeacherPage,
 }
 
 export const pagesConfig = {

@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { LEVELS, BADGES, getXPForScore, DIFFICULTIES } from "../components/game/gameData";
+import { progressStore } from "@/api/progress-store";
+import { BADGES, getXPForScore, DIFFICULTIES, getLevels } from "../components/game/gameData";
 import QuizScreen from "../components/game/QuizScreen";
+import ScreenSkeleton from "../components/game/ScreenSkeleton.jsx";
 import DifficultyPicker from "../components/game/DifficultyPicker";
-import { motion } from "framer-motion";
+import { questionKey } from "../components/game/learning";
+import { useLang } from "../components/i18n";
+import { localDay, streakAfterPlay } from "../lib/streak";
 
-function buildNewProgress(progress, { level, difficulty, score, total, stars, xp }) {
+function buildNewProgress(progress, levels, { level, difficulty, score, total, stars, xp, timeSeconds }) {
   const diff = DIFFICULTIES[difficulty];
   const prevScores = progress.level_scores || {};
   const prevLevelScores = prevScores[String(level.id)] || {};
@@ -31,25 +34,45 @@ function buildNewProgress(progress, { level, difficulty, score, total, stars, xp
   const newXP = (progress.total_xp || 0) + Math.max(xpDiff, 0);
   const newStars = (progress.stars_earned || 0) + Math.max(starDiff, 0);
   const newCurrentLevel = Math.max(progress.current_level || 1, level.id + 1);
+  const newTotalTime = (progress.total_time_seconds || 0) + Math.max(Math.round(timeSeconds || 0), 0);
+
+  // Distinct regions the player has finished at least one level in.
+  const exploredRegions = new Set(
+    levels.filter((l) => newCompleted.includes(l.id)).map((l) => l.region)
+  ).size;
 
   const currentBadges = progress.badges || [];
   const newBadges = [...currentBadges];
   BADGES.forEach((b) => {
     if (newBadges.includes(b.id)) return;
     if (b.requirement.type === "levels" && newCompleted.length >= b.requirement.count) newBadges.push(b.id);
+    if (b.requirement.type === "regions" && exploredRegions >= b.requirement.count) newBadges.push(b.id);
     if (b.requirement.type === "stars" && newStars >= b.requirement.count) newBadges.push(b.id);
     if (b.requirement.type === "xp" && newXP >= b.requirement.count) newBadges.push(b.id);
     if (b.requirement.type === "perfect" && score === total) newBadges.push(b.id);
   });
 
-  const today = new Date().toISOString().split("T")[0];
-  const lastPlayed = progress.last_played;
-  let streakDays = progress.streak_days || 0;
-  if (lastPlayed !== today) {
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-    streakDays = lastPlayed === yesterday ? streakDays + 1 : 1;
-  }
+  // The streak is counted on the player's local calendar, and starts at one on
+  // the very first day of play (see src/lib/streak.js for the rules).
+  const now = new Date();
+  const today = localDay(now);
+  const { streakDays } = streakAfterPlay(progress.streak_days, progress.last_played, now);
   if (!newBadges.includes("streak_keeper") && streakDays >= 3) newBadges.push("streak_keeper");
+
+  // Record only the gains, so summing the history always equals the real totals
+  // even when a level is replayed with a worse score.
+  const history = [
+    ...(progress.history || []),
+    {
+      date: today,
+      level: level.id,
+      difficulty,
+      score,
+      total,
+      stars: Math.max(starDiff, 0),
+      xp: Math.max(xpDiff, 0),
+    },
+  ].slice(-200);
 
   return {
     current_level: newCurrentLevel,
@@ -58,24 +81,28 @@ function buildNewProgress(progress, { level, difficulty, score, total, stars, xp
     completed_levels: newCompleted,
     badges: newBadges,
     level_scores: newLevelScores,
+    total_time_seconds: newTotalTime,
     streak_days: streakDays,
     last_played: today,
+    history,
   };
 }
 
 export default function QuizPage({ levelId: levelIdProp, onBack }) {
   const queryClient = useQueryClient();
   const [difficulty, setDifficulty] = useState(null);
+  const lang = useLang();
+  const levels = getLevels(lang);
 
   const urlParams = new URLSearchParams(window.location.search);
   const levelId = levelIdProp ?? urlParams.get("levelId");
   const handleBack = onBack ?? (() => window.history.back());
 
-  const level = LEVELS.find((l) => l.id === Number(levelId));
+  const level = levels.find((l) => l.id === Number(levelId));
 
   const { data: progressList, isLoading } = useQuery({
     queryKey: ["progress"],
-    queryFn: () => base44.entities.PlayerProgress.list(),
+    queryFn: () => progressStore.list(),
     initialData: [],
   });
 
@@ -83,7 +110,7 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
 
   // Optimistic update mutation
   const updateProgress = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.PlayerProgress.update(id, data),
+    mutationFn: ({ id, data }) => progressStore.update(id, data),
     onMutate: async ({ data }) => {
       await queryClient.cancelQueries({ queryKey: ["progress"] });
       const previous = queryClient.getQueryData(["progress"]);
@@ -102,19 +129,16 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
     },
   });
 
-  if (!level) {
-    handleBack();
-    return null;
-  }
+  // An unknown level id must leave the screen, but never by calling a parent
+  // setState during render: that warns and can loop.
+  useEffect(() => {
+    if (!level) handleBack();
+  }, [level]);
+
+  if (!level) return null;
 
   if (isLoading || !progress) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f0a1e" }}>
-        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
-          <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full" />
-        </motion.div>
-      </div>
-    );
+    return <ScreenSkeleton variant="quiz" />;
   }
 
   if (!difficulty) {
@@ -129,8 +153,8 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
     );
   }
 
-  const handleComplete = ({ score, total, stars, xp }) => {
-    const newData = buildNewProgress(progress, { level, difficulty, score, total, stars, xp });
+  const handleComplete = ({ score, total, stars, xp, timeSeconds }) => {
+    const newData = buildNewProgress(progress, levels, { level, difficulty, score, total, stars, xp, timeSeconds });
     updateProgress.mutate({ id: progress.id, data: newData });
     handleBack();
   };
@@ -141,6 +165,13 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
       difficulty={difficulty}
       onComplete={handleComplete}
       onBack={() => setDifficulty(null)}
+      // The results screen compares this game with the ones already recorded.
+      history={progress.history || []}
+      onAnswer={(index, isCorrect) => {
+        progressStore
+          .recordAnswer(questionKey(level.id, index), isCorrect)
+          .then(() => queryClient.invalidateQueries({ queryKey: ["progress"] }));
+      }}
     />
   );
 }

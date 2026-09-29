@@ -1,39 +1,327 @@
-**Welcome to your Base44 project** 
+# Africa History Quest
 
-**About**
+An educational quiz game that helps young learners explore the history of Africa.
+Players progress through eight thematic levels (Ancient Egypt, Kush, Great Zimbabwe,
+Mali, Axum, Songhai, the Zulu Kingdom and African Independence), each available in
+three difficulty modes with stars, XP, badges and a daily streak.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+## Stack
 
-This project contains everything you need to run your app locally.
+- React 18 + Vite
+- Tailwind CSS
+- TanStack Query
+- Framer Motion (light, non-decorative transitions only)
+- Lucide icons
 
-**Edit the code in your local development environment**
+## Local by design
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+There is no account, no server and no tracking. Everything the game needs lives in the
+browser:
 
-**Prerequisites:** 
+- Progress (levels, XP, stars, badges, per-level scores, play time, streak) is stored in
+  `localStorage` under the key `aq_progress_v1`.
+- Hints are computed on the device, so they work offline.
+- Language preference is stored in `localStorage` under the key `aq_lang`.
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+The application makes no network request after loading its own assets: the level photographs
+are files of its own, downloaded once from their free licence source and shipped with the
+rest of the game.
+
+## Running locally
+
+```bash
+npm install
+npm run dev
+```
+
+## Scripts
+
+- `npm run dev` starts the development server.
+- `npm run build` produces a production build in `dist/`.
+- `npm run preview` serves the production build.
+- `npm run lint` runs ESLint.
+- `npm run verify` runs every gate the project has: translations, photograph budgets and
+  fingerprints, application icons, the tests, the linters, then a production build.
+- `npm run photos:stamp` records the fingerprint of every photograph, after the pictures have
+  changed.
+- `npm run weights` weighs the build bundle by bundle and compares it with the last recorded
+  pass.
+- `npm run check:references` follows the pages the verified references point at and reads the
+  title each one answers with, on demand and outside the verification, since it needs the
+  network.
+- `npm run weights:record` records this build as the pass the next one is compared with.
+
+## Photographs
+
+Each of the sixty level photographs ships as a JPEG, a WebP beside it, and — where it pays
+off — an AVIF in front of that one. A browser is offered them lightest first and draws the
+first it can read; the JPEG is only there for a browser that reads neither, and it is the
+one the service worker never installs.
+
+The third format is not written for every picture. At the size these are drawn, five hundred
+to six hundred and forty pixels across, AV1 pays for its headers more than it saves, and on
+part of the gallery the WebP is already the smaller file. `scripts/optimize-photos.mjs`
+encodes the AVIF at the lowest quality at which it is at least as faithful as the WebP it
+would replace, and writes it only when it also weighs meaningfully less; `npm run verify`
+reports how many pictures carry one rather than assuming they all do.
+
+That rule lives in `build/photo-fidelity.js` rather than inside the script, so that what the
+tests run is the very code that decides. `src/lib/photo-fidelity.test.js` measures it on one
+witness picture of its own, a hundred pixels of noise and edges, and checks the shape of the
+decision: that the walk stops on fidelity, that an AVIF lighter than the WebP but less
+faithful is refused, and that both halves have to hold. It costs half a second, where
+re-measuring the gallery would cost a minute and a half, which is why `--check` weighs the
+files that ship and leaves fidelity to that witness.
+
+Where an AVIF is written it is pinned by its own fingerprint in `src/lib/level-images.js`,
+and that line is also what tells the application which pictures to offer it for: a browser
+asked for an AVIF that is not there shows no picture rather than the one behind it.
+
+Each picture also ships a thumbnail, written by the same script in the same run: a WebP of
+a hundred and sixty pixels on the long edge, which is what the photo credits screen draws
+beside each name. That screen listed sixty lesson-sized pictures before, about two megabytes
+to fill sixty eighty-pixel squares; it now downloads about a hundred and seventy kilobytes
+in total. No AVIF is written at that size, and that is a measurement rather than a shortcut:
+at a hundred and sixty pixels it came out heavier than the WebP every time the two were
+weighed, which is the same rule that leaves part of the gallery without a third format.
+
+A thumbnail tells two pictures apart and shows neither of them, so each one is a button: it
+opens the photograph at the size it was made, in `src/components/game/PhotoViewer.jsx`, with
+its caption and its credit line still beside it and the page it came from one tap away. The
+largest file is asked for at the moment of the tap and not with the list, so a reader who only
+came to check who made a picture still downloads the small copies alone. The viewer is a
+dialog like every other sheet of the game: the focus moves into it, Escape and the area
+around the picture close it, and the focus goes back to the thumbnail that opened it.
+
+The one part of this that no build can hold is the page each credit points at: it is on
+somebody else's wiki, and it can be deleted between two releases. `npm run check:photos`
+follows all sixty of them on demand and says when one is gone, which is the failure a reader
+would find instead of a licence. It asks with HEAD, so no page is downloaded to learn whether
+it exists, and it keeps a page that could not be read apart from a page that is not there, so a
+bad connection is never reported as a badly credited photograph. Like the check on the search
+links, it needs the network and is therefore not part of `npm run verify`.
+
+All four files are pinned by a fingerprint of their own, so the credit line belongs to the
+bytes a reader is actually shown — in a lesson and on the credits screen alike.
+
+## Coming back for a review
+
+Spaced repetition only works if the player comes back, and a schedule is invisible from outside the
+game. So the count of what is due goes on the icon of the installed application, and, when the
+player asks for it in the settings, a notification is raised when the game is not open.
+
+None of it leaves the device and none of it needs a server. The page hands the moments of the
+schedule to the service worker, which keeps them in IndexedDB and looks at them when the browser
+wakes it: that is periodic background sync, which the manifest asks for with
+`"permissions": ["periodic-background-sync"]` and which the worker registers under one tag. The
+wording of the notification is composed by the page, in the language on screen, and travels with
+the schedule, so the worker never holds a second copy of the dictionary; the counted form carries a
+single `%d`, since more is due on the day of the notification than on the day it was handed over.
+
+Where a browser does not implement that wake-up, the switch says so instead of pretending: it
+tries to register the wake-up when the reminder is turned on, and a registration the browser
+refuses, which is what a desktop browser does today, is written under the switch as the reason
+no notification will come. The count on the icon still arrives every time the game is opened,
+which is the half that needs no permission at all. `src/lib/review-reminder.js` is the page's
+half of it, `build/offline-plugin.js` writes the worker's, and
+`src/lib/review-reminder.test.js` holds the two together: the tag the two halves agree on, the
+count on the icon against the count on the review tab inside the game, and the three reasons
+the worker says nothing at all. That last test does not read the worker, it runs it: the slice
+of the generated source the browser would run, given a browser of its own, since no test can
+wait for a notification that arrives while the page is closed.
+
+## Deployment
+
+Pushing to `main` publishes the built application to GitHub Pages (see
+`.github/workflows/pages.yml`). The build is told the address Pages reports, so the game
+works both at the root of a domain and under a project path such as
+`https://<owner>.github.io/<repository>/`, and the service worker is written for that same
+address, which is what keeps the offline copy working once installed.
+
+One setting has to be turned on once, by hand: in the repository settings, under **Pages**,
+set **Source** to **GitHub Actions**.
+
+## Project layout
 
 ```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+src/
+  api/            local progress store
+  components/game game UI: level cards, quiz screen, hints, badges, stats, settings
+  components/ui   reusable primitives
+  pages/          Home, Quiz, Privacy Policy, Terms of Use, Photo credits, Bibliography
+  Layout.jsx      shared page wrapper
 ```
 
-Run the app: `npm run dev`
+## What the first screen waits for
 
-**Publish your changes**
+The map is drawn from a brief of the game (`src/components/game/level-facts.js`), written by
+`scripts/generate-level-facts.mjs` out of the level table, the French wording and the photograph
+table, and checked by `npm run verify`. The brief carries the twenty levels' titles in both
+languages, their place in the timeline, the icon and the picture on each card, and how many
+questions each level holds - everything a card draws, and nothing else.
 
-Open [Base44.com](http://Base44.com) and click on Publish.
+The questions, their facts and sources, the lesson stories and the rest of the gallery live in
+`gameData.js` and `level-images.js`. The map asks for them as soon as it is on screen, so they
+arrive beside it rather than in front of it: the entry file is about 155 kB instead of 345 kB, and
+a screen opened by a tap finds the content already in the browser. On a connection where that
+matters, the map is painted after less than half the download it used to wait for.
 
-**Docs & Support**
+That boundary is held by tests rather than by memory: `src/lib/bundle-split.test.js` walks the
+static imports of the entry file and fails on one that reaches the content, and
+`src/components/game/level-summary.test.js` compares the brief with the three tables it is written
+from, down to the icon, the card picture and the AVIF list.
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+## The look of a screen
 
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+The interface has a house style, and it is held the same way as everything else here: the refusals
+are written in `src/lib/design-rules.test.js` and checked on every `npm run verify`, so a screen
+cannot quietly go back to wearing them.
+
+Nothing on a screen is decorative. There is no gradient text, no texture or grid laid over a
+gradient, and no serif or italic accent: a heading whose colour comes out of a gradient is
+unreadable the moment the gradient runs light. The typography is one voice, the one the reader's
+device already has, and the icons are one set at one weight, from the only icon package the project
+depends on. A blur belongs to a scrim over a photograph, which cannot be read anyway, and never to
+a card: a translucent panel is a surface nobody chose. Spacing comes from the scale rather than
+from a bracket, and motion lasts 150 to 300 milliseconds and says only that something is happening.
+
+A screen with a number to give gives one. The game opens on how far along the timeline the player
+is, and the stars, the streak and the experience are a quiet line under it, because a row of three
+boxes of equal weight is a row with nothing to read first. Text on the dark surfaces stays above a
+measured floor: white at half strength over `#14100A` is 5.3 to 1 and over a raised surface 5.1 to
+1, which is why the rule is half and not lower, and the band the game opens on is kept dark from
+top to bottom so that the words on it are legible at the bottom as well as the top.
+
+The waiting, the empty and the failed states are all drawn, because a screen that has nothing to
+show has to say which nothing it is: `src/components/game/ScreenSkeleton.jsx` stands in for the map,
+a quiz and a list of rows while their code arrives, the review inbox says when there is nothing to
+review, a player who has never played is not shown a screen of zeroes, a report that could not be
+written says so, and a device with no network and an address the app does not know both have their
+own line.
+
+One more thing was removed rather than written: `src/components/ui` now holds the one component the
+screens load, and a test fails on any file in it that the application never loads. It had fifty.
+The starter kit's toast was rendered on every screen and raised by nobody, and dropping it took
+43 kB off the stylesheet and six off the entry file, which is the same house rule seen from the
+other side: a thing nobody chose does not get to be in the app.
+
+## The weight of a build
+
+A build is the one thing in this project whose size nobody decides: every change that adds a few
+kilobytes adds them for a reason, and the total only shows up in somebody's download. So
+`npm run verify` ends by weighing the build it just made, bundle by bundle, against two
+references that refuse two different things, and against a table that has to hold every bundle
+it writes.
+
+The first is the pass recorded last time, in `build/bundle-weights.json`. Each bundle is printed
+with what it weighs on disk, what it is allowed, what it weighs compressed, and how it changed
+since that pass; a file more than a tenth heavier fails the verification, with both sizes and the
+ratio. That is the growth somebody made this morning: a screen that started importing something
+it only needs in one place, a dependency that was upgraded.
+
+The second is an absolute budget per bundle, written by hand in `build/bundle-weight.js`: what
+that bundle may weigh, whatever it weighed yesterday. It is the only thing that notices a bundle
+which grew a tenth at a time, every time inside the allowance of the pass before, and which is
+twice what it was after a year. A bundle past its budget fails the verification too, and the
+failure names the line to change, because a budget is a decision and not a measurement. The
+number is deliberately not the weight of the day: a budget set at the weight of the day fails on
+the next honest feature, and a table everybody edits without reading is not a budget. The numbers
+here carry room to grow into, and it is a change of direction they stop rather than a change of
+size. And the table has to be complete for any of it to mean anything: a bundle the build
+writes and nobody has written a line for fails the verification by name, with the kilobytes it
+already weighs. It is the one refusal here whose fix is not a number: what to allow it is a
+judgement, and the failure says which file to open rather than what to write in it.
+
+The names are compared with the content hash taken out, so `assets/gameData-Ws8p2oa0.js` is
+recorded as `assets/gameData.js`: the hash changes with the content, and without that every build
+would look like twenty new files and twenty vanished ones.
+
+`npm run weights:record` writes the current build down as the pass to compare against. It is a
+separate command on purpose: a threshold that moves itself is not a threshold. It records weights
+and never budgets, which only ever move by hand.
+
+The recorded pass is compared with a build of the same sources, which the Node version in
+`.nvmrc` turns into the same bytes wherever it runs, so the gate means the same thing on a
+laptop and on the CI runner.
+
+## What arrives from outside
+
+Exactly one kind of thing does: a file a reader picks from their own device. Everything else in
+this application is written here - the questions, the lessons, the references, the photographs - and
+there is no server, no upload and no address of ours that accepts anything. A progress backup can
+be loaded in three places (`SettingsModal.jsx`, the welcome card, and the teacher space), and all
+three go through the same guard in `src/lib/progress-file.js`.
+
+The file is weighed and typed before a single byte of it is read: two megabytes at most, which is
+twice what the heaviest record the reader allows can weigh, and it has to look like a JSON document
+either by name or by the type the browser declares - the picker's `accept` attribute is a hint, not
+a check. What comes back is then rebuilt field by field against the known shape of a record
+(`cleanProgress`), every value repaired to the type the rest of the app expects and every unknown
+field dropped, so a truncated or hand-edited file cannot reach the dashboard. Nothing is ever
+stored as a file, nothing is turned into a URL, and nothing is ever executed: what leaves a file is
+text, and what leaves the text is a record.
+
+Nothing a reader types is placed in the page as markup either. A name reaches the screen as a text
+node and is trimmed and capped to forty characters before it is kept, a field taken from a file is
+capped at the width of its column, and the application contains no `innerHTML`, no
+`dangerouslySetInnerHTML` and no `eval`. A link that leaves the app opens in its own window and
+carries nothing back with it. All of that is checked rather than remembered:
+`src/lib/upload-guard.test.js` holds the guard, the wording of its refusals in both languages, and
+the promise that no file is stored or executed, and the house rules fail on a raw HTML sink of any
+kind.
+
+One thing this application does not have is payments, and it should not look as though it does.
+There is no checkout, no payment data and no webhook: the two Stripe packages the starter kit
+brought along have been removed, because a manifest is a claim about what an application is. A
+payment provider's webhook cannot be verified from here at all, and pretending otherwise would be
+worse than saying so: a signature check needs a secret, a secret in a static site is public, and a
+check that anyone can forge is not a check. It would need a small server-side handler - one that
+holds the secret, verifies the signature over the raw body before it parses anything, and only then
+records what it was told - which is a piece of infrastructure of its own rather than a line in this
+repository.
+
+## Legal
+
+The application ships with a GDPR privacy notice (`/PrivacyPolicy`) and terms of use
+(`/TermsOfService`), both available from the Settings screen. Because no data leaves the
+device, the privacy notice describes a local-only processing model.
+
+Every photograph is listed with its author, its licence and the page it was taken from,
+on the photo credits screen (`/PhotoCredits`) that the Settings screen opens. The list is
+built from the same table the game reads, so a picture replaced there cannot leave an old
+credit behind. The credit section of the terms is written out by hand and a test keeps it
+in step with that table.
+
+Every explanation in the quiz carries a reference, and the bibliography (`/Bibliography`,
+beside the credits in the Settings screen) lists all of them: the works grouped by the
+institution that publishes them, each with the questions it documents and the page it was
+read on where the game has one. The institutions live in
+`src/components/game/publishers.js`, which the tests read as well, and the works and their
+questions are derived from the levels themselves, so a reference added to the quiz turns up
+on that page without anybody remembering to add it. A work whose page nobody verified is
+written out in full instead of linked, the same rule the reference under a question follows.
+It is not left as dead text either: each one carries a search of its publisher's own site,
+and the two are shown differently, because one is an address somebody opened and the other
+only opens a search. Encyclopaedia Britannica is the publisher that needs this, since its
+site answers a script with a refusal, and the shape of that search is the one Wikidata
+records for it rather than a guess. `npm run check:links` needs the network, so it is run by hand
+rather than by the verification: it asks the registry for that shape again, and follows every
+search the app offers, since a refusal is precisely what stops a link from being its own
+evidence.
+
+A verified link is a promise in two halves, and only one of them is visible from here: that the
+page answers, and that it is still the work. A site that answers a retired article with a
+landing page and a 200 keeps the first while breaking the second, and no build can tell, because
+the page is somebody else's. `npm run check:references` follows the twenty-two pages the verified
+references point at, reads the title each one answers with, and holds it against the two names
+the citation carries: the work's own, and the institution that publishes it. A page that answers
+under a title naming neither is the failure it is looking for, and a page that names its
+institution alone is reported as the weaker answer it is. The pages are downloaded rather than
+asked about with HEAD, since a title is not part of a status code, and it is the reason this
+check reads twenty-two pages where the credits check asks about sixty. Reading a title is a
+heuristic and the report says so: it is not a proof that the page is the work, since only a
+person can read a page, but it is the difference between a link that opens the work and a link
+that opens another page. What it cannot read it does not count as confirmed: the World Heritage
+Centre answers a script with a 403 on every one of its addresses, as Britannica does, so those
+fourteen references are printed as unconfirmed rather than passed as checked. Like the other two,
+it stays out of `npm run verify`: a gate that fails on a train is a gate somebody turns off.

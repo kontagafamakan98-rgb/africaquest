@@ -51,7 +51,7 @@ export default function PullToRefresh({ onRefresh, children }) {
             className="absolute top-0 left-0 right-0 flex justify-center z-10 pointer-events-none"
             style={{ top: Math.min(pullY - 44, 16) }}
           >
-            <div className="bg-violet-600 rounded-full w-9 h-9 flex items-center justify-center shadow-lg shadow-violet-300">
+            <div className="bg-amber-600 rounded-xl w-9 h-9 flex items-center justify-center shadow-lg shadow-amber-900/30">
               <motion.div animate={{ rotate: refreshing ? 360 : progress * 360 }} transition={refreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : { duration: 0 }}>
                 <RefreshCw className="w-4 h-4 text-white" />
               </motion.div>

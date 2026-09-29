@@ -2,10 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- The same mark drawn as PNG, for the browsers that ignore an SVG icon. -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Matches the app background, so the browser chrome and the splash screen
+         do not flash a different colour while the game loads. -->
+    <meta name="theme-color" content="#14100A" />
+    <meta
+      name="description"
+      content="Africa History Quest is an educational quiz game that helps young learners explore the history of Africa across twenty levels and three difficulty modes."
+    />
+    <!-- Installable on a phone or a desktop, and playable with no network. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Africa Quest" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="/manifest.json" />
-    <title>Base44 APP</title>
+    <title>Africa History Quest</title>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,59 @@
+# What has to be true before a change reaches main.
+#
+# One command decides: `npm run verify` runs the translation check, the photo
+# budget, the icon set, the tests, ESLint, a production build and the weight of
+# that build, in that order, and stops at the first failure. It is the same
+# command a developer runs on their machine, so a green run here means what a
+# green run there means.
+#
+# Two things the runner does not bring on its own are installed first: the Node
+# version named in .nvmrc, and Pillow, the image library the photograph check
+# reads JPEG pixels through. Without Pillow the photo step fails, and the
+# failure looks like a broken gallery rather than a missing dependency.
+name: Verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A run whose branch has moved on is not worth finishing.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: npm run verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is verified on
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the image library the photograph check reads with
+        run: python -m pip install --disable-pip-version-check Pillow
+
+      - name: Install the dependencies from the lockfile
+        run: npm ci
+
+      # The whole verification, including the production build the service
+      # worker is generated from. Nothing is published: a green run only says
+      # the change is ready to be looked at.
+      - name: Verify
+        run: npm run verify

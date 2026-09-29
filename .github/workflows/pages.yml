@@ -1,0 +1,97 @@
+# Publishes the built application to GitHub Pages, on every push to main.
+#
+# Two things make this more than a copy of dist/. The first is the address: a
+# project site is served from https://<owner>.github.io/<repository>/, so the
+# build has to be told that path. actions/configure-pages answers with it for
+# whatever the repository is configured as, and answers the root for a user site
+# or a custom domain, so nothing here has to know which of the three it is.
+#
+# The second is the service worker. The build writes it for that same path, the
+# application registers it there, and its scope is that directory: an installed
+# copy then runs offline from the address it was installed from, and one site's
+# worker never claims another's pages.
+#
+# Nothing else is done to dist/ here. The build already produces a complete
+# site, including the 404.html that answers a deep link with the application, so
+# what this workflow publishes is exactly what `npm run build` produces.
+#
+# What is published is what is on main. The gate that decides what belongs there
+# is the Verify workflow, which runs on the same pushes and on every pull
+# request; this one builds the result.
+#
+# One setting has to be turned on once, by hand: in the repository settings,
+# under Pages, set the source to "GitHub Actions". Until then the deployment
+# step reports that Pages is not enabled.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Deployments queue behind each other instead of running side by side, and one
+# already in flight is allowed to finish: cutting it off would leave the site
+# between two versions.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build for the address the site is served from
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is verified on
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Reports base_path: "/<repository>" for a project site and "" when the
+      # site is served from the root of a domain. Both cases end with a slash
+      # once the separator below is added.
+      - name: Ask GitHub Pages where the site will live
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Install the dependencies from the lockfile
+        run: npm ci
+
+      - name: Build for that address
+        run: npm run build -- --base="${{ steps.pages.outputs.base_path }}/"
+
+      # dist holds the service worker the build wrote, so it travels with the
+      # site: an installed copy runs offline from the address it was installed
+      # from.
+      - name: Hand the built site to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # The deployment itself is the only step that needs to write anywhere.
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Publish the built site
+        id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,44 +1,53 @@
-import { motion } from "framer-motion";
-import { Lock, ChevronRight } from "lucide-react";
+import { Lock, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LEVEL_IMAGES } from "./gameData";
+// The brief of the game, not the game: a card draws a title and a picture, and
+// the entry file must not carry two hundred questions to do it.
+import { LEVEL_IMAGES } from "./level-summary";
 import StarDisplay from "./StarDisplay";
+import LevelPicture from "./LevelPicture";
+import { useT } from "../i18n";
 
 export default function LevelCard({ level, isUnlocked, isCompleted, levelScores, onClick, index }) {
+  const t = useT();
   const img = LEVEL_IMAGES[level.id];
+  const Icon = level.icon;
   const bestStars = levelScores
     ? Math.max(...Object.values(levelScores).map((d) => d.stars || 0))
     : 0;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07, type: "spring", stiffness: 200, damping: 20 }}
+    <button
+      type="button"
       onClick={() => isUnlocked && onClick(level)}
+      aria-disabled={!isUnlocked}
       className={cn(
-        "relative rounded-3xl overflow-hidden",
+        "group relative block w-full rounded-2xl overflow-hidden text-left ring-1 ring-white/10",
         isUnlocked
-          ? "cursor-pointer active:scale-[0.97] transition-transform duration-150 shadow-lg hover:shadow-xl"
-          : "opacity-50 cursor-not-allowed shadow-sm"
+          ? "cursor-pointer active:scale-[0.99] transition-all duration-200 shadow-lg shadow-black/30 hover:shadow-xl hover:shadow-black/50 hover:-translate-y-0.5"
+          : "opacity-70 saturate-50 cursor-not-allowed shadow-sm"
       )}
-      style={{ height: 140 }}
+      style={{ height: 150 }}
     >
-      {/* Background image */}
-      {img ? (
-        <img src={img} alt={level.title} className="absolute inset-0 w-full h-full object-cover" />
-      ) : (
-        <div className={`absolute inset-0 bg-gradient-to-br ${level.color}`} />
+      {/* Coloured fallback is always present, the photo renders on top of it */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${level.color}`} />
+      {img && (
+        <LevelPicture
+          src={img}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+        />
       )}
 
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
+      {/* Overlay: darkest on the left where the text sits, so the photo can breathe */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/92 via-black/60 to-black/25" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
 
       {/* Locked overlay */}
       {!isUnlocked && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
-            <Lock className="w-6 h-6 text-white/80" />
+          <div className="bg-white/15 rounded-2xl p-3 ring-1 ring-white/25">
+            <Lock className="w-6 h-6 text-white" aria-hidden="true" />
           </div>
         </div>
       )}
@@ -47,19 +56,19 @@ export default function LevelCard({ level, isUnlocked, isCompleted, levelScores,
       <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${level.color}`} />
 
       {/* Content */}
-      <div className="absolute inset-0 px-5 py-4 flex items-center justify-between">
+      <div className="relative h-full px-5 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Icon badge */}
-          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${level.color} flex items-center justify-center shadow-lg shrink-0 border-2 border-white/30`}>
-            <span className="text-2xl">{level.icon}</span>
+          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${level.color} flex items-center justify-center shadow-lg ring-1 ring-white/30 shrink-0`}>
+            <Icon className="w-7 h-7 text-white" aria-hidden="true" />
           </div>
 
           <div>
-            <p className="text-white/50 text-[10px] uppercase tracking-[0.15em] font-bold mb-0.5">{level.region}</p>
+            <p className="text-amber-200/90 text-[10px] uppercase tracking-[0.18em] font-bold mb-1">{level.region}</p>
             <h3 className="text-white font-extrabold text-lg leading-tight drop-shadow">{level.title}</h3>
-            <p className="text-white/60 text-xs mt-0.5">{level.subtitle}</p>
+            <p className="text-white/85 text-xs mt-0.5">{level.subtitle}</p>
             {bestStars > 0 && (
-              <div className="mt-1.5">
+              <div className="mt-2">
                 <StarDisplay count={bestStars} size="sm" />
               </div>
             )}
@@ -70,12 +79,12 @@ export default function LevelCard({ level, isUnlocked, isCompleted, levelScores,
         {isUnlocked && (
           <div className="flex flex-col items-center gap-2 shrink-0">
             {isCompleted ? (
-              <div className="w-9 h-9 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center">
-                <span className="text-lg">✓</span>
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/30 ring-1 ring-emerald-300/70 flex items-center justify-center">
+                <Check className="w-5 h-5 text-emerald-100" aria-hidden="true" />
               </div>
             ) : (
-              <div className="w-9 h-9 rounded-full bg-white/10 border-2 border-white/30 flex items-center justify-center">
-                <ChevronRight className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-xl bg-white/10 ring-1 ring-white/30 flex items-center justify-center">
+                <ChevronRight className="w-5 h-5 text-white" aria-hidden="true" />
               </div>
             )}
           </div>
@@ -84,10 +93,15 @@ export default function LevelCard({ level, isUnlocked, isCompleted, levelScores,
 
       {/* Level number badge */}
       <div className="absolute top-3 right-3">
-        <span className="text-[10px] font-black text-white/40 bg-black/20 rounded-full px-2 py-0.5">
-          #{level.id}
+        <span className="text-[10px] font-black text-white bg-black/60 ring-1 ring-white/15 rounded-md px-2 py-0.5 tabular-nums">
+          {String(index + 1).padStart(2, "0")}
         </span>
       </div>
-    </motion.div>
+
+      {/* Status for screen readers */}
+      <span className="sr-only">
+        {!isUnlocked ? t.lockedLevel : isCompleted ? t.levelComplete : t.openLevel}
+      </span>
+    </button>
   );
 }
