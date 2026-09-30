@@ -7,11 +7,11 @@ import { LEVELS_FR } from "./content-fr.js";
 import { auditTranslations, extractLevelStories } from "../../lib/translation-audit.js";
 
 const OPTION_COUNT = 4;
-// A level is one lesson and one quiz on one period. The levels written first
-// hold thirteen questions, the ones added to complete the timeline hold eight:
-// what matters is that every period is taught, not that no quiz is shorter.
-const MIN_QUESTIONS_PER_LEVEL = 8;
-const MAX_QUESTIONS_PER_LEVEL = 13;
+// A level is one lesson and one quiz on one period. Every level now carries at
+// least ten questions, and the fuller ones fifteen: what matters is that every
+// period is taught, and that every lesson is full enough to study from.
+const MIN_QUESTIONS_PER_LEVEL = 10;
+const MAX_QUESTIONS_PER_LEVEL = 15;
 const LEVEL_COUNT = 20;
 // The periods of African history, in the order they happened.
 const ERAS = ["origins", "ancient", "medieval", "earlyModern", "modern", "contemporary"];

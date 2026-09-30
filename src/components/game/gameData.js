@@ -152,6 +152,20 @@ export const LEVELS = [
         correct: 2,
         fact: "Cleopatra VII ruled until 30 BC; after her death Egypt became a province of the Roman Empire, ending nearly 3,000 years of native rule!",
         source: { label: "Encyclopaedia Britannica, \"Cleopatra\"" },
+      },
+      {
+        question: "Which temple in Nubia was moved block by block in the 1960s to save it from Lake Nasser?",
+        options: ["Abu Simbel", "Karnak", "The Sphinx", "The pyramid of Menkaure"],
+        correct: 0,
+        fact: "The temples of Abu Simbel were cut apart and rebuilt higher up in a UNESCO campaign, the largest archaeological rescue ever mounted.",
+        source: { label: "UNESCO World Heritage List, Nubian Monuments from Abu Simbel to Philae", url: "https://whc.unesco.org/en/list/88/" },
+      },
+      {
+        question: "Which woman ruled Egypt as pharaoh and sent a trading expedition to the land of Punt?",
+        options: ["Hatshepsut", "Nefertiti", "Cleopatra VII", "Nefertari"],
+        correct: 0,
+        fact: "Hatshepsut ruled in the 15th century BC, was shown with a pharaoh's beard, and recorded her Punt expedition on the walls of her temple.",
+        source: { label: "Encyclopaedia Britannica, \"Hatshepsut\"" },
       }
     ]
   },
@@ -256,6 +270,20 @@ export const LEVELS = [
         correct: 1,
         fact: "The Italian treasure hunter Giuseppe Ferlini demolished the tops of many Meroë pyramids looking for gold; most had already been looted in ancient times!",
         source: { label: "Encyclopaedia Britannica, \"Meroe\"" },
+      },
+      {
+        question: "Which Kushite king of the 25th Dynasty fought the Assyrians for control of Egypt?",
+        options: ["Taharqa", "Piye", "Alara", "Ezana"],
+        correct: 0,
+        fact: "Taharqa ruled both Kush and Egypt and met the Assyrian armies in battle, a war recorded in Egyptian and Assyrian texts alike.",
+        source: { label: "Encyclopaedia Britannica, \"Taharqa\"" },
+      },
+      {
+        question: "Which Christian Nubian kingdom, with its capital at Soba, followed Kush in the Nile Valley?",
+        options: ["Alodia", "Axum", "Kanem", "Kongo"],
+        correct: 0,
+        fact: "After Kush, three Christian kingdoms arose in Nubia, Nobatia, Makuria and Alodia, and their churches and frescoes are among Africa's oldest Christian art.",
+        source: { label: "Encyclopaedia Britannica, \"Nubia\"" },
       }
     ]
   },
@@ -359,6 +387,20 @@ export const LEVELS = [
         options: ["Soapstone", "Marble", "Granite", "Sandstone"],
         correct: 0,
         fact: "Eight soapstone birds were found at Great Zimbabwe, and they are among the most celebrated works of art from pre-colonial southern Africa!",
+        source: { label: "UNESCO World Heritage List, Great Zimbabwe National Monument", url: "https://whc.unesco.org/en/list/364/" },
+      },
+      {
+        question: "Which kingdom on the Limpopo, dated to about 1075 to 1220, came before Great Zimbabwe?",
+        options: ["Mapungubwe", "Kilwa", "Djenne", "Sofala"],
+        correct: 0,
+        fact: "Mapungubwe traded ivory and gold with the coast and is seen as the first kingdom of the region that Great Zimbabwe would inherit from.",
+        source: { label: "UNESCO World Heritage List, Mapungubwe Cultural Landscape", url: "https://whc.unesco.org/en/list/1099/" },
+      },
+      {
+        question: "On what did the kings of Great Zimbabwe build their main residence?",
+        options: ["A rocky hill, the Hill Complex", "A river island", "An artificial lake", "A sand dune"],
+        correct: 0,
+        fact: "The Hill Complex was the royal and ritual centre, and the Great Enclosure below it held the king's wives and the community's most important ceremonies.",
         source: { label: "UNESCO World Heritage List, Great Zimbabwe National Monument", url: "https://whc.unesco.org/en/list/364/" },
       }
     ]
@@ -464,6 +506,20 @@ export const LEVELS = [
         correct: 0,
         fact: "Salt from the mines of Taghaza travelled south by camel caravan and was often traded weight for weight with gold!",
         source: { label: "Encyclopaedia Britannica, \"Mali empire\"" },
+      },
+      {
+        question: "Which town was the capital of the Mali Empire, the seat of the mansa?",
+        options: ["Niani", "Timbuktu", "Gao", "Djenne"],
+        correct: 0,
+        fact: "Niani, on the upper Niger, was the political capital, while Timbuktu grew into the empire's great centre of trade and scholarship.",
+        source: { label: "Encyclopaedia Britannica, \"Mali empire\"" },
+      },
+      {
+        question: "What did Mansa Musa's spending do to the price of gold in Cairo?",
+        options: ["It lowered it for years", "It doubled it", "It changed nothing", "It made gold illegal"],
+        correct: 0,
+        fact: "Cairo's chroniclers complained that so much gold was given away in 1324 that its value fell and took more than a decade to recover.",
+        source: { label: "Encyclopaedia Britannica, \"Musa I of Mali\"" },
       }
     ]
   },
@@ -568,6 +624,20 @@ export const LEVELS = [
         correct: 0,
         fact: "The spread of Islam after the 7th century shifted trade networks across the Red Sea, and Axum's power declined as a result!",
         source: { label: "Encyclopaedia Britannica, \"Aksum\"" },
+      },
+      {
+        question: "Whose kingdom did Axum defeat in the 4th century to open the Nile trade route?",
+        options: ["Kush", "Rome", "Persia", "Kanem"],
+        correct: 0,
+        fact: "The Axumite army destroyed the kingdom of Kush at Meroe around 350, an event recorded on an inscription at Aksum.",
+        source: { label: "Encyclopaedia Britannica, \"Aksum\"" },
+      },
+      {
+        question: "From which script, used in southern Arabia, did the Ge'ez script of Axum develop?",
+        options: ["The South Arabian script", "Latin", "Coptic", "Greek"],
+        correct: 0,
+        fact: "Ge'ez grew out of the South Arabian writing of the traders who crossed the Red Sea, and it is still read in Ethiopian churches today.",
+        source: { label: "Encyclopaedia Britannica, \"Ge'ez language\"" },
       }
     ]
   },
@@ -671,6 +741,20 @@ export const LEVELS = [
         options: ["The Pashalik of Timbuktu", "The Kingdom of Ghana", "The Fatimid Caliphate", "The Kingdom of Kongo"],
         correct: 0,
         fact: "The Pashalik of Timbuktu was a Moroccan-run administration, though its control over the region faded over the following centuries!",
+        source: { label: "Encyclopaedia Britannica, \"Songhai empire\"" },
+      },
+      {
+        question: "Which Moroccan sultan sent the army that invaded Songhai in 1591?",
+        options: ["Ahmad al-Mansur", "Idris Alooma", "Selim II", "Mansa Musa"],
+        correct: 0,
+        fact: "Ahmad al-Mansur armed his troops with muskets, and what he wanted was the gold and salt routes of the Niger rather than the land itself.",
+        source: { label: "Encyclopaedia Britannica, \"Ahmad al-Mansur\"" },
+      },
+      {
+        question: "What did Morocco mainly want from its conquest of Songhai?",
+        options: ["Control of the gold and salt trade", "Land for settlers", "Fishing rights on the Niger", "Freed slaves for its army"],
+        correct: 0,
+        fact: "The Moroccan victory at Tondibi brought the empire down, but holding the trade routes across the desert proved far harder than winning them.",
         source: { label: "Encyclopaedia Britannica, \"Songhai empire\"" },
       }
     ]
@@ -776,6 +860,20 @@ export const LEVELS = [
         correct: 1,
         fact: "Britain split Zululand into thirteen chiefdoms after 1879 and finally annexed it in 1897, ending Zulu independence!",
         source: { label: "South African History Online, The Zulu Kingdom", url: "https://sahistory.org.za/article/zulu-kingdom-and-colony-natal" },
+      },
+      {
+        question: "Who was Shaka's father, the chief of the small Zulu clan before him?",
+        options: ["Senzangakhona", "Dingane", "Mpande", "Cetshwayo"],
+        correct: 0,
+        fact: "Shaka was the son of Senzangakhona, and it was from that single small clan that he built a kingdom that shook southern Africa.",
+        source: { label: "Encyclopaedia Britannica, \"Shaka\"" },
+      },
+      {
+        question: "Which battle in 1838 did the Boers win against the Zulu at the Ncome river?",
+        options: ["The Battle of Blood River", "The Battle of Ulundi", "The Battle of Isandlwana", "The Battle of Adwa"],
+        correct: 0,
+        fact: "At Blood River, a Boer laager held off a far larger Zulu force, and the defeat led Dingane to lose his throne to Mpande.",
+        source: { label: "Encyclopaedia Britannica, \"Battle of Blood River\"" },
       }
     ]
   },
@@ -880,6 +978,20 @@ export const LEVELS = [
         correct: 0,
         fact: "'Uhuru' means freedom in Swahili and became the central slogan of Kenya's independence movement!",
         source: { label: "Encyclopaedia Britannica, \"Jomo Kenyatta\"" },
+      },
+      {
+        question: "Which large country won independence in 1960 and became Africa's most populous nation?",
+        options: ["Nigeria", "Kenya", "Congo", "Senegal"],
+        correct: 0,
+        fact: "Nigeria became independent on 1 October 1960, with Nnamdi Azikiwe and Abubakar Tafawa Balewa among its first leaders.",
+        source: { label: "Encyclopaedia Britannica, \"Nnamdi Azikiwe\"" },
+      },
+      {
+        question: "Which organisation, founded in 1963, was the African Union's predecessor?",
+        options: ["The Organisation of African Unity", "The League of African States", "The Pan-African Congress", "The Union of West Africa"],
+        correct: 0,
+        fact: "The Organisation of African Unity was founded by thirty-two states in Addis Ababa, and it became the African Union in 2002.",
+        source: { label: "Encyclopaedia Britannica, \"Organization of African Unity\"" },
       }
     ]
   },
@@ -951,6 +1063,20 @@ export const LEVELS = [
         correct: 0,
         fact: "Iron furnaces were working in the Great Lakes region by about 2000 BC and in West Africa by 500 BC, and iron tools changed farming and warfare.",
         source: { label: "UNESCO, General History of Africa, volume I", url: "https://www.unesco.org/en/general-history-africa" },
+      },
+      {
+        question: "Which early human, whose name means 'handy man', is linked to the first stone tools?",
+        options: ["Homo habilis", "Homo erectus", "Australopithecus afarensis", "Homo neanderthalensis"],
+        correct: 0,
+        fact: "Homo habilis lived in East Africa between about 2.4 and 1.4 million years ago, and its name was given for the tools found near its bones.",
+        source: { label: "Encyclopaedia Britannica, \"Homo habilis\"" },
+      },
+      {
+        question: "Whose 3.2-million-year-old skeleton, found in Ethiopia in 1974, is known as Lucy?",
+        options: ["Australopithecus afarensis", "Homo sapiens", "Homo erectus", "Paranthropus"],
+        correct: 0,
+        fact: "Lucy belongs to Australopithecus afarensis, and her bones show a creature that walked upright long before our own species appeared.",
+        source: { label: "Encyclopaedia Britannica, \"Lucy\"" },
       }
     ]
   },
@@ -1020,6 +1146,20 @@ export const LEVELS = [
         correct: 0,
         fact: "Amazigh means free people, and Amazigh languages are spoken from the Siwa oasis in Egypt to the Atlas mountains and the Sahel.",
         source: { label: "Encyclopaedia Britannica, \"Berber\"" },
+      },
+      {
+        question: "What was the main language of Carthage and its trading colonies?",
+        options: ["Punic", "Latin", "Greek", "Coptic"],
+        correct: 0,
+        fact: "Punic was a Phoenician language, and it survived in North Africa for centuries after Rome destroyed the city.",
+        source: { label: "Encyclopaedia Britannica, \"Punic language\"" },
+      },
+      {
+        question: "Which queen of Carthage is remembered in Virgil's Aeneid as guiding the city's founding?",
+        options: ["Dido", "Cleopatra", "Zenobia", "Amanirenas"],
+        correct: 0,
+        fact: "Dido, also called Elissa, was said to have led the founding of Carthage, and her story became one of the best known of the ancient world.",
+        source: { label: "Encyclopaedia Britannica, \"Dido\"" },
       }
     ]
   },
@@ -1089,6 +1229,20 @@ export const LEVELS = [
         correct: 0,
         fact: "The San and the Khoikhoi speak non-Bantu languages, and their rock art and place names are part of the oldest heritage of the region.",
         source: { label: "Encyclopaedia Britannica, \"San\"" },
+      },
+      {
+        question: "Which language family do most languages of central and southern Africa belong to?",
+        options: ["Niger-Congo", "Afroasiatic", "Khoisan", "Indo-European"],
+        correct: 0,
+        fact: "The Bantu languages are one branch of the Niger-Congo family, and the expansion of their speakers spread them across half the continent.",
+        source: { label: "Encyclopaedia Britannica, \"Bantu peoples\"" },
+      },
+      {
+        question: "Which food crop, carried across the Indian Ocean, became a staple of Bantu farming?",
+        options: ["Bananas", "Olives", "Dates", "Grapes"],
+        correct: 0,
+        fact: "Bananas reached Africa from Southeast Asia through Madagascar and the East African coast, and they fed farming villages as they spread.",
+        source: { label: "UNESCO, General History of Africa, volume II", url: "https://www.unesco.org/en/general-history-africa" },
       }
     ]
   },
@@ -1158,6 +1312,20 @@ export const LEVELS = [
         correct: 0,
         fact: "The Oromo expansion followed the wars of the 16th century, and Oromo is today the most widely spoken first language of Ethiopia.",
         source: { label: "Encyclopaedia Britannica, \"Oromo\"" },
+      },
+      {
+        question: "Which emperor, reigning from 1855 to 1868, tried to reunite and modernise Ethiopia?",
+        options: ["Tewodros II", "Fasilides", "Menelik II", "Gelawdewos"],
+        correct: 0,
+        fact: "Tewodros II ended the era of princes and tried to build a national army, and he died at Magdala rather than surrender to a British expedition.",
+        source: { label: "Encyclopaedia Britannica, \"Tewodros II\"" },
+      },
+      {
+        question: "Which language, written in the Ge'ez script, is the working language of Ethiopia?",
+        options: ["Amharic", "Oromo", "Tigrinya", "Somali"],
+        correct: 0,
+        fact: "Amharic is written with the Ge'ez script, whose characters stand for syllables, and it is one of the most widely spoken languages of the Horn.",
+        source: { label: "Encyclopaedia Britannica, \"Amharic language\"" },
       }
     ]
   },
@@ -1226,6 +1394,20 @@ export const LEVELS = [
         options: ["Mali", "Songhay", "Kanem", "Benin"],
         correct: 0,
         fact: "After the short lived kingdom of Sosso, the Mali of Sundiata Keita took control of the gold and salt routes and built an empire of its own.",
+        source: { label: "UNESCO, General History of Africa, volume III", url: "https://www.unesco.org/en/general-history-africa" },
+      },
+      {
+        question: "In which centuries did the Ghana Empire reach the height of its power?",
+        options: ["The 9th to 11th centuries", "The 15th century", "The 3rd century BC", "The 18th century"],
+        correct: 0,
+        fact: "Arab writers of the 9th to 11th centuries describe a rich kingdom whose king taxed every load of gold and salt that crossed it.",
+        source: { label: "Encyclopaedia Britannica, \"Ghana, historical empire\"" },
+      },
+      {
+        question: "What did the king of Ghana tax as goods crossed the empire?",
+        options: ["Every load of gold and salt", "Only boats on the Niger", "Only foreign houses", "Nothing at all"],
+        correct: 0,
+        fact: "Gold came north from the forests and salt came south from the Sahara, and each load paid a duty at the frontier and again at the capital.",
         source: { label: "UNESCO, General History of Africa, volume III", url: "https://www.unesco.org/en/general-history-africa" },
       }
     ]
@@ -1296,6 +1478,20 @@ export const LEVELS = [
         correct: 0,
         fact: "Camels crossed the desert for the best part of two thousand years, and the Hausa cities grew rich on that traffic.",
         source: { label: "UNESCO, General History of Africa, volume III", url: "https://www.unesco.org/en/general-history-africa" },
+      },
+      {
+        question: "Which title did the rulers of Kanem-Bornu carry?",
+        options: ["Mai", "Mansa", "Negus", "Oba"],
+        correct: 0,
+        fact: "The kings of Kanem-Bornu were called mai, and their Sayfawa dynasty ruled the lands around Lake Chad for about a thousand years.",
+        source: { label: "Encyclopaedia Britannica, \"Kanem-Bornu\"" },
+      },
+      {
+        question: "In which century did the Sayfawa dynasty begin to rule Kanem?",
+        options: ["The 11th century", "The 5th century", "The 16th century", "The 19th century"],
+        correct: 0,
+        fact: "The Sayfawa kings of Kanem adopted Islam in the 11th century, and their dynasty lasted longer than almost any other in African history.",
+        source: { label: "Encyclopaedia Britannica, \"Kanem-Bornu\"" },
       }
     ]
   },
@@ -1365,6 +1561,20 @@ export const LEVELS = [
         correct: 0,
         fact: "Zanzibar became the hub of the clove trade and of the caravan routes into the interior, with its own diplomatic relations with Europe.",
         source: { label: "Encyclopaedia Britannica, \"Zanzibar\"" },
+      },
+      {
+        question: "What were the houses of the Swahili trading towns built from?",
+        options: ["Coral stone and lime", "Mud brick", "Timber", "Cut granite"],
+        correct: 0,
+        fact: "Coral rag and lime mortar gave the coastal towns their tall, cool houses, and many of them still stand as ruins along the coast.",
+        source: { label: "UNESCO World Heritage List, Ruins of Kilwa Kisiwani and Ruins of Songo Mnara", url: "https://whc.unesco.org/en/list/144/" },
+      },
+      {
+        question: "Which Portuguese fort, built after 1593, still stands on the island of Mombasa?",
+        options: ["Fort Jesus", "Elmina Castle", "Cape Coast Castle", "Fort Sao Sebastiao"],
+        correct: 0,
+        fact: "Fort Jesus guarded the East African coast for Portugal, then for Oman, and it is now a UNESCO World Heritage site.",
+        source: { label: "UNESCO World Heritage List, Fort Jesus, Mombasa", url: "https://whc.unesco.org/en/list/1295/" },
       }
     ]
   },
@@ -1434,6 +1644,20 @@ export const LEVELS = [
         correct: 0,
         fact: "The craft guilds of Benin lived in their own quarters of the city and passed their skills from father to son.",
         source: { label: "Encyclopaedia Britannica, \"Benin\"" },
+      },
+      {
+        question: "Which queen ruled Ndongo and Matamba in today's Angola and fought the Portuguese for decades?",
+        options: ["Njinga Mbandi", "Kimpa Vita", "Yaa Asantewaa", "Amina"],
+        correct: 0,
+        fact: "Njinga Mbandi negotiated with the Portuguese as an equal, then fought them for years, and she is remembered as a symbol of resistance.",
+        source: { label: "Encyclopaedia Britannica, \"Nzinga\"" },
+      },
+      {
+        question: "Which forest kingdom of today's Ghana is famous for its Golden Stool?",
+        options: ["Asante", "Kongo", "Ife", "Kanem"],
+        correct: 0,
+        fact: "The Golden Stool stands for the soul of the Asante nation, and the kingdom grew rich on gold and on the trade routes to the coast.",
+        source: { label: "Encyclopaedia Britannica, \"Asante empire\"" },
       }
     ]
   },
@@ -1503,6 +1727,20 @@ export const LEVELS = [
         correct: 0,
         fact: "Freetown was founded by Black Loyalists from Nova Scotia, joined later by Maroons and by Africans freed from slave ships.",
         source: { label: "UNESCO, General History of Africa, volume V", url: "https://www.unesco.org/en/general-history-africa" },
+      },
+      {
+        question: "Which castle on the coast of today's Ghana was the seat of the British slave trade there?",
+        options: ["Cape Coast Castle", "Goree", "Kilwa", "Lamu"],
+        correct: 0,
+        fact: "Cape Coast Castle held enslaved people in its dungeons before they were carried across the Atlantic, and it is a UNESCO World Heritage site.",
+        source: { label: "UNESCO World Heritage List, Forts and Castles, Volta, Greater Accra, Central and Western Regions", url: "https://whc.unesco.org/en/list/34/" },
+      },
+      {
+        question: "Which revolt of enslaved Africans aboard a ship in 1839 became a famous court case in the United States?",
+        options: ["The Amistad revolt", "The Zong massacre", "The Nat Turner rebellion", "The Haitian revolution"],
+        correct: 0,
+        fact: "Led by Joseph Cinque, the captives of the Amistad seized the ship, and a court ruled they had been illegally enslaved and set them free.",
+        source: { label: "Encyclopaedia Britannica, \"Amistad\"" },
       }
     ]
   },
@@ -1572,6 +1810,20 @@ export const LEVELS = [
         correct: 0,
         fact: "Negritude answered colonial contempt with poetry and essays, and it shaped the thinking of the leaders who took power after 1960.",
         source: { label: "Encyclopaedia Britannica, \"Négritude\"" },
+      },
+      {
+        question: "Which Ethiopian emperor died fighting the Italians at Metemma in 1889?",
+        options: ["Yohannes IV", "Tewodros II", "Menelik II", "Haile Selassie"],
+        correct: 0,
+        fact: "Yohannes IV defended Ethiopia's borders against Sudanese and Italian forces, and his death opened the way for Menelik II to take the throne.",
+        source: { label: "Encyclopaedia Britannica, \"Yohannes IV\"" },
+      },
+      {
+        question: "Which chartered company ruled much of south-central Africa for a British businessman after 1889?",
+        options: ["The British South Africa Company", "The Royal Niger Company", "The Imperial British East Africa Company", "The German East Africa Company"],
+        correct: 0,
+        fact: "Cecil Rhodes's British South Africa Company was given a royal charter to govern and exploit a vast territory in the name of one company.",
+        source: { label: "Encyclopaedia Britannica, \"British South Africa Company\"" },
       }
     ]
   },
@@ -1641,6 +1893,20 @@ export const LEVELS = [
         correct: 0,
         fact: "Mandela became president on 10 May 1994, and the Truth and Reconciliation Commission was set up two years later.",
         source: { label: "Encyclopaedia Britannica, \"Nelson Mandela\"" },
+      },
+      {
+        question: "Which law of 1950 registered every South African by race?",
+        options: ["The Population Registration Act", "The Group Areas Act", "The Bantu Education Act", "The Prohibition of Mixed Marriages Act"],
+        correct: 0,
+        fact: "The Population Registration Act fixed each person's race on paper, and every other apartheid law was built on that register.",
+        source: { label: "Encyclopaedia Britannica, \"apartheid\"" },
+      },
+      {
+        question: "Which 1955 gathering of the ANC and its allies adopted the Freedom Charter?",
+        options: ["The Congress of the People", "The Rivonia trial", "The Defiance Campaign", "The Treason trial"],
+        correct: 0,
+        fact: "The Freedom Charter declared that South Africa belongs to all who live in it, and it guided the movement for the next forty years.",
+        source: { label: "Encyclopaedia Britannica, \"Freedom Charter\"" },
       }
     ]
   },
@@ -1710,6 +1976,20 @@ export const LEVELS = [
         correct: 0,
         fact: "The median age on the continent is around nineteen, the youngest of any region, which puts schools and jobs at the centre of every debate.",
         source: { label: "UNESCO, General History of Africa, volume VIII", url: "https://www.unesco.org/en/general-history-africa" },
+      },
+      {
+        question: "In which city is the African Union headquartered?",
+        options: ["Addis Ababa", "Cairo", "Nairobi", "Abuja"],
+        correct: 0,
+        fact: "The African Union is headquartered in Addis Ababa, the same city where its predecessor, the Organisation of African Unity, was founded in 1963.",
+        source: { label: "African Union, member states", url: "https://au.int/en/member_states/countryprofiles2" },
+      },
+      {
+        question: "In which city does the secretariat of the African Continental Free Trade Area sit?",
+        options: ["Accra", "Addis Ababa", "Cairo", "Abuja"],
+        correct: 0,
+        fact: "The secretariat of the free trade area is in Accra, and its job is to run the single market the continent agreed to build.",
+        source: { label: "African Union, African Continental Free Trade Area", url: "https://au.int/en/afcfta" },
       }
     ]
   }

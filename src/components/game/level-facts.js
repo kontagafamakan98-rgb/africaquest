@@ -26,7 +26,7 @@ export const LEVEL_FACTS = [
     color: "from-amber-400 to-yellow-500",
     icon: "Landmark",
     image: "/photos/level-1-1.jpg",
-    questionCount: 13,
+    questionCount: 15,
     fr: { title: "Égypte antique", subtitle: "Terre des pharaons", region: "Afrique du Nord" },
   },
   {
@@ -40,7 +40,7 @@ export const LEVEL_FACTS = [
     color: "from-amber-600 to-orange-800",
     icon: "Crown",
     image: "/photos/level-2-1.jpg",
-    questionCount: 13,
+    questionCount: 15,
     fr: { title: "Royaume de Kouch", subtitle: "L'empire doré de Nubie", region: "Afrique du Nord-Est" },
   },
   {
@@ -54,7 +54,7 @@ export const LEVEL_FACTS = [
     color: "from-emerald-400 to-green-600",
     icon: "Castle",
     image: "/photos/level-3-1.jpg",
-    questionCount: 13,
+    questionCount: 15,
     fr: { title: "Grand Zimbabwe", subtitle: "La cité de pierre", region: "Afrique australe" },
   },
   {
@@ -68,7 +68,7 @@ export const LEVEL_FACTS = [
     color: "from-yellow-500 to-orange-500",
     icon: "Coins",
     image: "/photos/level-4-1.jpg",
-    questionCount: 13,
+    questionCount: 15,
     fr: { title: "Empire du Mali", subtitle: "L'âge d'or de Mansa Moussa", region: "Afrique de l'Ouest" },
   },
   {
@@ -82,7 +82,7 @@ export const LEVEL_FACTS = [
     color: "from-red-500 to-orange-600",
     icon: "Church",
     image: "/photos/level-5-1.jpg",
-    questionCount: 13,
+    questionCount: 15,
     fr: { title: "Royaume d'Axoum", subtitle: "La puissance antique d'Éthiopie", region: "Afrique de l'Est" },
   },
   {
@@ -96,7 +96,7 @@ export const LEVEL_FACTS = [
     color: "from-teal-400 to-cyan-600",
     icon: "Swords",
     image: "/photos/level-6-1.jpg",
-    questionCount: 13,
+    questionCount: 15,
     fr: { title: "Empire songhaï", subtitle: "Le plus grand empire d'Afrique", region: "Afrique de l'Ouest" },
   },
   {
@@ -110,7 +110,7 @@ export const LEVEL_FACTS = [
     color: "from-orange-400 to-red-500",
     icon: "Shield",
     image: "/photos/level-7-1.jpg",
-    questionCount: 13,
+    questionCount: 15,
     fr: { title: "Royaume zoulou", subtitle: "Les guerriers du Sud", region: "Afrique australe" },
   },
   {
@@ -124,7 +124,7 @@ export const LEVEL_FACTS = [
     color: "from-green-500 to-emerald-600",
     icon: "Flag",
     image: "/photos/level-8-1.jpg",
-    questionCount: 13,
+    questionCount: 15,
     fr: { title: "Indépendances africaines", subtitle: "La liberté sur tout le continent", region: "Toute l'Afrique" },
   },
   {
@@ -138,7 +138,7 @@ export const LEVEL_FACTS = [
     color: "from-stone-500 to-amber-800",
     icon: "Footprints",
     image: "/photos/level-9-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "Les origines de l'humanité", subtitle: "L'Afrique, berceau de l'humanité", region: "Toute l'Afrique" },
   },
   {
@@ -152,7 +152,7 @@ export const LEVEL_FACTS = [
     color: "from-sky-500 to-blue-700",
     icon: "Anchor",
     image: "/photos/level-10-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "Carthage et l'Afrique du Nord antique", subtitle: "La rivale de Rome", region: "Afrique du Nord" },
   },
   {
@@ -166,7 +166,7 @@ export const LEVEL_FACTS = [
     color: "from-orange-700 to-red-800",
     icon: "Hammer",
     image: "/photos/level-11-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "L'âge du fer", subtitle: "Terres cuites nok et expansion bantoue", region: "Afrique centrale et australe" },
   },
   {
@@ -180,7 +180,7 @@ export const LEVEL_FACTS = [
     color: "from-yellow-600 to-red-700",
     icon: "Mountain",
     image: "/photos/level-12-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "L'Éthiopie médiévale", subtitle: "Lalibela et la dynastie salomonide", region: "Corne de l'Afrique" },
   },
   {
@@ -194,7 +194,7 @@ export const LEVEL_FACTS = [
     color: "from-yellow-400 to-amber-600",
     icon: "Gem",
     image: "/photos/level-13-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "L'empire du Ghana", subtitle: "Wagadu, pays de l'or", region: "Afrique de l'Ouest" },
   },
   {
@@ -208,7 +208,7 @@ export const LEVEL_FACTS = [
     color: "from-lime-600 to-emerald-800",
     icon: "Scroll",
     image: "/photos/level-14-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "Kanem-Bornou et les cités haoussa", subtitle: "Cavaliers, savants et remparts", region: "Sahel central" },
   },
   {
@@ -222,7 +222,7 @@ export const LEVEL_FACTS = [
     color: "from-cyan-500 to-teal-700",
     icon: "Ship",
     image: "/photos/level-15-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "La côte swahili", subtitle: "Kilwa, Zanzibar et le commerce de mousson", region: "Côte est-africaine" },
   },
   {
@@ -236,7 +236,7 @@ export const LEVEL_FACTS = [
     color: "from-green-600 to-emerald-800",
     icon: "Building2",
     image: "/photos/level-16-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "Les royaumes de la forêt", subtitle: "Kongo, Bénin, Ifé et Oyo", region: "Afrique centrale et de l'Ouest" },
   },
   {
@@ -250,7 +250,7 @@ export const LEVEL_FACTS = [
     color: "from-slate-500 to-slate-800",
     icon: "Globe",
     image: "/photos/level-17-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "La traite atlantique", subtitle: "Exil, résistance et abolition", region: "Afrique atlantique" },
   },
   {
@@ -264,7 +264,7 @@ export const LEVEL_FACTS = [
     color: "from-rose-600 to-red-900",
     icon: "Map",
     image: "/photos/level-18-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "La conquête coloniale", subtitle: "Résistances, Adoua et panafricanisme", region: "Sur tout le continent" },
   },
   {
@@ -278,7 +278,7 @@ export const LEVEL_FACTS = [
     color: "from-amber-700 to-stone-800",
     icon: "Scale",
     image: "/photos/level-19-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "L'apartheid", subtitle: "La longue marche vers la liberté en Afrique du Sud", region: "Afrique australe" },
   },
   {
@@ -292,7 +292,7 @@ export const LEVEL_FACTS = [
     color: "from-teal-500 to-green-700",
     icon: "Rocket",
     image: "/photos/level-20-1.jpg",
-    questionCount: 8,
+    questionCount: 10,
     fr: { title: "L'Afrique d'aujourd'hui", subtitle: "Union, croissance et nouveaux défis", region: "Sur tout le continent" },
   },
 ];

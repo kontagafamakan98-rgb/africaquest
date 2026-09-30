@@ -89,6 +89,18 @@ export const LEVELS_FR = {
         fact: "Cléopâtre VII a régné jusqu'en 30 av. J.-C. ; après sa mort, l'Égypte est devenue une province romaine, mettant fin à près de 3 000 ans de pouvoir local !",
         source: "Encyclopaedia Britannica, notice « Cleopatra »",
       },
+      {
+        question: "Quel temple de Nubie a été déplacé bloc par bloc dans les années 1960 pour le sauver du lac Nasser ?",
+        options: ["Abou Simbel", "Karnak", "Le Sphinx", "La pyramide de Mykérinos"],
+        fact: "Les temples d'Abou Simbel ont été découpés et remontés plus haut lors d'une campagne de l'UNESCO, le plus grand sauvetage archéologique jamais entrepris.",
+        source: "Liste du patrimoine mondial de l'UNESCO, Monuments de Nubie d'Abou Simbel à Philae",
+      },
+      {
+        question: "Quelle femme a régné sur l'Égypte comme pharaon et envoyé une expédition commerciale au pays de Pount ?",
+        options: ["Hatchepsout", "Néfertiti", "Cléopâtre VII", "Néfertari"],
+        fact: "Hatchepsout a régné au XVe siècle av. J.-C., était représentée avec la barbe du pharaon et a fait graver son expédition de Pount sur les murs de son temple.",
+        source: "Encyclopaedia Britannica, notice « Hatshepsut »",
+      },
     ],
   },
 
@@ -175,6 +187,18 @@ export const LEVELS_FR = {
         fact: "Le chasseur de trésors italien Giuseppe Ferlini a fait démolir le sommet de nombreuses pyramides de Méroé pour trouver de l'or, alors que la plupart avaient déjà été pillées dans l'Antiquité !",
         source: "Encyclopaedia Britannica, notice « Meroe »",
       },
+      {
+        question: "Quel roi kouchite de la 25e dynastie a combattu les Assyriens pour le contrôle de l'Égypte ?",
+        options: ["Taharqa", "Piye", "Alara", "Ézana"],
+        fact: "Taharqa régnait à la fois sur Kouch et sur l'Égypte et a affronté les armées assyriennes, une guerre décrite par les textes égyptiens et assyriens.",
+        source: "Encyclopaedia Britannica, notice « Taharqa »",
+      },
+      {
+        question: "Quel royaume chrétien de Nubie, avec sa capitale à Soba, a succédé à Kouch dans la vallée du Nil ?",
+        options: ["Alodia", "Axoum", "Kanem", "Kongo"],
+        fact: "Après Kouch, trois royaumes chrétiens nubiens sont nés, Nobatie, Makouria et Alodia, et leurs églises et leurs fresques comptent parmi les plus anciens arts chrétiens d'Afrique.",
+        source: "Encyclopaedia Britannica, notice « Nubia »",
+      },
     ],
   },
 
@@ -259,6 +283,18 @@ export const LEVELS_FR = {
         question: "Dans quelle pierre les sculptures de l'oiseau du Zimbabwe ont-elles été taillées ?",
         options: ["La stéatite", "Le marbre", "Le granit", "Le grès"],
         fact: "Huit oiseaux de stéatite ont été retrouvés au Grand Zimbabwe, ils comptent parmi les œuvres d'art les plus célèbres de l'Afrique australe précoloniale !",
+        source: "Liste du patrimoine mondial de l'UNESCO, Monument national du Grand Zimbabwe",
+      },
+      {
+        question: "Quel royaume du Limpopo, daté d'environ 1075 à 1220, a précédé le Grand Zimbabwe ?",
+        options: ["Mapungubwe", "Kilwa", "Djenné", "Sofala"],
+        fact: "Mapungubwe commerçait l'ivoire et l'or avec la côte et est considéré comme le premier royaume de la région dont le Grand Zimbabwe a hérité.",
+        source: "Liste du patrimoine mondial de l'UNESCO, Paysage culturel de Mapungubwe",
+      },
+      {
+        question: "Sur quoi les rois du Grand Zimbabwe ont-ils bâti leur résidence principale ?",
+        options: ["Le complexe de la colline", "Une île fluviale", "Un lac artificiel", "Une dune de sable"],
+        fact: "Le complexe de la colline était le centre royal et rituel, et le Grand Enclos, en contrebas, abritait les épouses du roi et les cérémonies les plus importantes.",
         source: "Liste du patrimoine mondial de l'UNESCO, Monument national du Grand Zimbabwe",
       },
     ],
@@ -347,6 +383,18 @@ export const LEVELS_FR = {
         fact: "Le sel des mines de Taghaza descendait vers le sud par caravanes de chameaux et s'échangeait souvent poids pour poids contre de l'or !",
         source: "Encyclopaedia Britannica, notice « Mali empire »",
       },
+      {
+        question: "Quelle ville était la capitale de l'empire du Mali, le siège du mansa ?",
+        options: ["Niani", "Tombouctou", "Gao", "Djenné"],
+        fact: "Niani, sur le haut Niger, était la capitale politique, tandis que Tombouctou est devenue le grand centre du commerce et du savoir de l'empire.",
+        source: "Encyclopaedia Britannica, notice « Mali empire »",
+      },
+      {
+        question: "Quel effet les dépenses de Mansa Moussa ont-elles eu sur le prix de l'or au Caire ?",
+        options: ["Il l'a fait baisser pendant des années", "Il l'a doublé", "Il n'a rien changé", "Il a rendu l'or illégal"],
+        fact: "Les chroniqueurs du Caire se plaignaient qu'en 1324 tant d'or avait été distribué que sa valeur avait chuté et qu'il fallut plus de dix ans pour s'en remettre.",
+        source: "Encyclopaedia Britannica, notice « Musa I of Mali »",
+      },
     ],
   },
 
@@ -433,6 +481,18 @@ export const LEVELS_FR = {
         fact: "L'expansion de l'islam après le VIIe siècle a déplacé les réseaux commerciaux de la mer Rouge, et la puissance d'Axoum s'en est trouvée affaiblie !",
         source: "Encyclopaedia Britannica, notice « Aksum »",
       },
+      {
+        question: "Quel royaume Aksoum a-t-il vaincu au IVe siècle pour ouvrir la route commerciale du Nil ?",
+        options: ["Kouch", "Rome", "La Perse", "Kanem"],
+        fact: "L'armée axoumite a détruit le royaume de Kouch à Méroé vers 350, un événement gravé dans une inscription d'Aksoum.",
+        source: "Encyclopaedia Britannica, notice « Aksum »",
+      },
+      {
+        question: "De quelle écriture, utilisée en Arabie du Sud, l'écriture guèze d'Aksoum est-elle issue ?",
+        options: ["L'écriture sud-arabique", "Le latin", "Le copte", "Le grec"],
+        fact: "Le guèze est né de l'écriture sud-arabique des marchands qui traversaient la mer Rouge, et il se lit encore aujourd'hui dans les églises éthiopiennes.",
+        source: "Encyclopaedia Britannica, notice « Ge'ez language »",
+      },
     ],
   },
 
@@ -517,6 +577,18 @@ export const LEVELS_FR = {
         question: "Après l'invasion de 1591, sous quelle administration les forces marocaines gouvernaient-elles Tombouctou et Gao ?",
         options: ["Le pachalik de Tombouctou", "Le royaume du Ghana", "Le califat fatimide", "Le royaume du Kongo"],
         fact: "Le pachalik de Tombouctou était une administration dirigée par le Maroc, dont le contrôle sur la région s'est ensuite effacé au fil des siècles !",
+        source: "Encyclopaedia Britannica, notice « Songhai empire »",
+      },
+      {
+        question: "Quel sultan marocain a envoyé l'armée qui a envahi le Songhaï en 1591 ?",
+        options: ["Ahmed al-Mansour", "Idriss Alooma", "Sélim II", "Mansa Moussa"],
+        fact: "Ahmed al-Mansour a équipé ses troupes de mousquets, et ce qu'il voulait, c'était les routes de l'or et du sel du Niger plutôt que la terre elle-même.",
+        source: "Encyclopaedia Britannica, notice « Ahmad al-Mansur »",
+      },
+      {
+        question: "Que cherchait surtout le Maroc dans sa conquête du Songhaï ?",
+        options: ["Le contrôle du commerce de l'or et du sel", "Des terres pour s'installer", "Des droits de pêche sur le Niger", "Des esclaves affranchis pour son armée"],
+        fact: "La victoire marocaine de Tondibi a fait tomber l'empire, mais tenir les routes caravanières à travers le désert s'est révélé bien plus difficile que de les conquérir.",
         source: "Encyclopaedia Britannica, notice « Songhai empire »",
       },
     ],
@@ -605,6 +677,18 @@ export const LEVELS_FR = {
         fact: "La Grande-Bretagne a divisé le Zoulouland en treize chefferies après 1879 et l'a finalement annexé en 1897, mettant fin à l'indépendance zouloue !",
         source: "South African History Online, The Zulu Kingdom",
       },
+      {
+        question: "Qui était le père de Chaka, chef du petit clan zoulou avant lui ?",
+        options: ["Senzangakhona", "Dingane", "Mpande", "Cetshwayo"],
+        fact: "Chaka était le fils de Senzangakhona, et c'est de ce seul petit clan qu'il a bâti un royaume qui a ébranlé l'Afrique australe.",
+        source: "Encyclopaedia Britannica, notice « Shaka »",
+      },
+      {
+        question: "Quelle bataille de 1838 les Boers ont-ils remportée contre les Zoulous à la rivière Ncome ?",
+        options: ["La bataille de Blood River", "La bataille d'Ulundi", "La bataille d'Isandlwana", "La bataille d'Adoua"],
+        fact: "À Blood River, un laager boer a repoussé une force zouloue bien plus nombreuse, et cette défaite a coûté son trône à Dingane, au profit de Mpande.",
+        source: "Encyclopaedia Britannica, notice « Battle of Blood River »",
+      },
     ],
   },
 
@@ -690,9 +774,21 @@ export const LEVELS_FR = {
         options: ["Liberté", "Unité", "Lutte", "Victoire"],
         fact: "Uhuru signifie liberté en swahili et il est devenu le slogan central du mouvement d'indépendance du Kenya !",
         source: "Encyclopaedia Britannica, notice « Jomo Kenyatta »",
+      },      {
+        question: "Quel grand pays a obtenu son indépendance en 1960 et est devenu le pays le plus peuplé d'Afrique ?",
+        options: ["Le Nigeria", "Le Kenya", "Le Congo", "Le Sénégal"],
+        fact: "Le Nigeria est devenu indépendant le 1er octobre 1960, avec Nnamdi Azikiwe et Abubakar Tafawa Balewa parmi ses premiers dirigeants.",
+        source: "Encyclopaedia Britannica, notice « Nnamdi Azikiwe »",
+      },
+      {
+        question: "Quelle organisation, fondée en 1963, a précédé l'Union africaine ?",
+        options: ["L'Organisation de l'unité africaine", "La Ligue des États africains", "Le Congrès panafricain", "L'Union de l'Afrique de l'Ouest"],
+        fact: "L'Organisation de l'unité africaine a été fondée par trente-deux États à Addis-Abeba, et elle est devenue l'Union africaine en 2002.",
+        source: "Encyclopaedia Britannica, notice « Organization of African Unity »",
       },
     ],
   },
+
   9: {
     title: "Les origines de l'humanité",
     subtitle: "L'Afrique, berceau de l'humanité",
@@ -745,9 +841,21 @@ export const LEVELS_FR = {
         options: ["La fonte du fer", "L'impression de livres", "La machine à vapeur", "La navigation à la boussole"],
         fact: "Des fourneaux à fer fonctionnaient dans la région des Grands Lacs vers 2000 avant notre ère et en Afrique de l'Ouest vers 500 avant notre ère, et le fer a transformé l'agriculture comme la guerre.",
         source: "UNESCO, Histoire générale de l'Afrique, volume I",
+      },      {
+        question: "Quel premier humain, dont le nom signifie « homme habile », est associé aux premiers outils de pierre ?",
+        options: ["Homo habilis", "Homo erectus", "Australopithecus afarensis", "Homo neanderthalensis"],
+        fact: "Homo habilis a vécu en Afrique de l'Est entre environ 2,4 et 1,4 million d'années, et son nom lui a été donné pour les outils retrouvés près de ses ossements.",
+        source: "Encyclopaedia Britannica, notice « Homo habilis »",
+      },
+      {
+        question: "À qui appartient le squelette vieux de 3,2 millions d'années, découvert en Éthiopie en 1974 et surnommé Lucy ?",
+        options: ["Australopithecus afarensis", "Homo sapiens", "Homo erectus", "Paranthropus"],
+        fact: "Lucy appartient à Australopithecus afarensis, et ses os montrent une créature qui marchait debout bien avant l'apparition de notre espèce.",
+        source: "Encyclopaedia Britannica, notice « Lucy »",
       },
     ],
   },
+
   10: {
     title: "Carthage et l'Afrique du Nord antique",
     subtitle: "La rivale de Rome",
@@ -800,9 +908,21 @@ export const LEVELS_FR = {
         options: ["Les Amazighs, aussi appelés Berbères", "Les Swahili", "Les Bantous", "Les Oromos"],
         fact: "Amazigh signifie peuple libre, et les langues amazighes se parlent de l'oasis de Siwa en Égypte jusqu'à l'Atlas et au Sahel.",
         source: "Encyclopaedia Britannica, notice « Berber »",
+      },      {
+        question: "Quelle était la principale langue de Carthage et de ses colonies commerçantes ?",
+        options: ["Le punique", "Le latin", "Le grec", "Le copte"],
+        fact: "Le punique était une langue phénicienne, et il a survécu en Afrique du Nord des siècles après la destruction de la ville par Rome.",
+        source: "Encyclopaedia Britannica, notice « Punic language »",
+      },
+      {
+        question: "Quelle reine de Carthage est célébrée dans l'Énéide de Virgile ?",
+        options: ["Didon", "Cléopâtre", "Zénobie", "Amanirenas"],
+        fact: "Didon, aussi appelée Élissa, aurait guidé la fondation de Carthage, et son histoire est devenue l'une des plus connues de l'Antiquité.",
+        source: "Encyclopaedia Britannica, notice « Dido »",
       },
     ],
   },
+
   11: {
     title: "L'âge du fer",
     subtitle: "Terres cuites nok et expansion bantoue",
@@ -855,9 +975,21 @@ export const LEVELS_FR = {
         options: ["Les San et les Khoïkhoï", "Les Zoulous et les Xhosas", "Les Oromos et les Somaliens", "Les Touaregs et les Peuls"],
         fact: "Les San et les Khoïkhoï parlent des langues non bantoues, et leur art rupestre comme leurs noms de lieux font partie du plus ancien patrimoine de la région.",
         source: "Encyclopaedia Britannica, notice « San »",
+      },      {
+        question: "À quelle famille appartiennent la plupart des langues d'Afrique centrale et australe ?",
+        options: ["Le nigéro-congolais", "L'afroasiatique", "Le khoïsan", "L'indo-européen"],
+        fact: "Les langues bantoues sont une branche de la famille nigéro-congolaise, et l'expansion de leurs locuteurs les a répandues sur la moitié du continent.",
+        source: "Encyclopaedia Britannica, notice « Bantu peoples »",
+      },
+      {
+        question: "Quelle plante vivrière, apportée à travers l'océan Indien, est devenue une base de l'agriculture bantoue ?",
+        options: ["La banane", "L'olive", "La datte", "Le raisin"],
+        fact: "La banane est arrivée en Afrique depuis l'Asie du Sud-Est par Madagascar et la côte est-africaine, et elle a nourri les villages d'agriculteurs au fil de leur expansion.",
+        source: "UNESCO, Histoire générale de l'Afrique, volume II",
       },
     ],
   },
+
   12: {
     title: "L'Éthiopie médiévale",
     subtitle: "Lalibela et la dynastie salomonide",
@@ -910,9 +1042,21 @@ export const LEVELS_FR = {
         options: ["Les Oromos", "Les Somaliens", "Les Nubiens", "Les Zoulous"],
         fact: "L'expansion oromo a suivi les guerres du XVIe siècle, et l'oromo est aujourd'hui la première langue maternelle la plus parlée d'Éthiopie.",
         source: "Encyclopaedia Britannica, notice « Oromo »",
+      },      {
+        question: "Quel empereur, régnant de 1855 à 1868, a tenté de réunifier et de moderniser l'Éthiopie ?",
+        options: ["Téwodros II", "Fasilidès", "Ménélik II", "Gelawdéwos"],
+        fact: "Téwodros II a mis fin à l'ère des princes et tenté de bâtir une armée nationale, et il est mort à Magdala plutôt que de se rendre à l'expédition britannique.",
+        source: "Encyclopaedia Britannica, notice « Tewodros II »",
+      },
+      {
+        question: "Quelle langue, écrite en caractères guèze, est la langue de travail de l'Éthiopie ?",
+        options: ["L'amharique", "L'oromo", "Le tigrinya", "Le somali"],
+        fact: "L'amharique s'écrit avec l'écriture guèze, dont chaque caractère note une syllabe, et il est l'une des langues les plus parlées de la Corne.",
+        source: "Encyclopaedia Britannica, notice « Amharic language »",
       },
     ],
   },
+
   13: {
     title: "L'empire du Ghana",
     subtitle: "Wagadu, pays de l'or",
@@ -965,9 +1109,21 @@ export const LEVELS_FR = {
         options: ["Le Mali", "Le Songhaï", "Le Kanem", "Le Bénin"],
         fact: "Après le bref royaume de Sosso, le Mali de Soundjata Keïta a pris le contrôle des routes de l'or et du sel et a bâti son propre empire.",
         source: "UNESCO, Histoire générale de l'Afrique, volume III",
+      },      {
+        question: "À quels siècles l'empire du Ghana a-t-il atteint l'apogée de sa puissance ?",
+        options: ["Du IXe au XIe siècle", "Le XVe siècle", "Le IIIe siècle av. J.-C.", "Le XVIIIe siècle"],
+        fact: "Les auteurs arabes des IXe au XIe siècles décrivent un royaume riche dont le roi taxait chaque charge d'or et de sel qui le traversait.",
+        source: "Encyclopaedia Britannica, notice « Ghana, historical empire »",
+      },
+      {
+        question: "Que taxait le roi du Ghana au passage des marchandises ?",
+        options: ["Chaque charge d'or et de sel", "Seulement les bateaux sur le Niger", "Seulement les maisons étrangères", "Rien du tout"],
+        fact: "L'or venait du sud, des forêts, et le sel du nord, du Sahara, et chaque charge payait un droit à la frontière puis de nouveau à la capitale.",
+        source: "UNESCO, Histoire générale de l'Afrique, volume III",
       },
     ],
   },
+
   14: {
     title: "Kanem-Bornou et les cités haoussa",
     subtitle: "Cavaliers, savants et remparts",
@@ -1020,9 +1176,21 @@ export const LEVELS_FR = {
         options: ["Les routes caravanières transsahariennes", "Les routes maritimes de la mousson", "Les pirogues du Congo", "La route maritime atlantique"],
         fact: "Les caravanes de chameaux ont traversé le désert pendant près de deux mille ans, et les cités haoussa se sont enrichies grâce à ce trafic.",
         source: "UNESCO, Histoire générale de l'Afrique, volume III",
+      },      {
+        question: "Quel titre portaient les souverains du Kanem-Bornou ?",
+        options: ["Mai", "Mansa", "Négus", "Oba"],
+        fact: "Les rois du Kanem-Bornou étaient appelés mai, et leur dynastie sayfawa a régné sur les terres autour du lac Tchad pendant environ mille ans.",
+        source: "Encyclopaedia Britannica, notice « Kanem-Bornu »",
+      },
+      {
+        question: "À quel siècle la dynastie sayfawa a-t-elle commencé à régner sur le Kanem ?",
+        options: ["Au XIe siècle", "Au Ve siècle", "Au XVIe siècle", "Au XIXe siècle"],
+        fact: "Les rois sayfawa du Kanem ont adopté l'islam au XIe siècle, et leur dynastie a duré plus longtemps que presque toute autre de l'histoire africaine.",
+        source: "Encyclopaedia Britannica, notice « Kanem-Bornu »",
       },
     ],
   },
+
   15: {
     title: "La côte swahili",
     subtitle: "Kilwa, Zanzibar et le commerce de mousson",
@@ -1075,9 +1243,21 @@ export const LEVELS_FR = {
         options: ["Sayyid Saïd", "Idris Alooma", "Ewuare", "Fasilides"],
         fact: "Zanzibar est devenue le centre du commerce des clous de girofle et des routes caravanières vers l'intérieur, avec ses propres relations diplomatiques avec l'Europe.",
         source: "Encyclopaedia Britannica, notice « Zanzibar »",
+      },      {
+        question: "En quoi étaient construites les maisons des cités marchandes swahili ?",
+        options: ["En pierre de corail et chaux", "En briques de terre", "En bois", "En granite taillé"],
+        fact: "Le corail et le mortier de chaux donnaient aux villes côtières leurs maisons hautes et fraîches, dont beaucoup subsistent aujourd'hui en ruines.",
+        source: "Liste du patrimoine mondial de l'UNESCO, Ruines de Kilwa Kisiwani et de Songo Mnara",
+      },
+      {
+        question: "Quel fort portugais, bâti après 1593, se dresse encore sur l'île de Mombasa ?",
+        options: ["Fort Jesus", "Le château d'Elmina", "Le château de Cape Coast", "Fort São Sebastião"],
+        fact: "Fort Jesus a gardé la côte est-africaine pour le Portugal, puis pour Oman, et il est aujourd'hui inscrit au patrimoine mondial.",
+        source: "Liste du patrimoine mondial de l'UNESCO, Fort Jesus, Mombasa",
       },
     ],
   },
+
   16: {
     title: "Les royaumes de la forêt",
     subtitle: "Kongo, Bénin, Ifé et Oyo",
@@ -1130,9 +1310,21 @@ export const LEVELS_FR = {
         options: ["Les fondeurs de laiton de la rue Igun", "Les sculpteurs sur bois d'Ifé", "Les tisserands de Kano", "Les constructeurs de pirogues de Lamu"],
         fact: "Les corporations d'artisans du Bénin vivaient dans leurs propres quartiers de la ville et transmettaient leur savoir de père en fils.",
         source: "Encyclopaedia Britannica, notice « Benin »",
+      },      {
+        question: "Quelle reine a régné sur le Ndongo et le Matamba, dans l'Angola actuel, et combattu les Portugais pendant des décennies ?",
+        options: ["Njinga Mbandi", "Kimpa Vita", "Yaa Asantewaa", "Amina"],
+        fact: "Njinga Mbandi a négocié d'égal à égal avec les Portugais, puis les a combattus des années durant, et elle reste un symbole de résistance.",
+        source: "Encyclopaedia Britannica, notice « Nzinga »",
+      },
+      {
+        question: "Quel royaume forestier du Ghana actuel est célèbre pour son Tabouret d'or ?",
+        options: ["L'Asante", "Le Kongo", "Ifé", "Le Kanem"],
+        fact: "Le Tabouret d'or incarne l'âme de la nation asante, et le royaume s'est enrichi grâce à l'or et aux routes commerciales vers la côte.",
+        source: "Encyclopaedia Britannica, notice « Asante empire »",
       },
     ],
   },
+
   17: {
     title: "La traite atlantique",
     subtitle: "Exil, résistance et abolition",
@@ -1185,9 +1377,21 @@ export const LEVELS_FR = {
         options: ["Freetown", "Monrovia", "Accra", "Lagos"],
         fact: "Freetown a été fondée par des loyalistes noirs venus de Nouvelle-Écosse, rejoints plus tard par des Marrons et par des Africains libérés des navires négriers.",
         source: "UNESCO, Histoire générale de l'Afrique, volume V",
+      },      {
+        question: "Quel château, sur la côte du Ghana actuel, était le siège de la traite britannique dans la région ?",
+        options: ["Le château de Cape Coast", "Gorée", "Kilwa", "Lamu"],
+        fact: "Le château de Cape Coast retenait les captifs dans ses cachots avant la traversée de l'Atlantique, et il est inscrit au patrimoine mondial.",
+        source: "Liste du patrimoine mondial de l'UNESCO, Forts et châteaux de Volta, d'Accra et des régions centrale et occidentale",
+      },
+      {
+        question: "Quelle révolte d'Africains réduits en esclavage à bord d'un navire, en 1839, a donné lieu à un célèbre procès aux États-Unis ?",
+        options: ["La révolte de l'Amistad", "Le massacre du Zong", "La rébellion de Nat Turner", "La révolution haïtienne"],
+        fact: "Menés par Joseph Cinque, les captifs de l'Amistad se sont emparés du navire, et un tribunal a jugé qu'ils avaient été illégalement réduits en esclavage et les a libérés.",
+        source: "Encyclopaedia Britannica, notice « Amistad »",
       },
     ],
   },
+
   18: {
     title: "La conquête coloniale",
     subtitle: "Résistances, Adoua et panafricanisme",
@@ -1240,9 +1444,21 @@ export const LEVELS_FR = {
         options: ["La négritude", "Le modernisme", "Le panarabisme", "L'abolitionnisme"],
         fact: "La négritude a répondu au mépris colonial par la poésie et l'essai, et elle a marqué la pensée des dirigeants arrivés au pouvoir après 1960.",
         source: "Encyclopaedia Britannica, notice « Négritude »",
+      },      {
+        question: "Quel empereur éthiopien est mort en combattant les Italiens à Metemma en 1889 ?",
+        options: ["Yohannes IV", "Téwodros II", "Ménélik II", "Haïlé Sélassié"],
+        fact: "Yohannes IV a défendu les frontières de l'Éthiopie face aux forces soudanaises et italiennes, et sa mort a ouvert à Ménélik II la voie du trône.",
+        source: "Encyclopaedia Britannica, notice « Yohannes IV »",
+      },
+      {
+        question: "Quelle compagnie à charte a gouverné une grande partie du centre-sud de l'Afrique pour le compte d'un homme d'affaires britannique après 1889 ?",
+        options: ["La British South Africa Company", "La Royal Niger Company", "L'Imperial British East Africa Company", "La German East Africa Company"],
+        fact: "La British South Africa Company de Cecil Rhodes a reçu une charte royale pour gouverner et exploiter un immense territoire au nom d'une seule entreprise.",
+        source: "Encyclopaedia Britannica, notice « British South Africa Company »",
       },
     ],
   },
+
   19: {
     title: "L'apartheid",
     subtitle: "La longue marche vers la liberté en Afrique du Sud",
@@ -1295,9 +1511,21 @@ export const LEVELS_FR = {
         options: ["1994", "1976", "1990", "1999"],
         fact: "Mandela est devenu président le 10 mai 1994, et la Commission de la vérité et de la réconciliation a été créée deux ans plus tard.",
         source: "Encyclopaedia Britannica, notice « Nelson Mandela »",
+      },      {
+        question: "Quelle loi de 1950 a enregistré chaque Sud-Africain selon sa race ?",
+        options: ["La loi d'enregistrement de la population", "La loi sur les zones réservées", "La loi sur l'éducation bantoue", "La loi interdisant les mariages mixtes"],
+        fact: "La loi d'enregistrement de la population fixait la race de chacun sur le papier, et toutes les autres lois de l'apartheid reposaient sur ce registre.",
+        source: "Encyclopaedia Britannica, notice « apartheid »",
+      },
+      {
+        question: "Quel rassemblement de 1955 réunissant l'ANC et ses alliés a adopté la Charte de la liberté ?",
+        options: ["Le Congrès du peuple", "Le procès de Rivonia", "La Campagne de désobéissance", "Le procès pour trahison"],
+        fact: "La Charte de la liberté déclarait que l'Afrique du Sud appartient à tous ceux qui y vivent, et elle a guidé le mouvement pendant les quarante années suivantes.",
+        source: "Encyclopaedia Britannica, notice « Freedom Charter »",
       },
     ],
   },
+
   20: {
     title: "L'Afrique d'aujourd'hui",
     subtitle: "Union, croissance et nouveaux défis",
@@ -1350,6 +1578,18 @@ export const LEVELS_FR = {
         options: ["Environ la moitié", "Environ un quart", "Environ un dixième", "Presque la totalité"],
         fact: "L'âge médian du continent est d'environ dix-neuf ans, le plus jeune de toutes les régions, ce qui place l'école et l'emploi au centre de tous les débats.",
         source: "UNESCO, Histoire générale de l'Afrique, volume VIII",
+      },
+      {
+        question: "Dans quelle ville se trouve le siège de l'Union africaine ?",
+        options: ["Addis-Abeba", "Le Caire", "Nairobi", "Abuja"],
+        fact: "L'Union africaine a son siège à Addis-Abeba, la même ville où son prédécesseur, l'Organisation de l'unité africaine, a été fondée en 1963.",
+        source: "Union africaine, les États membres",
+      },
+      {
+        question: "Dans quelle ville siège le secrétariat de la Zone de libre-échange continentale africaine ?",
+        options: ["Accra", "Addis-Abeba", "Le Caire", "Abuja"],
+        fact: "Le secrétariat de la zone de libre-échange se trouve à Accra, et il a pour tâche de faire fonctionner le marché unique que le continent a décidé de bâtir.",
+        source: "Union africaine, Zone de libre-échange continentale africaine",
       },
     ],
   },
