@@ -8,9 +8,10 @@ import { underBase } from "../src/lib/base-path.js";
  *
  * The application is a single page with no backend: progress lives in
  * localStorage, so the only things it needs to run with no network at all are
- * its own files and the eight level photographs. This plugin writes a service
- * worker into the built output that downloads exactly that list up front, then
- * serves it from the cache.
+ * its own files, and the photographs of a level once that level has been opened.
+ * This plugin writes a service worker into the built output that downloads the
+ * code and the thumbnails up front, serves them from the cache, and keeps every
+ * other file the first time it is really fetched.
  *
  * The list is taken from the build itself (the hashed bundles Vite just wrote)
  * rather than written by hand, so a renamed chunk can never leave the offline
@@ -86,42 +87,35 @@ const extensionOf = (file) => (/[./]([a-z0-9]+)$/i.exec(file)?.[1] || "").toLowe
 /** The formats one picture is served in, the lightest first. */
 const PICTURE_FORMATS = ["avif", "webp", "jpg", "jpeg"];
 
+/** The suffix a thumbnail carries, which is how it is told apart from a picture. */
+export const THUMBNAIL_SUFFIX = "-thumb";
+
 /**
- * What a device really draws, so the files it never draws are left out.
+ * What the install really needs, and what can wait until a level is opened.
  *
- * A photograph ships as a JPEG, as a WebP beside it, and - where that one is
- * lighter and no less faithful - as an AVIF in front of both. A browser draws
- * the first of those it can read and nothing else, so installing all three would
- * download two files nobody is shown; the gallery is the largest thing the
- * worker caches, and this is what keeps an install small.
+ * A photograph ships as a JPEG, a WebP, and often an AVIF in front of both, plus
+ * a thumbnail a fraction of the size. The lesson draws the full picture and the
+ * list of credits draws the thumbnail, and a browser that has never opened a
+ * level draws neither: installing the whole gallery up front was two and a third
+ * megabytes of photographs most players never look at, on the very first load.
  *
- * The rule reads the files themselves rather than a list of names, so a
- * photograph added to the game is covered the day it is added, and a picture
- * that gains or loses its AVIF changes the cache on its own. The lightest file
- * that exists keeps its place whatever it is: a JPEG with no lighter twin is
- * still a hole in the offline copy if it is left out.
- *
- * The thumbnail is not one of those three, and it is here for the opposite
- * reason: it is not the fallback of the picture but a second, much smaller copy
- * of it, drawn by the list of credits. It is named after the picture with a
- * suffix of its own, so it forms a group of its own and keeps its place as the
- * lightest file of that group - which is what an installed copy needs if that
- * screen is to show its pictures with no network at all.
+ * So the install carries the code and the thumbnails, and nothing else: about a
+ * sixth of a megabyte of pictures instead of two and a half. A full photograph
+ * is downloaded the first time its level is opened, through the ordinary fetch
+ * path, and cached from then on, which is what keeps an offline copy complete
+ * for every level that has really been played rather than for levels nobody
+ * opened. The rule reads the files themselves, so a photograph added to the game
+ * is covered the day it is added.
  */
 export function offlineShell(files) {
-  const drawn = new Map();
-  for (const file of files) {
+  return files.filter((file) => {
     const format = extensionOf(file);
-    const rank = PICTURE_FORMATS.indexOf(format);
-    if (rank === -1) continue;
-
-    const picture = file.slice(0, file.length - format.length - 1);
-    const best = drawn.get(picture);
-    if (best === undefined || rank < best.rank) drawn.set(picture, { rank, file });
-  }
-
-  const kept = new Set([...drawn.values()].map((entry) => entry.file));
-  return files.filter((file) => !PICTURE_FORMATS.includes(extensionOf(file)) || kept.has(file));
+    if (!PICTURE_FORMATS.includes(format)) return true;
+    // Only the thumbnail of a picture is installed; the picture itself is
+    // fetched when its level is opened and cached from then on.
+    const stem = file.slice(0, file.length - format.length - 1);
+    return stem.endsWith(THUMBNAIL_SUFFIX);
+  });
 }
 
 /**
@@ -426,7 +420,6 @@ export function offlineApp({ images = [] } = {}) {
       // fallbacks beside each light photograph are left to the network.
       const built = listBuiltFiles(target).filter((file) => !file.endsWith("/sw.js"));
       const shell = offlineShell(built);
-      const fallbacks = built.length - shell.length;
       const remote = remoteImages(images);
       const source = createServiceWorkerSource({
         shell,
@@ -438,22 +431,20 @@ export function offlineApp({ images = [] } = {}) {
         version: cacheVersion(offlineEntries({ shell, images })),
       });
       writeFileSync(path.join(target, "sw.js"), source, "utf8");
-      // The photographs served from public/ are counted in the file list; only
-      // the ones still held by a third party come from `images`. Each photograph
-      // is counted once, under the format that was kept for it.
-      const localPhotos = shell.filter((file) => file.startsWith("/photos/"));
-      const inAvif = localPhotos.filter((file) => extensionOf(file) === "avif").length;
+      // The thumbnails are what an install carries of the gallery; every full
+      // photograph is left to be fetched the first time its level is opened, and
+      // cached from then on. The photographs from public/ are counted in the
+      // file list, and only the ones still held by a third party come from
+      // `images`.
+      const thumbnails = shell.filter(
+        (file) => file.startsWith("/photos/") && file.endsWith(`${THUMBNAIL_SUFFIX}.webp`)
+      );
       const left = built.filter((file) => !shell.includes(file));
-      const leftJpegs = left.filter((file) => /jpe?g$/.test(extensionOf(file))).length;
-      const leftWebp = left.filter((file) => extensionOf(file) === "webp").length;
+      const leftPhotos = left.filter((file) => PICTURE_FORMATS.includes(extensionOf(file))).length;
       const where = base === "/" ? "" : ` under ${base}`;
-      const skipped =
-        fallbacks > 0
-          ? `; ${leftJpegs} JPEG and ${leftWebp} WebP fallbacks left to the network`
-          : "";
       this.info?.(
-        `offline: cached ${shell.length} files${where} (${localPhotos.length} photographs served locally, ` +
-          `${inAvif} of them in AVIF${skipped}) and ${remote.length} remote`
+        `offline: cached ${shell.length} files${where} (${thumbnails.length} thumbnails installed, ` +
+          `${leftPhotos} full photographs downloaded when their level is opened) and ${remote.length} remote`
       );
     },
   };

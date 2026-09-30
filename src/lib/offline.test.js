@@ -253,18 +253,12 @@ test("the photographs are really on disk, as usable images", () => {
   }
 });
 
-test("the photographs stay light enough to be precached on a phone", () => {
-  // What is installed offline is one file per photograph: the lightest of the
-  // formats that exist, which is the AVIF where one was written and the WebP
-  // behind it otherwise. The fallbacks are left to the network, so these are the
-  // bytes a new player waits for. The weight of a single picture is held to its
-  // own budget next door in photo-weight.test.js, where each light version is
-  // also checked to be the real thing and lighter than the file behind it.
-  //
-  // The thumbnail travels as well, and it is not a fallback of the picture: it
-  // is the copy the list of credits draws, a screen of the application like any
-  // other, so an installed copy that left it out would open that list on a
-  // phone with no network and show sixty captions with no pictures above them.
+test("the install carries the thumbnails, and leaves the photographs to the levels", () => {
+  // What is installed offline is one thumbnail per photograph, which is what the
+  // list of credits draws: about a sixth of a megabyte, against two and a half
+  // for the whole gallery. A full photograph is fetched the first time its level
+  // is opened and cached from then on, so the offline copy is complete for the
+  // levels a player has really opened rather than for the ones they never did.
   const onDisk = (file) => path.join(ROOT, "public", file.replace(/^\//, ""));
   const size = (file) => statSync(onDisk(file)).size;
   const photos = readdirSync(path.join(ROOT, "public", "photos")).map((name) => `/photos/${name}`);
@@ -272,36 +266,20 @@ test("the photographs stay light enough to be precached on a phone", () => {
   const installed = new Set(shell);
 
   for (const photo of LEVEL_PHOTOS) {
-    const versions = [avifPath(photo.file), webpPath(photo.file)].filter((file) => installed.has(file));
-    assert.equal(versions.length, 1, `${photo.file}: one version of the picture is installed, not two`);
     assert.ok(installed.has(thumbPath(photo.file)), `${photo.file}: the thumbnail of the list of credits`);
+    for (const full of [avifPath(photo.file), webpPath(photo.file), photo.file]) {
+      assert.ok(!installed.has(full), `${photo.file}: a full photograph is not installed up front`);
+    }
   }
-  assert.equal(shell.length, LEVEL_PHOTOS.length * 2, "a version and a thumbnail per photograph, and nothing else");
-  assert.ok(
-    shell.every((file) => /\.(avif|webp)$/.test(file)),
-    "and it is a light one: installing the fallbacks too would download copies nobody is shown"
-  );
-
-  for (const file of shell) {
-    if (!file.endsWith(".avif")) continue;
-    // An AVIF is installed only where one was written, and only where it is
-    // lighter than the WebP it stands in front of: a browser draws the first
-    // format it can read, so a heavier one in front is a heavier gallery.
-    const webp = `${file.slice(0, -5)}.webp`;
-    assert.ok(existsSync(onDisk(webp)), `${file} replaces a WebP that is not in the repository`);
-    assert.ok(size(file) < size(webp), `${file} is not lighter than ${webp}, which it is drawn in front of`);
-  }
+  assert.equal(shell.length, LEVEL_PHOTOS.length, "one thumbnail per photograph, and nothing else");
+  assert.ok(shell.every((file) => /-thumb\.webp$/.test(file)), "and what is installed is a thumbnail");
 
   const bytes = shell.reduce((total, file) => total + size(file), 0);
   const megabytes = bytes / 1024 / 1024;
-  const inAvif = shell.filter((file) => file.endsWith(".avif")).length;
-  // Twenty levels, three pictures each. The light formats take the gallery from
-  // 3.78 MB of JPEGs to 2.17 MB here, a third of it carried as AVIF, plus about
-  // 0.17 MB of thumbnails for the list of credits, which keeps it a quick single
-  // download before the game can be played with no network; a fresh download
-  // from the sources would push it back over seven.
-  assert.ok(inAvif > 0, "no picture is installed in the third format");
-  assert.ok(megabytes < 3, `the gallery weighs ${megabytes.toFixed(2)} MB, which is too much to install offline`);
+  assert.ok(
+    megabytes < 0.5,
+    `the thumbnails weigh ${megabytes.toFixed(2)} MB, which is more than the install should carry`
+  );
 });
 
 test("every author and licence is credited in the terms, in both languages", () => {
@@ -456,55 +434,35 @@ test("the file list used for precaching is read from the real directory", () => 
   assert.ok(files.every((file) => file.startsWith("/")), "paths are absolute, as the cache expects");
 });
 
-test("a photograph is installed in its light version, and only that is left out", () => {
+test("only the thumbnail of a photograph is installed, the picture itself waits", () => {
   // The rule reads the files themselves rather than a list of names, so a
-  // photograph added to the game is covered the day it is added, and anything
-  // that is not a JPEG with a lighter twin keeps its place: the offline copy
-  // must not lose a file it needs.
+  // photograph added to the game is covered the day it is added, and nothing
+  // that is not a photograph is ever dropped: the install must not lose a file
+  // it needs to start at all.
   const files = [
     "/index.html",
     "/assets/index-abc123.js",
     "/manifest.json",
     "/photos/level-1-1.jpg",
     "/photos/level-1-1.webp",
+    "/photos/level-1-1.avif",
+    "/photos/level-1-1-thumb.webp",
     "/photos/level-2-1.jpg",
   ];
   assert.deepEqual(offlineShell(files), [
     "/index.html",
     "/assets/index-abc123.js",
     "/manifest.json",
-    "/photos/level-1-1.webp",
-    "/photos/level-2-1.jpg",
+    "/photos/level-1-1-thumb.webp",
   ]);
 
-  // A picture whose light version was never written still travels: nothing can
-  // stand in for it, and leaving it out would leave a hole in the gallery.
-  assert.deepEqual(offlineShell(["/photos/level-9-1.jpg"]), ["/photos/level-9-1.jpg"]);
+  // A picture with no thumbnail is left to the network whole: installing a full
+  // photograph nobody asked for is the cost this rule exists to avoid.
+  assert.deepEqual(offlineShell(["/photos/level-9-1.jpg"]), []);
 
-  // With a third format the same question has three answers, and the answer is
-  // always the smallest file: a browser that reads AVIF draws it in front of the
-  // two others, so installing them as well downloads copies nobody is shown.
-  const three = offlineShell([
-    "/photos/level-1-1.jpg",
-    "/photos/level-1-1.webp",
-    "/photos/level-1-1.avif",
-    "/photos/level-2-1.jpg",
-    "/photos/level-2-1.webp",
-    "/photos/level-3-1.jpg",
-    "/photos/level-3-1.avif",
-  ]);
-  assert.deepEqual(three, [
-    "/photos/level-1-1.avif",
-    "/photos/level-2-1.webp",
-    "/photos/level-3-1.avif",
-  ]);
-
-  // The rule is about the fallback of a photograph, not about every extension:
-  // a file that is not a JPEG is never treated as one.
-  assert.deepEqual(
-    offlineShell(["/photos/plan.png", "/photos/plan.webp"]),
-    ["/photos/plan.png", "/photos/plan.webp"]
-  );
+  // The rule is about photographs and their thumbnails, not about every
+  // extension: a file that is not a photograph keeps its place.
+  assert.deepEqual(offlineShell(["/photos/plan.png", "/photos/plan.webp"]), ["/photos/plan.png"]);
 });
 
 test("a built application ships the worker the configuration asks for", (t) => {
@@ -547,21 +505,20 @@ test("a built application ships the worker the configuration asks for", (t) => {
     assert.ok(worker.includes(JSON.stringify(served)), `${served} is missing from the precache list`);
   }
 
-  const stem = (file) => file.replace(/\.[a-z0-9]+$/i, "");
   const leftOut = built.filter((file) => !shell.includes(file));
-  assert.ok(leftOut.length > 0, "this build has a light version of every photograph");
+  assert.ok(leftOut.length > 0, "this build leaves the full photographs to the levels");
   for (const file of leftOut) {
     assert.ok(
-      /\.(jpe?g|webp)$/i.test(file),
-      `${file} is not one of the fallback formats a photograph is served in`
+      /\.(avif|jpe?g|webp)$/i.test(file),
+      `${file} is not a photograph format that could be left to the network`
     );
     assert.ok(
-      shell.some((kept) => kept !== file && stem(kept) === stem(file)),
-      `${file} is left out and no lighter file is installed for the same picture`
+      shell.includes(`${file.replace(/\.(avif|jpe?g|webp)$/i, "")}-thumb.webp`),
+      `${file} is left out and its thumbnail is not installed`
     );
     assert.ok(
       !worker.includes(JSON.stringify(`${base}${file.replace(/^\//, "")}`)),
-      `${file} is a fallback for a light version and is not downloaded in advance`
+      `${file} is a full photograph and is not downloaded in advance`
     );
   }
   assert.ok(worker.includes(JSON.stringify(`${base}index.html`)), "the offline page is the app itself");

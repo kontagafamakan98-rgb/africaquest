@@ -95,8 +95,15 @@ file that travels with the work.
 
 Each of the sixty level photographs ships as a JPEG, a WebP beside it, and — where it pays
 off — an AVIF in front of that one. A browser is offered them lightest first and draws the
-first it can read; the JPEG is only there for a browser that reads neither, and it is the
-one the service worker never installs.
+first it can read; the JPEG is only there for a browser that reads neither.
+
+The service worker installs none of the full pictures. It carries the code and the sixty
+thumbnails, about a sixth of a megabyte of photographs, and every full picture is fetched the
+first time its level is opened and kept from then on. Installing the whole gallery up front
+was two and a third megabytes most players never look at, on the very first load; now the
+install is under two megabytes, and the offline copy stays complete for every level that has
+really been played rather than for the ones nobody opened. `src/lib/offline.test.js` holds it:
+each photograph's full files are left out of the install, and its thumbnail is in.
 
 The third format is not written for every picture. At the size these are drawn, five hundred
 to six hundred and forty pixels across, AV1 pays for its headers more than it saves, and on
