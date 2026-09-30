@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { FAILURE_PLACES } from "./error-log.js";
 import { buildProgressReport, formatDuration, levelLines } from "./progress-report.js";
 import { reportFileName } from "./report-pdf.js";
 
@@ -11,6 +12,12 @@ const t = {
   reportSummary: "Résumé",
   reportLevels: "Résultat par niveau",
   reportRegions: "Exactitude par région",
+  reportErrors: "Ce qui a échoué sur cet appareil",
+  reportErrorsNote: "Gardé en mémoire, envoyé nulle part.",
+  reportNoErrors: "Rien n'a échoué.",
+  failurePlaceSave: "pendant l'enregistrement de la progression",
+  failurePlaceWindow: "une erreur que personne n'a attrapée",
+  failurePlacePromise: "une promesse qui a échoué",
   reportFooter: "Données locales.",
   notStarted: "Non commencé",
   bestScore: "Meilleur score",
@@ -103,6 +110,55 @@ test("a profile with no progress still produces a usable report", () => {
   assert.equal(value("Exactitude"), "aucune donnée");
   assert.equal(value("Questions à réviser"), "0");
   assert.equal(report.levels.length, 2);
+});
+
+test("the report carries what failed on the device, and says so when nothing did", () => {
+  const failures = [
+    {
+      at: "2026-09-29T20:15:00.000Z",
+      name: "TypeError",
+      message: "Cannot read properties of undefined (reading 'gallery')",
+      where: "LevelGallery",
+      count: 1,
+    },
+    {
+      at: "2026-09-29T20:16:00.000Z",
+      name: "QuotaExceededError",
+      message: "The quota has been exceeded.",
+      // Exactly what the store writes into the log, so the report is held to the
+      // value that really arrives rather than to a tidier one invented here.
+      where: FAILURE_PLACES.save,
+      count: 3,
+    },
+  ];
+
+  const report = buildProgressReport({ progress, levels, t, failures });
+  assert.equal(report.failuresTitle, "Ce qui a échoué sur cet appareil");
+  assert.equal(report.failures.length, 2);
+  assert.equal(report.failures[0].what, "TypeError: Cannot read properties of undefined (reading 'gallery')");
+  assert.equal(report.failures[0].where, "LevelGallery", "a screen keeps its own name");
+  assert.equal(report.failures[0].times, "", "a failure that happened once says nothing about repeats");
+  // The three places the application reports from itself are codes here and
+  // words in the report, because they are the only part of an entry that is
+  // wording rather than code.
+  assert.equal(report.failures[1].where, "pendant l'enregistrement de la progression");
+  assert.equal(report.failures[1].times, "×3");
+  // A moment is a day and an hour a person reads, never a timestamp, and it is
+  // the reader's own time rather than the server's.
+  assert.match(report.failures[0].when, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+  assert.equal(report.failuresNote, "Gardé en mémoire, envoyé nulle part.");
+
+  // A report made on a device where nothing failed says that, rather than
+  // leaving a reader to wonder whether the section is missing.
+  const clean = buildProgressReport({ progress, levels, t });
+  assert.deepEqual(clean.failures, []);
+  assert.equal(clean.noFailures, "Rien n'a échoué.");
+  // And an entry that came back from a hand-edited place does not break it.
+  const odd = buildProgressReport({ progress, levels, t, failures: [{ where: "nowhere" }, null] });
+  assert.equal(odd.failures.length, 2);
+  assert.equal(odd.failures[0].where, "nowhere");
+  assert.equal(odd.failures[1].what, "Error: ");
+  assert.equal(odd.failures[1].when, "");
 });
 
 test("the file name is readable and safe for any system", () => {

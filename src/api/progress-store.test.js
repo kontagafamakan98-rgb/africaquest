@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { clearFailures, recentFailures } from "../lib/error-log.js";
 import { isDue } from "../lib/spaced-repetition.js";
 import { pickFlashQuizQuestions } from "../lib/quick-quiz.js";
 import { questionKey } from "../lib/game-metrics.js";
@@ -218,4 +219,53 @@ test("the flash quiz keys its answers to the right question", async () => {
   const [progress] = await progressStore.list();
   assert.deepEqual(Object.keys(progress.question_stats), ["5:6"], "the answer lands on the question that was asked");
   assert.equal(progress.question_stats["5:6"].wrong, 1);
+});
+
+test("a browser that refuses to save is seen, and a browser that saves again is too", async () => {
+  const { watchSaveRefusal, saveIsRefused } = await import("./progress-store.js");
+  await freshProgress();
+
+  // A full quota, a device in private browsing, a school browser that blocks
+  // storage: all of them throw here, and all of them have to be visible. The
+  // write still fails for the caller - a change that was not saved must not
+  // look saved - and the application is told so it can say it out loud.
+  const seen = [];
+  const stop = watchSaveRefusal((failed) => seen.push(failed));
+  assert.equal(saveIsRefused(), false);
+  clearFailures();
+
+  const allowed = localStorage.setItem;
+  localStorage.setItem = () => {
+    const error = new Error("QuotaExceededError");
+    error.name = "QuotaExceededError";
+    throw error;
+  };
+
+  await assert.rejects(() => progressStore.recordAnswer("1:0", true), /QuotaExceededError/);
+  assert.equal(saveIsRefused(), true);
+  assert.equal(seen.at(-1)?.name, "QuotaExceededError");
+
+  // And it is written into the log the report carries: a browser that will not
+  // save is the failure nobody can reconstruct afterwards, because it says
+  // nothing once the tab is closed.
+  assert.deepEqual(
+    recentFailures().map((entry) => [entry.name, entry.where]),
+    [["QuotaExceededError", "failurePlaceSave"]]
+  );
+
+  // Reported once, not once per keystroke: a refusal that has already been said
+  // is not news.
+  const after = seen.length;
+  await assert.rejects(() => progressStore.recordAnswer("1:1", false));
+  assert.equal(seen.length, after, "the same refusal was announced twice");
+  // The same wall, hit twice, is one line: what the report has to say is that the
+  // browser refuses, not how many times the player pressed a button.
+  assert.equal(recentFailures().length, 1);
+  assert.equal(recentFailures()[0].count, 1);
+
+  localStorage.setItem = allowed;
+  await progressStore.recordAnswer("1:2", true);
+  assert.equal(saveIsRefused(), false, "a store that saves again is no longer refused");
+  assert.equal(seen.at(-1), null);
+  assert.equal(stop(), true);
 });

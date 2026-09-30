@@ -1,6 +1,7 @@
 // Player progress is stored entirely in the browser. There is no account, no
 // server and no network request: the game is fully playable offline.
 // Explicit extension: the file is also loaded directly by the test runner.
+import { FAILURE_PLACES, recordFailure } from "../lib/error-log.js";
 import { scheduleAfterAnswer } from "../lib/spaced-repetition.js";
 import { activeProfileId, hasProfiles, progressKeyFor } from "./profiles-store.js";
 
@@ -8,6 +9,40 @@ import { activeProfileId, hasProfiles, progressKeyFor } from "./profiles-store.j
 // between several students on the same device without touching this module.
 const progressKey = () => progressKeyFor(activeProfileId());
 const LOCAL_ID = "local";
+
+// Whether the browser last refused to save, and who wants to know. A device
+// that cannot keep a record is the one failure a player cannot see for
+// themselves: the game keeps scoring, and everything is gone at the next
+// reload. So the refusal is held here until a write succeeds again.
+let refusal = null;
+const refusalWatchers = new Set();
+
+function rememberRefusal(error) {
+  const next = error ? { name: typeof error.name === "string" ? error.name : "Error" } : null;
+  const changed = (next === null) !== (refusal === null);
+  refusal = next;
+  if (changed) refusalWatchers.forEach((listener) => listener(refusal));
+
+  // A browser that will not save is a failure the player cannot see for
+  // themselves, so it earns a line in the log the report carries. Once, when it
+  // starts: a full quota stays full, and a hundred refused writes are one fact.
+  if (error && changed) recordFailure(error, { where: FAILURE_PLACES.save });
+}
+
+/**
+ * Tells a listener whether storage is currently refusing writes, every time that
+ * changes, and returns the way to stop listening.
+ */
+export function watchSaveRefusal(listener) {
+  refusalWatchers.add(listener);
+  listener(refusal);
+  return () => refusalWatchers.delete(listener);
+}
+
+/** Whether the browser is refusing to save right now. */
+export function saveIsRefused() {
+  return refusal !== null;
+}
 // Set once the player has answered the offer to load a backup, whether they
 // loaded one or chose to start from scratch.
 const WELCOME_KEY = "aq_welcome_v1";
@@ -103,7 +138,20 @@ function readLocal() {
 function writeLocal(data) {
   const { id: _ignored, ...rest } = data;
   const record = { ...defaultProgress(), ...rest };
-  localStorage.setItem(progressKey(), JSON.stringify(record));
+
+  try {
+    localStorage.setItem(progressKey(), JSON.stringify(record));
+  } catch (error) {
+    // Storage refuses a write more often than it sounds: a full quota, a device
+    // in private browsing, a school browser that blocks storage altogether. The
+    // caller still hears about it - a change that was not saved must not look
+    // saved - and the refusal is remembered so the application can say so on
+    // every screen rather than losing the afternoon in silence.
+    rememberRefusal(error);
+    throw error;
+  }
+
+  rememberRefusal(null);
   return { id: LOCAL_ID, ...record };
 }
 

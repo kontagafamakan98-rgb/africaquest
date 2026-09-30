@@ -27,6 +27,19 @@ export function reportFileName(report, date = new Date()) {
 
 /** Draws the report and hands the file to the browser. */
 export async function exportProgressReportPdf(report, date = new Date()) {
+  const doc = await buildReportPdf(report);
+  doc.save(reportFileName(report, date));
+}
+
+/**
+ * The report as a document, with nothing handed to the browser yet.
+ *
+ * The drawing and the saving are kept apart so that the layout can be read by a
+ * test without a browser, which is the only way to check a section of a PDF: the
+ * failures are the one part of this report nobody can see coming, and a page of
+ * "undefined" would only be found by the teacher who opened it.
+ */
+export async function buildReportPdf(report) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -120,6 +133,56 @@ export async function exportProgressReportPdf(report, date = new Date()) {
     y += LINE + 2;
   });
 
+  // What failed on the device, which is the one section of this report about the
+  // application rather than about the student. It is what a teacher sends on when
+  // something did not work, and it is short: the log holds a dozen failures at
+  // most (src/lib/error-log.js), and each of them is a line here.
+  y += 6;
+  if (y > doc.internal.pageSize.getHeight() - MARGIN - 60) {
+    doc.addPage();
+    y = MARGIN;
+  }
+  doc.line(MARGIN, y, right, y);
+  y += 24;
+  text(report.failuresTitle, MARGIN, 12, "bold");
+  y += 18;
+
+  const muted = (lines, size = 10) => {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(size);
+    doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text(lines, MARGIN, y);
+  };
+
+  if (report.failures.length === 0) {
+    muted(String(report.noFailures));
+    y += LINE;
+  } else {
+    report.failures.forEach((failure) => {
+      if (y > doc.internal.pageSize.getHeight() - MARGIN - 50) {
+        doc.addPage();
+        y = MARGIN;
+      }
+      // A message is capped at a couple of hundred characters but the page is
+      // narrower than that, so it is wrapped rather than run off the edge.
+      const what = doc.splitTextToSize(String(failure.what), right - MARGIN);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(INK[0], INK[1], INK[2]);
+      doc.text(what, MARGIN, y);
+      y += what.length * 12;
+      muted([failure.when, failure.where, failure.times].filter(Boolean).join("   ·   "));
+      y += LINE + 5;
+    });
+  }
+
+  // Where the list comes from, and where it does not go: the reader of a report
+  // is entitled to know that what is above was kept on the device and sent
+  // nowhere, because that is also why it may be incomplete.
+  y += 2;
+  muted(doc.splitTextToSize(String(report.failuresNote), right - MARGIN), 8);
+  y += LINE;
+
   // Footer on every page
   const pages = doc.internal.getNumberOfPages();
   for (let page = 1; page <= pages; page += 1) {
@@ -131,5 +194,5 @@ export async function exportProgressReportPdf(report, date = new Date()) {
     doc.text(`${page} / ${pages}`, right, doc.internal.pageSize.getHeight() - 28, { align: "right" });
   }
 
-  doc.save(reportFileName(report, date));
+  return doc;
 }

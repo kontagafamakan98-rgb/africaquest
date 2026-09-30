@@ -15,6 +15,7 @@ import { StarsOverTimeChart, RegionAccuracyChart, accuracyColor } from "./Progre
 import KnowledgeMap from "./KnowledgeMap";
 import { useT, useLang, DIFFICULTY_LABEL_KEYS } from "../i18n";
 import { activeProfile } from "@/api/profiles-store";
+import { recentFailures } from "../../lib/error-log";
 import { buildProgressReport, formatDuration } from "../../lib/progress-report";
 
 // Everything below is derived from the player's stored progress, nothing is invented.
@@ -45,6 +46,9 @@ export default function StatsScreen({ progress, onReviewLevel }) {
         levels,
         t,
         student: activeProfile().name || t.defaultProfileName,
+        // What failed on this device since it was opened, which travels with the
+        // report rather than being described from memory by whoever sends it.
+        failures: recentFailures(),
       });
       const { exportProgressReportPdf } = await import("../../lib/report-pdf");
       await exportProgressReportPdf(report);

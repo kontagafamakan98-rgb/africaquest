@@ -66,11 +66,48 @@ export function levelLines(progress, levels, t) {
   });
 }
 
+/** A moment as the day and the hour a person reads it in, never as a timestamp. */
+function momentOf(at) {
+  const date = at instanceof Date ? at : new Date(typeof at === "string" && at !== "" ? at : Number.NaN);
+  if (Number.isNaN(date.getTime())) return "";
+  const two = (value) => String(value).padStart(2, "0");
+  return `${localDay(date)} ${two(date.getHours())}:${two(date.getMinutes())}`;
+}
+
 /**
- * Everything the report needs, already worded: a summary, the per level table
- * and the accuracy per region. `t` is the active translation object.
+ * The failures the application logged, as lines a report can carry.
+ *
+ * The place is a word rather than a code: what a failure was doing is the part a
+ * reader needs. The three the application reports from itself are written down as
+ * translation keys (see FAILURE_PLACES in src/lib/error-log.js), and any other
+ * place is the name of the screen that broke, which is code and reads the same in
+ * every language, so it stays as it is.
+ *
+ * A failure that happened more than once says so rather than being printed as
+ * many times: what the reader has to see is that it keeps happening.
  */
-export function buildProgressReport({ progress, levels, t, student = "", date = new Date() }) {
+function failureLines(failures, t) {
+  return (failures || []).map((entry) => {
+    const where = entry?.where || "";
+    return {
+      when: momentOf(entry?.at),
+      what: `${entry?.name || "Error"}: ${entry?.message || ""}`,
+      where: t[where] || where,
+      times: (entry?.count || 1) > 1 ? `×${entry.count}` : "",
+    };
+  });
+}
+
+/**
+ * Everything the report needs, already worded: a summary, the per level table,
+ * the accuracy per region, and what failed on the device while it was being
+ * prepared. `t` is the active translation object.
+ *
+ * The failures are passed in rather than read here, so what the report says is
+ * what the caller handed over - the log itself lives in src/lib/error-log.js and
+ * is bounded there.
+ */
+export function buildProgressReport({ progress, levels, t, student = "", date = new Date(), failures = [] }) {
   const questionStats = progress?.question_stats || {};
   const levelScores = progress?.level_scores || {};
   const levelsCompleted = (progress?.completed_levels || []).length;
@@ -103,6 +140,13 @@ export function buildProgressReport({ progress, levels, t, student = "", date = 
       region: region.region,
       accuracy: region.accuracy === null ? t.noAnswersYet : `${region.accuracy}%`,
     })),
+    // What failed on this device, which is the part of the report a teacher
+    // cannot reconstruct afterwards: a crash is reloaded away, and a browser that
+    // refuses to save says nothing once it is closed.
+    failuresTitle: t.reportErrors,
+    failuresNote: t.reportErrorsNote,
+    failures: failureLines(failures, t),
+    noFailures: t.reportNoErrors,
     footer: t.reportFooter,
   };
 }
