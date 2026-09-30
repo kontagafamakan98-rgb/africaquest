@@ -28,6 +28,16 @@ the CI runs, so a green run here is a green run there.
 `verify`, because a timing on a shared machine and a page on somebody else's
 server are both things that fail at random.
 
+## What the tests do
+
+Two kinds of test live here. Most read the source as text, which is what catches
+a rule broken on purpose. A few draw the application for real: the runner
+bundles the quiz, the review and the statistics screens together with the
+teacher page, renders them in a jsdom window, and hands the markup to axe, so a
+screen that throws while it draws, or a control that reaches a reader with no
+name, fails here instead of in front of a player. That is the reason `jsdom`,
+`axe-core` and `esbuild` sit in the development dependencies.
+
 ## House rules
 
 The rules in `src/lib/design-rules.test.js` are the taste of this project, and
