@@ -9,6 +9,10 @@ export default [
     files: [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",
+      // The layer that touches the browser is the one where a name that does not
+      // exist costs a stored afternoon, and it used to sit outside the linters
+      // altogether: nothing here reads it unless this line is there.
+      "src/api/**/*.{js,mjs,cjs}",
       "src/Layout.jsx",
       "src/lib/**/*.{js,mjs,cjs,jsx}",
       "scripts/**/*.{js,mjs,cjs}",

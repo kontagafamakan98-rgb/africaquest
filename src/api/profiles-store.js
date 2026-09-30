@@ -47,6 +47,17 @@ function cleanName(name) {
 }
 
 /**
+ * What a student with no name of their own is called in the roster.
+ *
+ * A backup exported from a device whose profile was never named carries none,
+ * and the teacher space falls back to the file name: a file called
+ * africa-quest-2026-09-27.json has nothing left to make a name from. The roster
+ * still needs an entry to hold the progress, so it gets this one, which the
+ * teacher can rename like any other.
+ */
+const UNNAMED_STUDENT = "Student";
+
+/**
  * The roster, which always contains at least one profile: a device that never
  * opened the teacher space still has the single profile holding its progress.
  */
@@ -163,12 +174,12 @@ export function importStudentProfile(name, progress) {
   // If the device only has the default unnamed profile and it has no progress, rename it
   const defaultP = roster.find((p) => p.id === DEFAULT_PROFILE_ID);
   if (roster.length === 1 && defaultP && !defaultP.name && !readProfileProgress(DEFAULT_PROFILE_ID)) {
-    renameProfile(DEFAULT_PROFILE_ID, clean || Student);
+    renameProfile(DEFAULT_PROFILE_ID, clean || UNNAMED_STUDENT);
     writeProfileProgress(DEFAULT_PROFILE_ID, progress);
-    return { profile: { ...defaultP, name: clean || Student }, updated: false };
+    return { profile: { ...defaultP, name: clean || UNNAMED_STUDENT }, updated: false };
   }
 
-  const created = createProfile(clean || Student);
+  const created = createProfile(clean || UNNAMED_STUDENT);
   writeProfileProgress(created.id, progress);
   return { profile: created, updated: false };
 }
