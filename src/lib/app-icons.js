@@ -276,6 +276,8 @@ function roundedRectDistance(x, y, halfWidth, halfHeight, radius) {
 
 /** Signed distance to the edge of one shape, negative inside it. */
 function shapeDistance(shape, x, y) {
+  // Shapes arrive here in the units of the surface they are painted on: the
+  // favicon's own units for an icon, card pixels for a link preview.
   if (shape.kind === "circle") {
     return Math.hypot(x - shape.cx, y - shape.cy) - shape.r;
   }
@@ -306,9 +308,9 @@ function coverage(distance) {
  * `distance` and `crop` both work in pixels, so the antialiased edge is one
  * pixel wide whatever size the icon is drawn at.
  */
-function paint(pixels, size, distance, colour, crop) {
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
+function paint(pixels, width, height, distance, colour, crop) {
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
       // Written so that a shape the renderer cannot place, a distance that is
       // not a number, leaves the pixel alone instead of painting it black.
       const value = distance(x + 0.5, y + 0.5);
@@ -319,7 +321,7 @@ function paint(pixels, size, distance, colour, crop) {
       const alpha = inside * coverage(crop(x + 0.5, y + 0.5));
       if (!(alpha > 0)) continue;
 
-      const index = (y * size + x) * 4;
+      const index = (y * width + x) * 4;
       const inverse = 1 - alpha;
       pixels[index] = Math.round(pixels[index] * inverse + colour[0] * alpha);
       pixels[index + 1] = Math.round(pixels[index + 1] * inverse + colour[1] * alpha);
@@ -407,6 +409,7 @@ export function renderIcon(scene, { size, bleed = false, safe = false }) {
     paint(
       pixels,
       size,
+      size,
       (x, y) => shapeDistance(drawn, toSvgX(x), toSvgY(y)) * scale,
       drawn.fill,
       crop
@@ -414,6 +417,98 @@ export function renderIcon(scene, { size, bleed = false, safe = false }) {
   }
 
   return encodePng(size, size, pixels);
+}
+
+/* ---------------------------------------------------------- link card --- */
+
+/**
+ * The picture a link to the application shows: in a chat, in a feed, in a
+ * search result.
+ *
+ * It is drawn from the favicon, like every other piece of artwork here, so the
+ * mark cannot end up looking like two different things on two screens. The two
+ * shapes that already span the favicon - the sky and the ground - are stretched
+ * across the card, which is what turns a square icon into a landscape; the mark
+ * between them keeps its proportions and rests where it reads, because a sun
+ * pulled sideways is a mistake rather than a style.
+ *
+ * `share` is how much of the card's height the mark takes. The horizon stays on
+ * the card's own centre line whatever that number is, so shrinking the mark
+ * never moves the ground.
+ */
+export const SOCIAL_CARD = {
+  file: "social-preview.png",
+  width: 1200,
+  height: 630,
+  share: 1,
+};
+
+/**
+ * One shape, placed on the card, in card pixels.
+ *
+ * A shape that spans the favicon is stretched to the card's width and height, so
+ * the sky reaches the edges and the ground lies flat across the bottom. Every
+ * other shape is moved by a single factor, which is what keeps the mark from
+ * changing shape: only a rectangle spanning the frame can be stretched without
+ * anybody noticing.
+ */
+function shapeOnCard(shape, scene, { width, height, factor, midX, midY, centre }) {
+  const across = spansFrame(shape, scene);
+  const scaleX = across ? width / scene.width : factor;
+  const scaleY = across ? height / scene.height : factor;
+  const moveX = (value) => (across ? (value - scene.minX) * scaleX : midX + (value - centre.x) * factor);
+  const moveY = (value) => (across ? (value - scene.minY) * scaleY : midY + (value - centre.y) * factor);
+
+  const box = (value, scale) => value * scale;
+
+  if (shape.kind === "rect") {
+    return {
+      kind: "rect",
+      x: moveX(shape.x),
+      y: moveY(shape.y),
+      width: box(shape.width, scaleX),
+      height: box(shape.height, scaleY),
+      rx: box(shape.rx, scaleX),
+      ry: box(shape.ry, scaleY),
+    };
+  }
+
+  const radiusX = shape.kind === "circle" ? shape.r : shape.rx;
+  const radiusY = shape.kind === "circle" ? shape.r : shape.ry;
+  const cx = moveX(shape.cx);
+  const cy = moveY(shape.cy);
+  const rx = box(radiusX, scaleX);
+  const ry = box(radiusY, scaleY);
+  // A circle drawn about two different axes is an ellipse, and only an ellipse
+  // can carry two radii.
+  if (shape.kind === "circle" && Math.abs(rx - ry) < 1e-9) return { kind: "circle", cx, cy, r: rx };
+  return { kind: "ellipse", cx, cy, rx, ry };
+}
+
+/** The link preview, as PNG bytes. */
+export function renderSocialCard(
+  scene,
+  { width = SOCIAL_CARD.width, height = SOCIAL_CARD.height, share = SOCIAL_CARD.share } = {}
+) {
+  const pixels = new Uint8ClampedArray(width * height * 4);
+  const placement = {
+    width,
+    height,
+    factor: share * Math.min(width / scene.width, height / scene.height),
+    midX: width / 2,
+    midY: height / 2,
+    centre: { x: scene.minX + scene.width / 2, y: scene.minY + scene.height / 2 },
+  };
+  // Nothing is cropped: a link preview is a rectangle with no corners to round,
+  // and the sky is meant to reach every edge of it.
+  const noCrop = () => -1;
+
+  for (const shape of scene.shapes) {
+    const drawn = shapeOnCard(shape, scene, placement);
+    paint(pixels, width, height, (x, y) => shapeDistance(drawn, x, y), drawn.fill ?? shape.fill, noCrop);
+  }
+
+  return encodePng(width, height, pixels);
 }
 
 /**

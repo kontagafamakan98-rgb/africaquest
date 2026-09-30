@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { offlineApp } from './build/offline-plugin.js'
 import { pagesFallback } from './build/pages-fallback.js'
+import { siteFiles } from './build/site-files.js'
 import { REMOTE_IMAGE_URLS } from './src/lib/level-images.js'
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url))
@@ -64,6 +65,10 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    // Answer a crawler before the application runs: robots.txt, sitemap.xml,
+    // and the two link-preview tags that need the address the site is served
+    // from. Before the 404 copy, which has to be written with those tags in it.
+    siteFiles(),
     // Copies index.html to 404.html: a single page site has no other file to
     // answer a deep link with. Before the offline plugin, which lists what the
     // build produced and so has to see the copy.
