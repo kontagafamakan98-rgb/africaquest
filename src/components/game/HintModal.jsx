@@ -30,7 +30,12 @@ export default function HintModal({
     <AnimatePresence>
       {open && (
         <>
+          {/* A tap on the scrim closes the sheet, which is what a thumb tries
+              first. It carries nothing a reader can act on by keyboard, and the
+              sheet has a close button of its own, so it is kept out of the
+              accessibility tree rather than announced as an unnamed control. */}
           <motion.div
+            aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

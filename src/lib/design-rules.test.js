@@ -767,3 +767,59 @@ test("every file under src is read by one of the two type programs", () => {
     "a file held out of one type program is read by the other, or by neither"
   );
 });
+
+/**
+ * The contrast ratio between two colours, as WCAG measures it.
+ *
+ * sRGB first, then the perceived brightness of each channel, then the two
+ * against each other. Written out rather than pulled from a package because it
+ * is one expression and the reader can check it here.
+ */
+function contrast(foreground, background) {
+  const channel = (value) => {
+    const c = value / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const luminance = (hex) => {
+    const clean = hex.replace("#", "");
+    const [r, g, b] = [0, 2, 4].map((at) => channel(parseInt(clean.slice(at, at + 2), 16)));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [a, b] = [luminance(foreground), luminance(background)].sort((x, y) => y - x);
+  return (a + 0.05) / (b + 0.05);
+}
+
+test("every colour a word is written in clears the contrast floor", () => {
+  // The house rules already hold the words on the dark surfaces above a floor;
+  // this measures the light ones, which were never checked at all. Each pair is
+  // a colour this application really writes a word in, against the surface it is
+  // written on, taken from the screens rather than invented here: the muted
+  // labels on white and on the near-white band, the explanations on the amber,
+  // emerald and red cards, and the error lines on their pale grounds. Ordinary
+  // words need 4.5 to 1; the boundary was chosen by measuring, not by taste, and
+  // the assertions below fail the moment one of these colours is nudged lighter.
+  const pairs = [
+    ["#1e293b", "#ffffff", "slate-800 on white"],
+    ["#334155", "#ffffff", "slate-700 on white"],
+    ["#475569", "#ffffff", "slate-600 on white"],
+    ["#475569", "#f8fafc", "slate-600 on slate-50"],
+    ["#64748b", "#ffffff", "slate-500 on white"],
+    ["#78350f", "#fffbeb", "amber-900 on amber-50"],
+    ["#b45309", "#fffbeb", "amber-700 on amber-50"],
+    ["#065f46", "#ecfdf5", "emerald-800 on emerald-50"],
+    ["#b91c1c", "#fef2f2", "red-700 on red-50"],
+  ];
+
+  const failures = pairs
+    .map(([foreground, background, label]) => ({ label, ratio: contrast(foreground, background) }))
+    .filter((pair) => pair.ratio < 4.5)
+    .map((pair) => `${pair.label}: ${pair.ratio.toFixed(2)} to 1`);
+
+  assert.deepEqual(failures, []);
+
+  // And the measurement really measures: a lighter grey on white is below the
+  // floor, so a rule that passed everything would be caught here rather than
+  // quietly passing a colour nobody can read.
+  assert.ok(contrast("#cbd5e1", "#ffffff") < 4.5, "slate-300 on white should be below the floor");
+  assert.ok(contrast("#000000", "#ffffff") > 20, "black on white is the top of the scale");
+});
