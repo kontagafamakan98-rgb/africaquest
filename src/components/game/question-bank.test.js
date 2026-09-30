@@ -60,9 +60,20 @@ test("hard spends no question on what an easy player is asked first", () => {
   const full = LEVELS.find((level) => level.questions.length >= 12);
   assert.ok(full, "the game holds a full length level");
 
+  // The two numbers are read off the level rather than written here, so a longer
+  // lesson does not have to be matched by an edit to this test.
+  const bandOf = (index) => questionBand(index, full.questions.length);
   const hard = selectQuestions(full.questions, "hard");
-  assert.equal(hard[0].__index, 5, "hard opens on the middle band, not on the easiest question");
-  assert.equal(questionCount(full.questions, "easy"), 5);
+  assert.equal(
+    hard[0].__index,
+    full.questions.findIndex((_question, index) => bandOf(index) === 2),
+    "hard opens on the middle band, not on the easiest question"
+  );
+  assert.equal(
+    questionCount(full.questions, "easy"),
+    full.questions.filter((_question, index) => bandOf(index) === 1).length,
+    "easy asks exactly the opening band"
+  );
 });
 
 test("an unknown difficulty falls back to easy rather than to nothing", () => {
