@@ -45,26 +45,31 @@ export default function LearnScreen({ progress, onOpenLesson }) {
               <Icon className="w-6 h-6 text-white" aria-hidden="true" />
             </div>
 
+            {/* The name of the level takes the width of the row, and the status
+                and the mastery are read on the line under it. Held in a column
+                of their own on the right, as they used to be, they left about a
+                hundred and twenty pixels for the title, which is three words:
+                fourteen of the twenty levels were cut short with an ellipsis,
+                and the eighteen characters of "Kingdom of Kush" did not fit. */}
             <div className="flex-1 min-w-0">
               <p className="text-amber-200/80 text-[10px] uppercase tracking-[0.15em] font-bold">{level.region}</p>
-              <h3 className="text-white font-extrabold text-base leading-tight truncate">{level.title}</h3>
-              <p className="text-white/70 text-xs truncate">{level.subtitle}</p>
-            </div>
-
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-              {isStudied ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-400/30 rounded-full px-2 py-0.5">
-                  <Check className="w-3 h-3" aria-hidden="true" />
-                  {t.studied}
+              <h3 className="text-white font-extrabold text-base leading-tight">{level.title}</h3>
+              <p className="text-white/70 text-xs">{level.subtitle}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {isStudied ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-400/30 rounded-full px-2 py-0.5">
+                    <Check className="w-3 h-3" aria-hidden="true" />
+                    {t.studied}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-white/60 bg-[#1C150C] border border-white/10 rounded-full px-2 py-0.5">
+                    {t.notStudied}
+                  </span>
+                )}
+                <span className="text-[10px] text-white/60 font-semibold tabular-nums">
+                  {t.mastery} {mastery}%
                 </span>
-              ) : (
-                <span className="text-[10px] font-bold text-white/60 bg-[#1C150C] border border-white/10 rounded-full px-2 py-0.5">
-                  {t.notStudied}
-                </span>
-              )}
-              <span className="text-[10px] text-white/60 font-semibold tabular-nums">
-                {t.mastery} {mastery}%
-              </span>
+              </div>
             </div>
 
             <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors shrink-0" aria-hidden="true" />

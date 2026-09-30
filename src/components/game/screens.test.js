@@ -57,6 +57,7 @@ export { default as PhotoCredits } from "@/pages/PhotoCredits.jsx";
 export { default as About } from "@/pages/About.jsx";
 export { default as PrivacyPolicy } from "@/pages/PrivacyPolicy.jsx";
 export { default as TermsOfService } from "@/pages/TermsOfService.jsx";
+export { translations } from "@/components/i18n.jsx";
 `;
 
 /** Build the screens once, and hand back the imported module. */
@@ -430,6 +431,44 @@ test("the lesson screen draws the whole study pack of a level", async () => {
   });
   assert.ok(html.includes(escapedText(study.glossary[0].term)), "a word names its term");
   assert.ok(html.includes(escapedText(level.questions[0].fact)), "and the key points are still drawn");
+});
+
+test("a level is named in full by the screen that lists the lessons", async () => {
+  // The study list used to keep the state of a level and its mastery in a
+  // column of their own on the right, and draw the name of the level in what
+  // was left: about a hundred and twenty pixels on a phone, which is three
+  // words. Fourteen of the twenty names came out cut short, and a reader could
+  // not tell "Kingdom of Kush" from "Kingdom of Axum".
+  //
+  // jsdom lays nothing out, so what is read back here is not how wide the
+  // column is but what it holds: the name carries no truncation of its own, and
+  // the state is written under the name rather than beside it.
+  const { LearnScreen, getLevels, translations } = await loadScreens();
+  const levels = getLevels("en");
+  const html = await draw(h(LearnScreen, { progress: PLAYED_PROGRESS, onOpenLesson() {} }));
+
+  const list = document.createElement("div");
+  list.innerHTML = html;
+  const names = [...list.querySelectorAll("h3")];
+  assert.equal(names.length, levels.length, "every level of the list names itself");
+
+  const cut = names.filter((name) => /truncate|ellipsis|line-clamp/.test(name.className));
+  assert.deepEqual(
+    cut.map((name) => name.textContent),
+    [],
+    "these names are drawn with an ellipsis waiting to happen"
+  );
+
+  const beside = names.filter((name) => {
+    const column = name.parentElement.textContent;
+    const state = column.includes(translations.en.studied) || column.includes(translations.en.notStudied);
+    return !state || !column.includes(translations.en.mastery);
+  });
+  assert.deepEqual(
+    beside.map((name) => name.textContent),
+    [],
+    "these keep their state outside the column the name is drawn in"
+  );
 });
 
 test("the other screens a reader opens are drawn and audited too", async () => {
