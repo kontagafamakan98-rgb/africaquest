@@ -714,3 +714,56 @@ test("every script in the project is one the runner can read", () => {
 
   assert.deepEqual(broken, []);
 });
+
+test("the annotations are read by the verification, and only the shipped code is read", () => {
+  // Two decisions, and both are the kind that quietly stops being true.
+  //
+  // The first is that the type gate runs at all. A check outside `verify` is a
+  // check nobody runs, which is what this one was: a script in package.json that
+  // was red, absent from the verification, and therefore read by no one - the
+  // worst of the three states, because it looked like a gate.
+  const verify = readFileSync(path.join(ROOT, "scripts", "verify.mjs"), "utf8");
+  assert.match(verify, /typescript\/bin\/tsc/, "the verification no longer reads the annotations");
+  assert.match(verify, /jsconfig\.json/, "the type gate no longer says which program it reads");
+
+  // The second is what that program is: the code that ships. Test files run under
+  // Node, read their own fixtures and are not part of a bundle, so typing them
+  // would mean checking a program nobody deploys - and the noise is what makes a
+  // gate stop being read. The gate itself is the backstop for the rest: a test
+  // file that found its way back in fails on the first `node:` import, not here.
+  const config = readFileSync(path.join(ROOT, "jsconfig.json"), "utf8");
+  assert.match(config, /"checkJs":\s*true/, "the program no longer reads the JSDoc at all");
+  assert.match(config, /\*\.test\.js/, "the type program reads the test files again");
+});
+
+/** The paths a config names in one of its arrays, comments and all. */
+function pathsIn(config, key) {
+  const array = new RegExp(`"${key}"\\s*:\\s*\\[([\\s\\S]*?)\\]`).exec(config);
+  return array ? (array[1].match(/"[^"]+"/g) || []).map((entry) => entry.slice(1, -1)) : [];
+}
+
+test("every file under src is read by one of the two type programs", () => {
+  // A gate is only ever the program it declares, so a file it holds out is a
+  // file nothing checks - and holding one out is exactly how a whole directory
+  // once fell out of this one. Two files under src/lib call Node's own
+  // libraries and cannot be in a browser program at all, so they have a program
+  // of their own. This rule holds the two lists together: what the browser
+  // program holds out, the Node probe must read, and the browser program must
+  // still ask for the whole of src.
+  const browser = readFileSync(path.join(ROOT, "jsconfig.json"), "utf8");
+  const node = readFileSync(path.join(ROOT, "jsconfig.node.json"), "utf8");
+
+  assert.deepEqual(pathsIn(browser, "include").sort(), ["src/**/*.js", "src/**/*.jsx"]);
+
+  // The globs of the browser program are not files: what matters here is the
+  // files it names one by one, and each one has to be read by the Node program.
+  const heldOut = pathsIn(browser, "exclude")
+    .filter((entry) => entry.startsWith("src/") && entry.endsWith(".js") && !entry.includes("*"))
+    .sort();
+  assert.ok(heldOut.length > 0, "nothing is held out of the browser program any more");
+  assert.deepEqual(
+    heldOut,
+    pathsIn(node, "include").sort(),
+    "a file held out of one type program is read by the other, or by neither"
+  );
+});

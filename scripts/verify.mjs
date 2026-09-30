@@ -49,6 +49,30 @@ const STEPS = [
     command: process.execPath,
     args: ["./node_modules/eslint/bin/eslint.js", ".", "--quiet"],
   },
+  // The one gate that reads the code without running it: it holds the JSDoc
+  // annotations to what the functions actually do, so a parameter typed as
+  // narrower than it is - which is how a whole afternoon of stored progress once
+  // read as an impossible shape - is an error here rather than a surprise later.
+  // It reads the program jsconfig.json declares, which leaves the test files out
+  // on purpose: they run under Node and are not part of what ships.
+  {
+    id: "types",
+    name: "Annotations et types (tsc)",
+    command: process.execPath,
+    args: ["./node_modules/typescript/bin/tsc", "-p", "./jsconfig.json"],
+  },
+  // The other half of the same gate, and the reason the first half can afford to
+  // stay browser only: the two modules under src/lib that call Node's own
+  // libraries - the one that draws the icons, the one that hashes a photograph -
+  // are read here, with Node's typings, against their own declared program.
+  // Between the two, every file under src is checked, and neither program has to
+  // pretend to be the other.
+  {
+    id: "tooling-types",
+    name: "Annotations des modules de build (tsc, Node)",
+    command: process.execPath,
+    args: ["./node_modules/typescript/bin/tsc", "-p", "./jsconfig.node.json"],
+  },
   {
     id: "build",
     name: "Production bundle (Vite + Service Worker)",
@@ -131,6 +155,13 @@ for (let i = 0; i < STEPS.length; i++) {
         const clean = offlineLine.replace(/^.*\[plugin africa-quest-offline\]\s*/, "");
         console.log(`    ↳ ${clean}`);
       }
+    } else if (step.id === "types" || step.id === "tooling-types") {
+      // tsc says nothing at all when it is happy, which is exactly why it needs a
+      // line here: a step that prints nothing reads as a step that did nothing.
+      // The name of the config is the name of the program it read, since there
+      // are two of them now.
+      const config = step.args[step.args.length - 1];
+      console.log(`    ↳ no type error in the program ${config} declares`);
     } else if (step.id === "weights" && res.stdout) {
       // The report is the step: one line per bundle of the application, and what
       // each of them weighs against the pass it is compared with. It is read in

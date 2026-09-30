@@ -20,19 +20,39 @@ export const REVIEW_SCOPES = ["all", "level", "region", "mistakes"];
  */
 export const MISTAKE_THRESHOLD = 2;
 
-/** The scope a player starts on: the whole rotation, in the queue's own order. */
-export const ALL_SCOPE = { kind: "all" };
+/**
+ * One way of narrowing the session, as the interface builds and keeps it.
+ *
+ * `id` and `region` belong to the kind that carries them, and `title` is what the
+ * screen prints on the rule it has selected - the scope is held by a screen for
+ * as long as the player keeps narrowing, so it says what it shows rather than
+ * making the screen look the name up again on every render.
+ *
+ * @typedef {{ kind: "all" | "level" | "region" | "mistakes", id?: number, region?: string, title?: string }} ReviewScope
+ */
 
-/** One queue item as a scope argument. Unknown kinds fall back to the whole queue. */
+/** The scope a player starts on: the whole rotation, in the queue's own order. */
+export const ALL_SCOPE = /** @type {ReviewScope} */ ({ kind: "all" });
+
+/**
+ * One queue item as a scope argument. Unknown kinds fall back to the whole queue.
+ *
+ * @param {number} id
+ * @returns {ReviewScope}
+ */
 export function scopeOfLevel(id) {
   return { kind: "level", id };
 }
 
+/**
+ * @param {string} region
+ * @returns {ReviewScope}
+ */
 export function scopeOfRegion(region) {
   return { kind: "region", region };
 }
 
-export const MISTAKES_SCOPE = { kind: "mistakes" };
+export const MISTAKES_SCOPE = /** @type {ReviewScope} */ ({ kind: "mistakes" });
 
 /**
  * Stable identity of a scope, so a screen can tell when the player changed it

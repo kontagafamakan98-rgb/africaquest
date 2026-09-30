@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useT } from "../i18n";
 
-export default function XPBar({ current, max, level, className }) {
+export default function XPBar({ current, max, level, className = "" }) {
   const t = useT();
   const pct = Math.min((current / max) * 100, 100);
 

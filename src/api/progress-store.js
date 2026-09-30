@@ -36,7 +36,13 @@ function rememberRefusal(error) {
 export function watchSaveRefusal(listener) {
   refusalWatchers.add(listener);
   listener(refusal);
-  return () => refusalWatchers.delete(listener);
+  // The way to stop listening, and nothing else: `Set.delete` answers whether
+  // the listener was still there, which is nobody's business here. Returning it
+  // made this cleanup a function that returns a value, which is not a cleanup a
+  // React effect accepts.
+  return () => {
+    refusalWatchers.delete(listener);
+  };
 }
 
 /** Whether the browser is refusing to save right now. */

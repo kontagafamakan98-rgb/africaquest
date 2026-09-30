@@ -96,10 +96,19 @@ export function titleOf(html) {
  * A letter is dropped because a roman numeral beside a volume is not what the
  * page is about, and a name that came down to one character would be found
  * everywhere. The rest of the name is what has to be found in the title.
+ *
+ * @param {string} name The work's name, as the citation writes it.
+ * @returns {string[]} The words a title is searched for.
  */
 export function nameWords(name) {
-  const words = String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().match(/[\p{L}\p{N}]+/gu);
-  return (words || []).filter((word) => word.length > 1 && !SMALL_WORDS.has(word));
+  const found = String(name)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .match(/[\p{L}\p{N}]+/gu);
+  /** @type {string[]} */
+  const words = found || [];
+  return words.filter((word) => word.length > 1 && !SMALL_WORDS.has(word));
 }
 
 /**

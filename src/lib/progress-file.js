@@ -264,6 +264,11 @@ export function cleanProgress(raw) {
  * The document that gets saved: the whole record under a marker and a version,
  * plus whose progress it is, so a teacher holding several files can tell them
  * apart without opening one.
+ *
+ * @param {{ progress?: object, profileName?: string, now?: number }} [backup]
+ *   The record to write, the name to write on it, and the moment to date it with,
+ *   handed in by a caller that wants two runs to agree on one document.
+ * @returns {object} the document, ready to be serialised
  */
 export function buildBackup({ progress, profileName = "", now = Date.now() } = {}) {
   return {

@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "checkJs": true,
+    "allowJs": true,
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["esnext"],
+    "target": "esnext",
+    "skipLibCheck": true,
+    // The two files below are the only ones here, and they are the only ones in
+    // src that cannot run in a browser: one deflates a PNG by hand, the other
+    // hashes a file, and both are Node's own libraries. They sit in src/lib so
+    // that the build scripts and the tests reach the same code, so they are
+    // typed where they actually run, with Node's typings and nothing else.
+    "types": ["node"]
+  },
+  // Exactly the modules jsconfig.json holds out, named here: between the two
+  // programs every file under src is read by one of them, and a rule in
+  // src/lib/design-rules.test.js fails when a file falls out of both.
+  "include": ["src/lib/app-icons.js", "src/lib/photo-fingerprints.js"],
+  "exclude": ["node_modules", "dist"]
+}

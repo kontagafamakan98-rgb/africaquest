@@ -267,5 +267,19 @@ test("a browser that refuses to save is seen, and a browser that saves again is 
   await progressStore.recordAnswer("1:2", true);
   assert.equal(saveIsRefused(), false, "a store that saves again is no longer refused");
   assert.equal(seen.at(-1), null);
-  assert.equal(stop(), true);
+
+  // And stopping really stops: the wall is hit again, the store's own answer
+  // changes back, and the listener that asked to stop hears nothing. What this
+  // watches is the behaviour, not the value `Set.delete` happens to return.
+  const heard = seen.length;
+  stop();
+  localStorage.setItem = () => {
+    const error = new Error("QuotaExceededError");
+    error.name = "QuotaExceededError";
+    throw error;
+  };
+  await assert.rejects(() => progressStore.recordAnswer("1:3", true));
+  assert.equal(saveIsRefused(), true);
+  assert.equal(seen.length, heard, "a listener that stopped listening was called again");
+  localStorage.setItem = allowed;
 });

@@ -77,6 +77,11 @@ export function looksLike(kind, body) {
  * there. `wrong` is the site answering with something that is not what was
  * asked for, which is how a half-published site looks. Only `healthy` is the
  * site being up.
+ *
+ * @param {{ kind?: string, status?: number, body?: string, error?: string|null }} [answer]
+ *   What was asked for, and what came back: the status of the answer, its body
+ *   when there was one, and the message of the rejection when there was none.
+ * @returns {"unreachable"|"missing"|"refused"|"wrong"|"healthy"}
  */
 export function verdictOf({ kind, status = 0, body = "", error = null } = {}) {
   // A rejection, or an answer with no status at all: either way nothing came

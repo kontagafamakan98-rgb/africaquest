@@ -65,8 +65,19 @@ file that travels with the work.
 - `npm run build` produces a production build in `dist/`.
 - `npm run preview` serves the production build.
 - `npm run lint` runs ESLint.
-- `npm run verify` runs every gate the project has: translations, photograph budgets and
-  fingerprints, application icons, the tests, the linters, then a production build.
+- `npm run verify` runs every gate the project has: the translations, the photograph budgets
+  and fingerprints, the application icons, the brief the first screen reads, the tests and the
+  house rules, the linters, the annotations the code is read through - twice, once for the
+  program that ships and once for the build modules that run under Node - and then a production
+  build, which the last step weighs, bundle by bundle, against the pass it is compared with.
+- `npm run typecheck` is that reading on its own, and it is the one gate that never runs the
+  code: it holds every JSDoc annotation to what its function really does, so a parameter
+  typed narrower than the values it receives is an error here rather than a surprise later.
+  It reads two programs, and between them no file under `src/` is left unchecked:
+  `jsconfig.json` is the browser program, which leaves the test files out on purpose since
+  they run under Node and are not part of what ships, and `jsconfig.node.json` reads the two
+  modules under `src/lib/` that call Node's own libraries - the icon rasteriser and the
+  photograph fingerprints - with Node's typings, since neither could run in a page at all.
 - `npm run photos:stamp` records the fingerprint of every photograph, after the pictures have
   changed.
 - `npm run weights` weighs the build bundle by bundle and compares it with the last recorded

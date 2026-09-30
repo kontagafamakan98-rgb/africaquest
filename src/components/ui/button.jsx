@@ -39,6 +39,27 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Everything a caller may hand a button: its own words and handler, plus the three
+ * this wrapper decides - the shape of its edge, its size, and whether the child
+ * element becomes the button rather than sitting inside one.
+ *
+ * The open `Record<string, any>` beside it is deliberate: this is a pass-through,
+ * so whatever the caller adds reaches the element underneath, and a list of
+ * properties here would be a promise to keep it up to date forever.
+ *
+ * @typedef {object} ButtonProps
+ * @property {any} [children]
+ * @property {string} [className]
+ * @property {"default"|"destructive"|"outline"|"secondary"|"ghost"|"link"} [variant]
+ * @property {"default"|"sm"|"lg"|"icon"} [size]
+ * @property {boolean} [asChild]
+ * @property {boolean} [disabled]
+ * @property {string} [type]
+ * @property {Function} [onClick]
+ */
+
+/** @type {React.ForwardRefExoticComponent<ButtonProps & Record<string, any>>} */
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button"
   return (

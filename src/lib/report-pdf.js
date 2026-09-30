@@ -183,8 +183,12 @@ export async function buildReportPdf(report) {
   muted(doc.splitTextToSize(String(report.failuresNote), right - MARGIN), 8);
   y += LINE;
 
-  // Footer on every page
-  const pages = doc.internal.getNumberOfPages();
+  // Footer on every page, counted with the public method rather than with the one
+  // under `internal`: both exist and both work, and only this one is part of the
+  // interface jsPDF declares - which is the difference between reading the
+  // library and reaching behind it. The test reads the count back from a
+  // document this module really drew, so the two can never drift apart quietly.
+  const pages = doc.getNumberOfPages();
   for (let page = 1; page <= pages; page += 1) {
     doc.setPage(page);
     doc.setFont("helvetica", "normal");

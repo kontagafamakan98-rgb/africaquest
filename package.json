@@ -27,7 +27,7 @@
     "build": "npm run check:translations --silent && npm run check:facts --silent && vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc -p ./jsconfig.json",
+    "typecheck": "tsc -p ./jsconfig.json && tsc -p ./jsconfig.node.json",
     "test": "node --test",
     "preview": "vite preview"
   },

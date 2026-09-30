@@ -9,6 +9,22 @@ import { questionKey } from "../components/game/learning";
 import { useLang } from "../components/i18n";
 import { localDay, streakAfterPlay } from "../lib/streak";
 
+/**
+ * Writes one changed record.
+ *
+ * Named and annotated rather than left inline, and not for tidiness: a
+ * destructured parameter with no type of its own cannot tell the mutation what it
+ * is handed, so the mutation would be typed as taking nothing at all and the
+ * screen's own call would be reported as a mistake.
+ *
+ * @param {{ id: string, data: object }} change the profile to write, and what to
+ *   write over it
+ * @returns {Promise<object>} the record as it was written
+ */
+function saveProgressChange({ id, data }) {
+  return progressStore.update(id, data);
+}
+
 function buildNewProgress(progress, levels, { level, difficulty, score, total, stars, xp, timeSeconds }) {
   const diff = DIFFICULTIES[difficulty];
   const prevScores = progress.level_scores || {};
@@ -88,6 +104,14 @@ function buildNewProgress(progress, levels, { level, difficulty, score, total, s
   };
 }
 
+/**
+ * The quiz, reached in two ways: as a page of its own, where the level and the
+ * way back come from the address, and from the home screen, which hands both in.
+ * So neither prop is required, and each one falls back to the address or to the
+ * browser's own back when it is missing.
+ *
+ * @param {{ levelId?: string|number, onBack?: () => void }} props
+ */
 export default function QuizPage({ levelId: levelIdProp, onBack }) {
   const queryClient = useQueryClient();
   const [difficulty, setDifficulty] = useState(null);
@@ -110,14 +134,18 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
 
   // Optimistic update mutation
   const updateProgress = useMutation({
-    mutationFn: ({ id, data }) => progressStore.update(id, data),
+    mutationFn: saveProgressChange,
     onMutate: async ({ data }) => {
       await queryClient.cancelQueries({ queryKey: ["progress"] });
       const previous = queryClient.getQueryData(["progress"]);
-      // Optimistically update the cache immediately
-      queryClient.setQueryData(["progress"], (old) =>
-        (old || []).map((p) => (p.id === progress?.id ? { ...p, ...data } : p))
-      );
+      // Optimistically update the cache immediately. What the cache holds is
+      // checked rather than assumed: this is the first render of the screen, so
+      // the list may not be there yet, and a record that is not a list is left
+      // as it is rather than replaced with an empty one.
+      queryClient.setQueryData(["progress"], (old) => {
+        const list = Array.isArray(old) ? old : [];
+        return list.map((p) => (p.id === progress?.id ? { ...p, ...data } : p));
+      });
       return { previous };
     },
     onError: (_err, _vars, context) => {

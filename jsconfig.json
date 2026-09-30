@@ -7,15 +7,45 @@
     "jsx": "react-jsx",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "lib": ["esnext", "dom"],
+    // dom.iterable is what makes the iterators of the DOM - URLSearchParams, and
+    // the key iteration src/lib/urls.js does to compare two addresses - part of
+    // the program rather than an error under a loop.
+    "lib": ["esnext", "dom", "dom.iterable"],
     "target": "esnext",
     "checkJs": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "types": []
+    // What the application is allowed to know about where it runs: vite/client
+    // declares `import.meta.env`, which src/lib/base-path.js reads to find the path
+    // the site is served from. Nothing else is included on purpose - the typings of
+    // Node and of the test runner describe a program that never ships.
+    "types": ["vite/client"]
   },
-  "include": ["src/components/**/*.js", "src/pages/**/*.jsx", "src/Layout.jsx"],
-  "exclude": ["node_modules", "dist", "src/vite-plugins", "src/components/ui", "src/api", "src/lib"]
-} 
+  // The whole application, and no list of directories: a root list is a way to
+  // leave code out without saying so. Every entry point is here - App.jsx,
+  // main.jsx, pages.config.js - and everything else is reached through them.
+  "include": ["src/**/*.js", "src/**/*.jsx"],
+  // Test files are held out although they sit beside the code they check: they run
+  // under Node, read their own fixtures, and are not part of the bundle. Checking
+  // them here would mean checking a program nobody deploys, and the noise would be
+  // the reason the check stopped being read.
+  "exclude": [
+    "node_modules",
+    "dist",
+    // Not part of the application: this is build tooling, and it is run by Vite
+    // rather than by the browser.
+    "src/vite-plugins",
+    "src/**/*.test.js",
+    // The two modules that cannot run in a page at all: one deflates a PNG by
+    // hand with node:zlib, the other hashes a photograph with node:crypto, and
+    // the build scripts are what reach them. They are held out here and read by
+    // jsconfig.node.json instead, with Node's typings - which is also why Node's
+    // typings stay out of this program: added here, they would let a page use
+    // `Buffer` or `process` without a word from this gate, and that silence is
+    // the whole thing this gate exists to prevent.
+    "src/lib/app-icons.js",
+    "src/lib/photo-fingerprints.js"
+  ]
+}

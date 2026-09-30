@@ -28,9 +28,29 @@ export { TOTAL_QUESTIONS };
 
 
 /**
+ * A level as the two collectors below read it.
+ *
+ * The full levels carry their questions; the brief from level-summary.js carries
+ * only what the map needs, which is why the question is read with `?.` and may be
+ * missing. Saying so is the point rather than the annotation being loose: a screen
+ * working from the brief gets the position and the schedule, and asks the full
+ * levels for the wording only when it shows it.
+ *
+ * @typedef {object} ReviewableLevel
+ * @property {number} id
+ * @property {string} [title]
+ * @property {string} [region]
+ * @property {Array<object>} [questions]
+ */
+
+/**
  * Questions the review session should ask back right now, following the spaced
  * repetition schedule: the most overdue first, then the ones missed most often.
  * A question missed a minute ago is not in the list yet, it comes back later.
+ *
+ * @param {object} [questionStats] the schedule, keyed by level and question
+ * @param {ReviewableLevel[]} [levels]
+ * @param {{ max?: number, now?: number }} [options]
  */
 export function collectDueReviews(questionStats = {}, levels = LEVEL_SUMMARIES, { max = 12, now = Date.now() } = {}) {
   const items = [];
@@ -58,6 +78,10 @@ export function collectDueReviews(questionStats = {}, levels = LEVEL_SUMMARIES, 
  * carries the question's position and its schedule, so a screen can show the
  * waiting time of every one and let the player choose what to practise instead
  * of always being handed the same due batch.
+ *
+ * @param {object} [questionStats]
+ * @param {ReviewableLevel[]} [levels]
+ * @param {{ now?: number }} [options]
  */
 export function collectReviewQueue(questionStats = {}, levels = LEVEL_SUMMARIES, { now = Date.now() } = {}) {
   const items = [];
@@ -271,6 +295,10 @@ export function starsOverTime(history = [], windowDays = 14) {
  * the finished game is written to the history only once the player leaves it.
  * Every field is null rather than a made up zero when there is nothing to
  * compare with.
+ *
+ * @param {Array<object>} [history] the games already recorded
+ * @param {{ levelId?: number, difficulty?: string, score?: number }} [session]
+ *   the game that just ended: what it is compared against, and its own score
  */
 export function sessionRecap(history = [], { levelId, difficulty = "easy", score = 0 } = {}) {
   const previous = (history || []).filter(

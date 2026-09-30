@@ -401,7 +401,11 @@ function reminderNote(reminder, t) {
   return reminder.enabled ? t.reminderBrowserDecides : null;
 }
 
-function ConfirmBox({ message, onCancel, onConfirm, deleting, t, confirmLabel, busyLabel }) {
+// The two labels are optional and default to nothing, which is what the body
+// already expects: it falls back to the dictionary when a caller does not name
+// its own. Saying so in the signature is what keeps a caller that leaves them
+// out from reading as a mistake.
+function ConfirmBox({ message, onCancel, onConfirm, deleting, t, confirmLabel = "", busyLabel = "" }) {
   return (
     <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
       <div className="flex gap-2 items-start mb-3">
