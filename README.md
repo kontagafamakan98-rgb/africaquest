@@ -27,6 +27,10 @@ The application makes no network request after loading its own assets: the level
 are files of its own, downloaded once from their free licence source and shipped with the
 rest of the game.
 
+Nothing else is kept. The failure log ("When something breaks", below) lives in the browser's
+memory, holds the last dozen failures of the session, and is gone when the tab is closed: it
+is not a key, not a file, and not a request.
+
 ## Running locally
 
 ```bash
@@ -49,7 +53,11 @@ npm run dev
 - `npm run check:references` follows the pages the verified references point at and reads the
   title each one answers with, on demand and outside the verification, since it needs the
   network.
+- `npm run check:references:record` writes down what a person read on a page no script can read,
+  with their name and the day, so that a refusal stops being the last word about it.
 - `npm run weights:record` records this build as the pass the next one is compared with.
+- `npm run stress` walks the newest and the heaviest progress record the application accepts
+  and holds every path that has to read one to a budget, outside the verification.
 
 ## Photographs
 
@@ -138,8 +146,21 @@ works both at the root of a domain and under a project path such as
 `https://<owner>.github.io/<repository>/`, and the service worker is written for that same
 address, which is what keeps the offline copy working once installed.
 
+The same address is handed to the build a second time, as `SITE_ORIGIN`, because the files a
+crawler and a link preview read need it in full rather than as a path (see "What a crawler and a
+shared link read").
+
 One setting has to be turned on once, by hand: in the repository settings, under **Pages**,
-set **Source** to **GitHub Actions**.
+set **Source** to **GitHub Actions**. Nothing in the workflow can do it: the token a run is
+given may read that setting and may publish through it, but creating the site is outside what
+it is allowed to do, and GitHub answers "Resource not accessible by integration" when
+something tries. So the workflow asks first, and publishes only when there is somewhere to
+publish to. A repository that does not publish with Pages yet gets one run that builds
+nothing, writes what to click into the run summary, and warns once - instead of failing on a
+step whose name says nothing about the reason. The Uptime workflow goes on failing until the
+site is really there, which is the check that is meant to be alarmed. An owner who would
+rather not click can add a repository secret named `PAGES_TOKEN` holding a token that may
+administer the repository, and the next run turns Pages on with it.
 
 ## Project layout
 
@@ -244,6 +265,119 @@ The recorded pass is compared with a build of the same sources, which the Node v
 `.nvmrc` turns into the same bytes wherever it runs, so the gate means the same thing on a
 laptop and on the CI runner.
 
+## What a crawler and a shared link read
+
+The application is one page, and everything a reader meets inside it is drawn by code: a search
+engine is shown the shell, and a chat shows what that shell says about itself. Three small files
+carry the whole story, and the build writes all three (`build/site-files.js`).
+
+`robots.txt` allows everything and names the sitemap, because nothing here is hidden from a
+crawler: there is no private area, no account and no page behind a login. `sitemap.xml` lists the
+addresses of `src/pages`, read from that folder at build time with the landing page first, so a
+page added tomorrow turns up there without anybody remembering this file exists. The link preview
+in `index.html` carries a title, a description and a picture drawn - like the icons - from
+`public/favicon.svg`, so a shared link and the application itself cannot show two different marks.
+
+The one thing none of them knows is the address the site is finally served from. It is handed in
+at build time as `SITE_ORIGIN`, which the Pages workflow fills from the address GitHub answers for
+the repository; a build without it falls back to the published address, and an address that is not
+https is refused rather than written into a sitemap no crawler would fetch.
+`src/lib/site-files.test.js` holds both ends of that: the addresses are the pages that exist, and
+the picture the tags promise is the file on disk, 1200 by 630.
+
+## When something breaks
+
+A screen that fails to be drawn is the one failure with nothing left to draw it,
+so the application has a boundary above its router (`src/components/AppCrash.jsx`).
+It catches the three ways a screen breaks here - a value the data does not have, a
+chunk that could not be fetched (a phone that opened a level while the network had
+gone), and a mistake in the drawing itself - and it says three things: that it
+broke, that nothing played has been lost, and what to do about it. The trace sits
+behind a disclosure rather than on the page, written by a module of its own
+(`src/lib/failure-report.js`) which bounds it, keeps the stack apart from the
+component stack, and is tested against values that are not errors at all. Nothing
+is stored and nothing is sent: the lines exist while the crash screen is open, and
+the copy button is the only way they leave the device.
+
+The failure a player cannot see for themselves is a browser that refuses to save.
+A full quota, private browsing, a school browser that blocks storage: the game
+keeps scoring and the afternoon disappears at the next reload. So a refused write
+is remembered (`src/api/progress-store.js`) and said out loud on every screen by
+the status layer, and the write still fails for its caller, so a screen that
+thought it had saved knows it has not. When the browser saves again, the line goes
+away on its own.
+
+Both are written down as they happen, in a log of the session kept in the
+browser's memory (`src/lib/error-log.js`): the last dozen failures, newest first,
+each one a name, a message and the screen or the place it came from, capped so
+that nothing here can grow. A failure that happens again is counted rather than
+stored again, which is what makes a loop that throws a thousand times one line
+instead of a log it emptied. The list is read by the progress report a teacher
+exports, so what went wrong on a tablet travels with the file rather than being
+described from memory afterwards. Nothing about it is written to storage, sent
+anywhere, or about the reader: an error's own words, and where the application was
+when it threw.
+
+What is published is checked too, because a site that is not there is quiet: a
+half finished deployment, a repository whose Pages setting was changed, and a
+build that published an empty directory all answer at the same address.
+`npm run check:site` reads the four files that say what the site is - the page,
+`robots.txt`, the sitemap and the link preview - and decides what each answer
+means rather than whether it arrived: a single page site answers an unknown path
+with its own HTML, so a file that is missing comes back with a success status and
+the wrong content. The Uptime workflow runs it once a day, and a failing run is
+what tells the publisher, since GitHub notifies the owner of a scheduled workflow
+that failed. That is why no third party watches this site and no secret is kept
+for one.
+
+Two screens hold long lists: the credits (two hundred rows of photographs) and the
+bibliography (every reference of the game with its questions). Both are reference
+screens, opened to settle one question, so each draws a few groups and offers the
+rest, while the counts in the header stay the whole thing: what is not drawn yet
+never reads as absent. And what nothing here needs is a rate limit, an API budget
+or a cap on spending: the application makes no request at all after it has loaded
+its own files - which the house rules check - and the only things that talk to
+another machine are the on-demand checks and this one, four at a time, a quarter of
+a second apart, with a timeout on every request.
+
+## What a hundred thousand readers cost
+
+A hundred thousand readers is not a load this application can feel, and the reason is
+worth writing down rather than assuming: nothing of ours runs between them and the
+files. Every request is answered by the host from a directory of static files, so readers
+nobody is holding a device for cost bandwidth rather than CPU, and the only work this
+project does per reader is the download `npm run weights` already reports. What is left
+to worry about is the device in somebody's hand, and that is what `npm run stress`
+measures.
+
+What a hundred thousand readers can exhaust is the transfer, and it is arithmetic
+rather than a guess: a first visit is the 60 KB of entry files the weights report
+prints plus the 515 KB of card photographs the map draws, so a hundred thousand first
+visits is about 56 GB, against the soft 100 GB a month GitHub Pages allows. Repeat
+visits are answered from the browser's cache instead, since every file is
+content-hashed and installed by the service worker. That threshold is worth knowing
+for the month a link travels, and it is the only one there is: nothing behind these
+files counts the readers for us.
+
+Two shapes are built and walked: a player who finished the game (twenty levels, two
+hundred questions answered once, some 24 KB of record) and the heaviest record the
+importer accepts (four thousand answers, five thousand finished levels, some 800 KB).
+What each path may cost is a decision kept in `src/lib/load-stress.js`, written in the
+unit a reader feels it in — a tap that blocks the screen, a file that loads while
+somebody waits — so the script cannot raise one on its way past.
+
+The first run of it found the cliff this section exists to avoid: rebuilding the ceiling
+record took eight hundred milliseconds, because the reader asked the growing record for
+its key list once per answer and so paid the square of the number of answers. It now
+costs a few milliseconds, and the budget is what keeps it there. The other number worth
+knowing is the one a shared tablet meets: a browser gives one origin about 5 MB, which
+holds some two hundred finished players or six of the ceiling — and the ceiling only ever
+arrives as an imported file, since nothing the game writes comes near it.
+
+The stress run is deliberately not part of `npm run verify`: a timing on a shared runner
+is a coin toss, and a check that fails at random is a check people learn to ignore.
+Everything it decided is a table the tests read instead.
+
 ## What arrives from outside
 
 Exactly one kind of thing does: a file a reader picks from their own device. Everything else in
@@ -284,7 +418,18 @@ repository.
 
 The application ships with a GDPR privacy notice (`/PrivacyPolicy`) and terms of use
 (`/TermsOfService`), both available from the Settings screen. Because no data leaves the
-device, the privacy notice describes a local-only processing model.
+device, the privacy notice describes a local-only processing model. It names the publisher, the
+host and the person who answers for personal data, and `npm run check:legal` lists whatever of
+those is still missing, so a store review finds the gap here rather than in a rejection email.
+
+Nothing in the application asks a reader to agree to anything, because nothing in it collects
+anything: no cookie is set, no measuring script is loaded, no font or script comes from another
+origin, and no form sends a name anywhere. That is why there is no consent banner, and a banner
+over an application that stores nothing would be worse than its absence: it would ask for a
+permission that is not needed and teach a reader that a box is part of using an app. The rules
+behind that are in `src/lib/design-rules.test.js` - an address that is not https, a script or a
+picture loaded from another origin, a key or a token in a file every reader can download, a
+credential, a countdown, and a box already ticked all fail the verification.
 
 Every photograph is listed with its author, its licence and the page it was taken from,
 on the photo credits screen (`/PhotoCredits`) that the Settings screen opens. The list is
@@ -323,5 +468,19 @@ heuristic and the report says so: it is not a proof that the page is the work, s
 person can read a page, but it is the difference between a link that opens the work and a link
 that opens another page. What it cannot read it does not count as confirmed: the World Heritage
 Centre answers a script with a 403 on every one of its addresses, as Britannica does, so those
-fourteen references are printed as unconfirmed rather than passed as checked. Like the other two,
-it stays out of `npm run verify`: a gate that fails on a train is a gate somebody turns off.
+fourteen references are printed as unconfirmed rather than passed as checked. That is honest, and
+it is also where it used to stop, since no run of a script can ever read a page it was never
+handed. A person can, and `npm run check:references:record -- <url> --title "<what the tab says>"
+--by "<your name>"` writes down what they read. From then on the page is reported as confirmed by
+hand, under the name and the day, instead of unconfirmed.
+
+Three things keep that from being a way to make a report green. A reading is dated and it comes
+due: after a year it asks to be read again. A person may record a finding as easily as a
+confirmation, and a page they read as moved or gone is reported as a failure exactly like the
+machine's own, because a by-hand check is evidence and evidence goes both ways. And a person's
+word only fills a silence: a page that answered under another title is today's answer about
+today's page, so the two are printed together as a disagreement rather than one being quietly
+preferred. The readings live in `build/reference-checks.json`, written only by that command and
+read by the check, through a module of its own, `src/lib/reference-checks.js`, that the tests read
+as well. Like the other two, it stays out of `npm run verify`: a gate that fails on a train is a
+gate somebody turns off.
