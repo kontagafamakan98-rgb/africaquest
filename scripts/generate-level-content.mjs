@@ -35,7 +35,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { LEVELS, getLevelGallery } from "../src/components/game/gameData.js";
+import { LEVELS, levelGalleryRows } from "../src/components/game/gameData.js";
 import { LEVELS_FR } from "../src/components/game/content-fr.js";
 import { LEVEL_STUDY } from "../src/components/game/level-study.js";
 
@@ -99,7 +99,11 @@ function moduleOf(level) {
   const french = LEVELS_FR[level.id];
   if (!french) throw new Error(`level ${level.id}: the French wording of this level is missing`);
 
-  const gallery = { en: getLevelGallery(level.id, "en"), fr: getLevelGallery(level.id, "fr") };
+  // The rows as the photograph table names them, and not as a browser asks for
+  // them: a module written here outlives the address it is published to, and the
+  // lesson puts each file under the path it is actually served from when it
+  // reads the level back (see loadLevel in level-content.js).
+  const gallery = { en: levelGalleryRows(level.id, "en"), fr: levelGalleryRows(level.id, "fr") };
   if (gallery.en.length === 0) throw new Error(`level ${level.id}: no photograph to show in its lesson`);
 
   const study = LEVEL_STUDY[level.id];

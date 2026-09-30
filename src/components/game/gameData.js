@@ -34,23 +34,41 @@ export { DIFFICULTIES } from "./difficulties.js";
 
 /**
  * The photographs of one level, captioned and credited in the requested
- * language. The files, the authors and the licences are the same everywhere;
- * only the caption under each picture is translated.
+ * language, named exactly as the photograph table names them.
  *
  * The lesson gallery draws the caption and the credit line and nothing else, but
  * the credits screen lists every picture of the game with its author, its
  * licence and the page it was taken from, so those three travel with the same
  * row rather than being looked up a second time from a list kept beside it.
+ *
+ * The file is left as the table writes it, from the root of the build, because
+ * this is what a module written at build time can carry: the path a site is
+ * published under is decided by the address it is served from, and the script
+ * that writes the level modules runs outside a browser, where there is no
+ * BASE_URL to read. Preparing the path is the reader's job, and both readers do
+ * it: getLevelGallery below for a screen, and loadLevel in level-content.js for
+ * the level a lesson downloads on its own.
  */
-export function getLevelGallery(levelId, lang = "en") {
+export function levelGalleryRows(levelId, lang = "en") {
   return (LEVEL_GALLERIES[levelId] || []).map((photo) => ({
-    file: servedPath(photo.file),
+    file: photo.file,
     caption: lang === "fr" ? photo.caption.fr || photo.caption.en : photo.caption.en,
     credit: photoCredit(photo, lang),
     author: photo.author || photo.collection,
     licence: photoLicence(photo, lang),
     source: photoSourcePage(photo),
   }));
+}
+
+/**
+ * The photographs of one level, ready for the browser that has to fetch them.
+ *
+ * The same rows as above, with the file put under the path the application is
+ * served from. A screen that draws a photograph of a level held in this module
+ * goes through here rather than handing the table's name to the browser.
+ */
+export function getLevelGallery(levelId, lang = "en") {
+  return levelGalleryRows(levelId, lang).map((photo) => ({ ...photo, file: servedPath(photo.file) }));
 }
 
 export const LEVELS = [

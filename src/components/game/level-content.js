@@ -19,6 +19,7 @@
  */
 
 import { localizeLevel } from "./localize-level.js";
+import { servedPath } from "../../lib/base-path.js";
 
 const LOADERS = {
   1: () => import("./levels/level-01.js"),
@@ -82,6 +83,14 @@ export async function loadLevel(levelId, lang = "en") {
     // in the level's wording, so they are chosen here: it keeps the translation
     // logic about text only, and both languages carry the same shape.
     study: content.study?.[code] || content.study?.en || null,
-    gallery: content.gallery?.[code] || content.gallery?.en || [],
+    // Each photograph is put under the path the application is served from as
+    // it is handed over, because the module carries the file as the photograph
+    // table names it and a module cannot know that path: a lesson published
+    // under a directory would ask for /photos/ and be shown nothing at all,
+    // which is what a gallery of captions with no pictures is.
+    gallery: (content.gallery?.[code] || content.gallery?.en || []).map((photo) => ({
+      ...photo,
+      file: servedPath(photo.file),
+    })),
   };
 }

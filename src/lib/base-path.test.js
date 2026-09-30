@@ -33,7 +33,7 @@ test("outside a browser build there is no base, and the root is the answer", () 
 test("the app asks for its own files through this module, and only its own", () => {
   // The photograph table names its files from the root of the build, so a path
   // handed straight to the browser would leave every picture missing under a
-  // path. The two places that hand one over go through servedPath, and the
+  // path. The three places that hand one over go through servedPath, and the
   // router keeps its routes under the same directory, or a link to the privacy
   // notice would leave the application.
   //
@@ -64,6 +64,41 @@ test("the app asks for its own files through this module, and only its own", () 
     "the Commons page stays as it is"
   );
   assert.doesNotMatch(images, /servedPath/, "and the table itself stays free of the base");
+});
+
+test("a lesson read on its own prepares its gallery the same way", () => {
+  // The lesson is the one screen that downloads a single level, and the
+  // photographs it draws come out of that level rather than out of the game.
+  // So the level has to be prepared on the way in, or the gallery of a lesson
+  // published under a directory is a strip of captions with no pictures in it:
+  // every file asked for at the root of the domain, and every one of them 404.
+  //
+  // What is checked here is the shape of that, because a base only exists in a
+  // browser build, and the deployment is what really exercises it.
+  const content = read("src/components/game/level-content.js");
+  assert.match(
+    content,
+    /import \{ servedPath \} from "\.\.\/\.\.\/lib\/base-path\.js";/,
+    "the reader of a single level reads the module"
+  );
+  assert.match(content, /file: servedPath\(photo\.file\)/, "and puts each photograph under the base");
+
+  // The modules those levels live in are written by a script that runs outside
+  // a browser, where there is no BASE_URL to read, so they keep the file as the
+  // photograph table names it. One that baked a path in would have it asked for
+  // twice, under two directories, once the lesson prepared it again.
+  const dir = path.join(ROOT, "src", "components", "game", "levels");
+  const modules = readdirSync(dir).filter((file) => file.endsWith(".js"));
+  assert.equal(modules.length, 20, "one module per level");
+  const files = modules.flatMap((file) =>
+    [...read(`src/components/game/levels/${file}`).matchAll(/file: "([^"]+)"/g)].map((match) => match[1])
+  );
+  assert.equal(files.length, 120, "three photographs per level, in both languages");
+  assert.deepEqual(
+    files.filter((file) => !file.startsWith("/photos/")),
+    [],
+    "these carry a path the lesson would then prepare a second time"
+  );
 });
 
 test("no journey through the app sends the browser to the root of the domain", () => {
