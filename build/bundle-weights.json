@@ -7,7 +7,7 @@
   "/assets/LessonScreen.js": 9823,
   "/assets/PhotoCredits.js": 5656,
   "/assets/QuizPage.js": 6388,
-  "/assets/QuizScreen.js": 16421,
+  "/assets/QuizScreen.js": 16442,
   "/assets/ReviewScreen.js": 10489,
   "/assets/ReviewSession.js": 1073,
   "/assets/SourceReference.js": 1524,
@@ -18,7 +18,7 @@
   "/assets/icons.js": 39453,
   "/assets/index.css": 51955,
   "/assets/index.es.js": 159566,
-  "/assets/index.js": 169293,
+  "/assets/index.js": 175403,
   "/assets/jspdf.es.min.js": 390586,
   "/assets/motion.js": 114453,
   "/assets/progress-report.js": 3289,
@@ -243,7 +243,7 @@
   "/photos/level-9-3.jpg": 48649,
   "/photos/level-9-3.webp": 30934,
   "/robots.txt": 96,
-  "/sitemap.xml": 1006,
+  "/sitemap.xml": 1129,
   "/social-preview.png": 13380,
-  "/sw.js": 14793
+  "/sw.js": 13080
 }

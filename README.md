@@ -208,7 +208,7 @@ src/
   api/            local progress store
   components/game game UI: level cards, quiz screen, hints, badges, stats, settings
   components/ui   reusable primitives
-  pages/          Home, Quiz, Privacy Policy, Terms of Use, Photo credits, Bibliography
+  pages/          Home, Quiz, About, Privacy Policy, Terms of Use, Photo credits, Bibliography
   Layout.jsx      shared page wrapper
 ```
 
@@ -483,6 +483,12 @@ on the photo credits screen (`/PhotoCredits`) that the Settings screen opens. Th
 built from the same table the game reads, so a picture replaced there cannot leave an old
 credit behind. The credit section of the terms is written out by hand and a test keeps it
 in step with that table.
+
+Who edits the game, why it exists and how it is funded is said on its own page
+(`/About`), opened from the Settings screen beside the legal pages. It reads the same
+publisher facts the notices do, so it cannot name an editor they do not, and it carries the
+contact address for corrections and support. How to contribute, and how to record a source
+reading by hand, is written in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Every explanation in the quiz carries a reference, and the bibliography (`/Bibliography`,
 beside the credits in the Settings screen) lists all of them: the works grouped by the

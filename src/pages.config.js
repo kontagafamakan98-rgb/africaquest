@@ -49,6 +49,7 @@
  */
 import { lazy } from 'react';
 import Home from './pages/Home';
+import About from './pages/About';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import __Layout from './Layout.jsx';
@@ -67,6 +68,7 @@ const Bibliography = lazy(() => import('./pages/Bibliography'));
 export const PAGES = {
     "QuizPage": QuizPage,
     "Home": Home,
+    "About": About,
     "PrivacyPolicy": PrivacyPolicy,
     "TermsOfService": TermsOfService,
     "PhotoCredits": PhotoCredits,

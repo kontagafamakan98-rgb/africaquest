@@ -127,7 +127,12 @@ export default function SettingsModal({ open, onClose, reminder }) {
     <AnimatePresence>
       {open && (
         <>
+          {/* A tap on the scrim closes the sheet: a convenience for a thumb,
+              with the close button inside the sheet as the way a keyboard
+              reader leaves. It is kept out of the accessibility tree rather
+              than announced as an unnamed control. */}
           <motion.div
+            aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -377,6 +382,16 @@ export default function SettingsModal({ open, onClose, reminder }) {
                 >
                   <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
                   {t.bibliography}
+                </Link>
+                {/* Who edits the game, why it exists and how it is funded: the
+                    question a free app with no advertising raises first. */}
+                <Link
+                  to="/About"
+                  onClick={onClose}
+                  className="mt-2 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
+                >
+                  <Info className="w-3.5 h-3.5" aria-hidden="true" />
+                  {t.aboutPage}
                 </Link>
               </div>
             </div>
