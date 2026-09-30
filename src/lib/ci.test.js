@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -17,6 +18,52 @@ const pagesFile = path.join(ROOT, ".github", "workflows", "pages.yml");
 const pages = readFileSync(pagesFile, "utf8");
 const nvmrc = readFileSync(path.join(ROOT, ".nvmrc"), "utf8").trim();
 const { engines, scripts } = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
+
+/**
+ * What a shell says about one script, retried while the shell itself is what
+ * would not start: a machine that cannot fork a process twice in a row says
+ * nothing about the script, and a check that failed on that would be a check
+ * people learn to ignore.
+ */
+function shellSays(script) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const checked = spawnSync("bash", ["-n"], { input: script, encoding: "utf8" });
+    if (!checked.error && checked.status !== null) {
+      return { ok: checked.status === 0, why: (checked.stderr || "").trim() };
+    }
+  }
+  return { ok: false, why: "bash itself could not be started, so the shell was not read" };
+}
+
+/**
+ * Every `run:` of a workflow, as the runner hands it to the shell: an inline
+ * command as it is, and a block scalar unindented by the indentation it was
+ * written with.
+ */
+function shellBlocks(source) {
+  const lines = source.split("\n");
+  const blocks = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = /^(\s*)run:\s*(.*)$/.exec(lines[index]);
+    if (!match) continue;
+    const [, indent, rest] = match;
+    if (rest.trim() !== "" && rest.trim() !== "|" && rest.trim() !== ">") {
+      blocks.push(rest);
+      continue;
+    }
+
+    const body = [];
+    for (let next = index + 1; next < lines.length; next += 1) {
+      const line = lines[next];
+      if (line.trim() !== "" && line.search(/\S/) <= indent.length) break;
+      body.push(line.slice(Math.min(line.length, indent.length + 2)));
+    }
+    blocks.push(body.join("\n"));
+  }
+
+  return blocks;
+}
 
 /** The `on:` block alone, so a trigger is never found in a comment above it. */
 function triggerBlock(source) {
@@ -81,8 +128,15 @@ test("the built application is published to Pages on every push to main", () => 
     "one deployment at a time, and none interrupted"
   );
 
-  // Reading is all the build needs; writing is the publication's business.
-  assert.match(pages, /^permissions:\n {2}contents: read$/m, "the build only reads the repository");
+  // Reading is all the build needs; writing is the publication's business. The
+  // Pages setting is one of the things it reads, since that is what decides
+  // whether there is anywhere to publish to.
+  assert.match(
+    pages,
+    /^permissions:\n {2}contents: read\n {2}pages: read$/m,
+    "the build only reads the repository, and the Pages setting"
+  );
+  assert.doesNotMatch(pages, /contents: write/, "the build may write to the repository");
   assert.match(
     pages,
     /^ {4}permissions:\n {6}pages: write\n {6}id-token: write$/m,
@@ -108,11 +162,87 @@ test("the built application is published to Pages on every push to main", () => 
   assert.ok(!/cp\s+dist\//.test(pages), "the built site is published as it is");
 });
 
+test("a repository that does not publish with Pages yet is told so, and nothing is published in silence", () => {
+  // Turning Pages on is one click, and it is not a click this file can make: the
+  // token a workflow is given may read the setting and may publish through it,
+  // but creating the site is outside what it is allowed to do, and GitHub answers
+  // "Resource not accessible by integration" when an action tries (which is what
+  // an `enablement: true` with that token produces). A run on such a repository
+  // therefore has two honest choices - say what to click and publish nothing, or
+  // fail on a step whose name says nothing about the reason - and the first is
+  // what happens here, with the publication gated on the answer.
+  assert.match(pages, /curl[\s\S]{0,400}\/pages/, "the Pages setting is never asked about");
+  assert.match(
+    pages,
+    /Authorization: Bearer \$\{\{ github\.token \}\}/,
+    "the setting is asked about without the token the run already has"
+  );
+  assert.match(pages, /404\)[\s\S]{0,120}serving=no/, "an absent Pages site is not read as a no");
+  assert.match(
+    pages,
+    /\*\)[\s\S]{0,260}exit 1/,
+    "an answer that could not be read is taken for an answer, and the site quietly stops being published"
+  );
+
+  // Every step that builds or publishes waits for that answer, and the one that
+  // publishes again waits for the job: a deployment with no artifact in front of
+  // it fails, which would leave the run red for the reason it was explaining.
+  assert.equal(
+    pages.match(/if: steps\.asked\.outputs\.serving == 'yes'/g)?.length,
+    5,
+    "a step that builds or publishes does not wait for the answer"
+  );
+  assert.match(pages, /^ {4}outputs:\n {6}serving: \$\{\{ steps\.asked\.outputs\.serving \}\}$/m, "the answer is not handed to the publication");
+  assert.match(pages, /^ {4}if: needs\.build\.outputs\.serving == 'yes'$/m, "the publication does not wait for it");
+
+  // And what the person who has to click gets: the exact setting, the address of
+  // the page to open it on, and one warning in the annotations rather than a red
+  // cross with a step name on it.
+  assert.match(pages, /settings\/pages/, "the run does not say where the setting is");
+  assert.match(pages, /::warning title=Pages is not enabled::/, "nothing tells the publisher why no site appeared");
+  assert.match(pages, /GITHUB_STEP_SUMMARY/, "the explanation is not written where the run explains itself");
+  assert.match(pages, /Under "Build and deployment", set "Source" to "GitHub Actions"/, "the one click is not spelled out");
+
+  // The way out without a click, and the trap it avoids: a token that may
+  // administer the repository can turn the setting on, the workflow's own token
+  // cannot, so enablement is never asked for with one that cannot do it.
+  assert.match(pages, /secrets\.PAGES_TOKEN/, "there is no way to turn Pages on from here");
+  assert.match(pages, /enablement: \$\{\{ env\.PAGES_TOKEN != '' \}\}/, "enablement is not tied to the token that can do it");
+  assert.doesNotMatch(pages, /enablement: true/, "enablement is asked for with a token that cannot enable anything");
+});
+
+test("the shell each workflow runs is read by a shell before it runs", () => {
+  // The steps of a workflow are small programs, and a mistake in one of them is
+  // found by the runner, on main, after the push: nothing in a build reads them.
+  // They are checked here the way they are run, one block at a time, and a
+  // workflow that no longer parses is worth one more line - a tab is the one
+  // character that breaks a YAML file while looking right in an editor, and
+  // GitHub's answer to one is to run nothing at all.
+  for (const file of ["pages.yml", "verify.yml", "uptime.yml"]) {
+    const source = readFileSync(path.join(ROOT, ".github", "workflows", file), "utf8");
+    assert.doesNotMatch(source, /\t/, `${file} carries a tab`);
+
+    const blocks = shellBlocks(source);
+    assert.ok(blocks.length > 0, `${file} runs no shell at all`);
+    for (const script of blocks) {
+      const said = shellSays(script);
+      assert.ok(said.ok, `${file}: ${said.why}`);
+    }
+  }
+});
+
 test("the site is built for the address Pages serves it from", () => {
   // A project site lives under /<repository>, and every file the build refers to
   // is otherwise looked for at the root of the domain: a blank page, with a
   // working service worker wondering where its files went.
-  assert.match(pages, /id: pages\n\s+uses: actions\/configure-pages@v\d+/, "Pages says where the site will live");
+  // The step is gated, so the condition sits between its name and its id; what
+  // matters is that the address the build is given comes from this action under
+  // the id the build reads.
+  assert.match(
+    pages,
+    /id: pages[\s\S]{0,120}uses: actions\/configure-pages@v\d+/,
+    "Pages says where the site will live"
+  );
   assert.match(
     pages,
     /run: npm run build -- --base="\$\{\{ steps\.pages\.outputs\.base_path \}\}\/"/,

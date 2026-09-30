@@ -20,8 +20,18 @@
 # request; this one builds the result.
 #
 # One setting has to be turned on once, by hand: in the repository settings,
-# under Pages, set the source to "GitHub Actions". Until then the deployment
-# step reports that Pages is not enabled.
+# under Pages, set the source to "GitHub Actions". Nothing here can do it for the
+# repository. A workflow's token may read that setting and may publish through
+# it, but creating the site is outside what it is allowed to do, and GitHub
+# answers "Resource not accessible by integration" when something tries. So the
+# setting is asked about first, and the whole build is gated on the answer: a
+# repository that does not publish with Pages yet gets one run that publishes
+# nothing, explains in the summary what to click, and warns once rather than
+# failing on a step whose name says nothing about the reason. The Uptime workflow
+# is what goes on failing until the site is really there, because it asks the
+# published address rather than the setting. Adding a repository secret named
+# PAGES_TOKEN, holding a token that may administer this repository, lets the first
+# run turn Pages on by itself.
 name: Pages
 
 on:
@@ -36,8 +46,18 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# Reading is all this job does: the repository, and the Pages setting that
+# decides whether there is anywhere to publish to. Nothing here writes anywhere,
+# and the publication below is the one step that may.
 permissions:
   contents: read
+  pages: read
+
+env:
+  # Empty unless somebody added it, which is the usual case: it exists so that a
+  # repository whose owner can create a token has a way to turn Pages on from
+  # here rather than from the settings page. See the note at the top.
+  PAGES_TOKEN: ${{ secrets.PAGES_TOKEN }}
 
 jobs:
   build:
@@ -45,11 +65,76 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    # Handed on to the publication, which is skipped when this run published
+    # nothing: a deployment with no artifact in front of it fails, and a run that
+    # already said why there is nothing to publish does not need to fail again.
+    outputs:
+      serving: ${{ steps.asked.outputs.serving }}
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
 
+      # Asked before anything is built, because a repository with nowhere to
+      # publish to does not need Node, dependencies or a bundle. A 404 is the one
+      # answer read as "this repository has no Pages site"; anything else - a
+      # refused request, a server that fell over, no answer at all - is an answer
+      # that could not be read, and a run that cannot read it must not quietly
+      # stop publishing what main says.
+      #
+      # `serving` is what every step below waits for, so the answer decides
+      # whether this run publishes or explains.
+      - name: Ask whether this repository publishes with Pages
+        id: asked
+        run: |
+          set -u
+          if [ -n "$PAGES_TOKEN" ]; then
+            echo 'serving=yes' >> "$GITHUB_OUTPUT"
+            echo 'PAGES_TOKEN is set: this run turns Pages on itself if it is not already.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${{ github.token }}" \
+            --header 'Accept: application/vnd.github+json' \
+            "${{ github.api_url }}/repos/${{ github.repository }}/pages")
+
+          case "$status" in
+            200)
+              echo 'serving=yes' >> "$GITHUB_OUTPUT"
+              echo 'Pages is on for this repository.' >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            404)
+              echo 'serving=no' >> "$GITHUB_OUTPUT"
+              {
+                echo '## Nothing was published: this repository does not publish with Pages'
+                echo
+                echo 'The application is built and published by this workflow, and there is no'
+                echo 'Pages site here for it to be published to. Turning it on is one click, and'
+                echo 'it cannot be done from this file: the token a workflow is given may read'
+                echo 'this setting and may publish through it, but it may not create the site.'
+                echo
+                echo '1. Open https://github.com/${{ github.repository }}/settings/pages'
+                echo '2. Under "Build and deployment", set "Source" to "GitHub Actions"'
+                echo '3. Run this workflow again, or push to main'
+                echo
+                echo 'Until then the Uptime workflow asks the published address once a day and'
+                echo 'fails, which is how the publisher is told the site is not there yet.'
+                echo
+                echo 'An owner who would rather not click can add a repository secret named'
+                echo 'PAGES_TOKEN holding a token that may administer this repository: the next'
+                echo 'run turns Pages on with it.'
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo '::warning title=Pages is not enabled::Nothing was published. Set Settings > Pages > Source to "GitHub Actions": https://github.com/${{ github.repository }}/settings/pages'
+              ;;
+            *)
+              echo "::error::GitHub answered $status about the Pages setting, which is neither yes nor no. A run that cannot read this must not stop publishing what main says."
+              exit 1
+              ;;
+          esac
+
       - name: Install the Node version the app is verified on
+        if: steps.asked.outputs.serving == 'yes'
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -58,20 +143,37 @@ jobs:
       # Reports base_path: "/<repository>" for a project site and "" when the
       # site is served from the root of a domain. Both cases end with a slash
       # once the separator below is added.
+      #
+      # The token is the secret when there is one, because a token that may
+      # administer the repository is the only thing that can turn the setting on
+      # from here; without it this step only reads the address, and the run above
+      # has already made sure there is a site to read it for.
       - name: Ask GitHub Pages where the site will live
         id: pages
+        if: steps.asked.outputs.serving == 'yes'
         uses: actions/configure-pages@v5
+        with:
+          enablement: ${{ env.PAGES_TOKEN != '' }}
+          token: ${{ env.PAGES_TOKEN || github.token }}
 
       - name: Install the dependencies from the lockfile
+        if: steps.asked.outputs.serving == 'yes'
         run: npm ci
 
+      # The address is passed twice because the application needs it twice: as
+      # the path its links are written under, and as the whole address a crawler
+      # gets in robots.txt, in the sitemap and in the link preview.
       - name: Build for that address
+        if: steps.asked.outputs.serving == 'yes'
+        env:
+          SITE_ORIGIN: ${{ steps.pages.outputs.base_url }}
         run: npm run build -- --base="${{ steps.pages.outputs.base_path }}/"
 
       # dist holds the service worker the build wrote, so it travels with the
       # site: an installed copy runs offline from the address it was installed
       # from.
       - name: Hand the built site to Pages
+        if: steps.asked.outputs.serving == 'yes'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -79,6 +181,10 @@ jobs:
   deploy:
     name: Publish
     needs: build
+    # Only when the build job was asked and answered yes: a deployment with no
+    # artifact in front of it fails, and the page that explains the one manual
+    # setting is the summary of the run that skipped it.
+    if: needs.build.outputs.serving == 'yes'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
