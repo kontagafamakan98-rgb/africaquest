@@ -7,7 +7,8 @@
  * person in front of the screen, and the person in front of the screen is
  * usually a child, or a teacher who has thirty of them. So the crash screen
  * writes down the failure it is showing - and then a reload takes it away, which
- * is exactly the moment somebody would want it.
+ * is exactly the moment somebody would want it: reloading the page is the one
+ * thing that screen offers.
  *
  * This is the small memory that survives that: the last few failures, newest
  * first, added to by everything that can fail - a screen that could not be
@@ -15,6 +16,14 @@
  * into the progress report a teacher exports. The person who has to explain what
  * happened then has the facts in front of them rather than a description of
  * them.
+ *
+ * It is kept for the browser session and no longer than that. Session storage is
+ * the tab's own: what is written there is still there after a reload, which is
+ * the whole point, and the browser drops it when the tab is closed, which is the
+ * promise. Two tabs never read each other's log, nothing outlives the visit, and
+ * nothing is sent anywhere. A browser that will not keep it at all - private
+ * browsing, a school that blocks storage - is not a failure either: the log
+ * still works in memory for as long as the page is open.
  *
  * Four rules keep that from becoming a register of what people were doing.
  *
@@ -24,10 +33,12 @@
  * throws a thousand times cannot push the beginning out of the log or make it
  * grow.
  *
- * Nothing is written to storage and nothing is sent: the list lives in memory,
- * it is gone when the tab is closed, and there is no key, no file and no
- * request anywhere in this module - which its tests check, because that is the
- * claim, and the claim is the feature.
+ * What comes back is read as a stranger wrote it. Session storage belongs to
+ * whoever is holding the device, so the stored list is parsed behind a guard,
+ * every entry is rebuilt into the five fields this module knows and nothing
+ * else, and each field is capped again on the way in. A sixth field would be
+ * exactly where a name typed into a field, or an answer given, could be smuggled
+ * into a report.
  *
  * And what is kept is about the application, not about the reader: an error's
  * own name and message, and which screen was being drawn. Never an answer
@@ -47,6 +58,22 @@ export const ERROR_MESSAGE_LIMIT = 180;
 
 /** How long the place a failure came from may be, screen name included. */
 export const ERROR_WHERE_LIMIT = 60;
+
+/** How long the name of a failure may be, matching the reader in failure-report.js. */
+const ERROR_NAME_LIMIT = 40;
+
+/** How long the moment of a failure may be. An ISO stamp is twenty-four characters. */
+const ERROR_AT_LIMIT = 40;
+
+/**
+ * Where the tab keeps the log it wants to find again.
+ *
+ * Named like the other keys the application writes - `aq_progress_v1` for the
+ * progress, `aq_lang` for the language - with the version in the name, so a
+ * later shape of this list can be told apart from this one instead of being read
+ * as it.
+ */
+export const ERROR_LOG_KEY = "aq_failures_v1";
 
 /**
  * The places the application itself reports from, as the names the report
@@ -76,6 +103,28 @@ const GENERIC_PLACES = new Set(Object.values(FAILURE_PLACES));
 /** The last failures, newest first. */
 const failures = [];
 
+/** Whether what the tab was already keeping has been read into this module. */
+let restored = false;
+
+/**
+ * The tab's own storage, or nothing at all.
+ *
+ * A browser that blocks storage can throw on the property itself rather than on
+ * the call, which is why the read is inside the guard too, and a place with no
+ * session storage at all - the test runner, a build machine - answers nothing
+ * rather than failing: the log is still a log without it.
+ */
+function sessionStore() {
+  try {
+    const store = globalThis.sessionStorage;
+    if (!store) return null;
+    if (typeof store.getItem !== "function" || typeof store.setItem !== "function") return null;
+    return store;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Where a failure came from, from either shape a caller has: a plain place, or
  * the component stack React hands a boundary, whose first line is the screen
@@ -95,6 +144,87 @@ function whereOf(where) {
     .replace(/^\s*at\s+/, "")
     .replace(/\s*\(.*$/, "")
     .slice(0, ERROR_WHERE_LIMIT);
+}
+
+/**
+ * One stored entry, rebuilt into the five fields this module keeps.
+ *
+ * Storage belongs to whoever is holding the device, so nothing read back is
+ * trusted: a value that is not an object is dropped, the caps are applied again
+ * - a stored message is not a licence to keep a megabyte - a count that is not a
+ * count becomes one, and a sixth field simply does not survive, because the
+ * entry is built here rather than passed through.
+ */
+function cleanEntry(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const name = typeof value.name === "string" ? value.name.trim().slice(0, ERROR_NAME_LIMIT) : "";
+  const message = typeof value.message === "string" ? value.message.slice(0, ERROR_MESSAGE_LIMIT) : "";
+  // A line with neither a name nor a message says nothing at all, so it is not
+  // a failure that is worth keeping the slot of.
+  if (name === "" && message === "") return null;
+  return {
+    at: typeof value.at === "string" ? value.at.slice(0, ERROR_AT_LIMIT) : "",
+    name: name || "Error",
+    message,
+    where: typeof value.where === "string" ? value.where.slice(0, ERROR_WHERE_LIMIT) : "",
+    count: Number.isInteger(value.count) && value.count > 0 ? value.count : 1,
+  };
+}
+
+/**
+ * Writes the log where the tab keeps its session, so that a reload - the one
+ * thing the crash screen offers - does not take it away.
+ *
+ * Session storage is memory the browser holds for this tab rather than a file
+ * somewhere: a loop that throws a thousand times pays for a thousand small
+ * writes to memory and nothing else, and the record it writes is the bounded
+ * list above, which cannot grow.
+ */
+function keepFailures() {
+  const store = sessionStore();
+  if (!store) return;
+  try {
+    store.setItem(ERROR_LOG_KEY, JSON.stringify(failures));
+  } catch {
+    // A browser with no room left, or none at all: the log in front of us is the
+    // log, and a reader losing it at the next reload is better than a screen
+    // that breaks while trying to remember a screen that broke.
+  }
+}
+
+/**
+ * The list the tab was already keeping, read once, when this module is first
+ * asked for anything.
+ *
+ * A reload builds the page again from nothing, so this is the one moment the log
+ * can come back: everything read here is rebuilt through cleanEntry, because the
+ * only thing a stored list is guaranteed to be is somebody else's text.
+ */
+function restoreFailures() {
+  if (restored) return;
+  restored = true;
+
+  const store = sessionStore();
+  if (!store) return;
+
+  let raw = null;
+  try {
+    raw = store.getItem(ERROR_LOG_KEY);
+  } catch {
+    return;
+  }
+  if (typeof raw !== "string" || raw === "") return;
+
+  let parsed = null;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  if (!Array.isArray(parsed)) return;
+
+  const kept = parsed.map(cleanEntry).filter(Boolean).slice(0, ERROR_LOG_LIMIT);
+  if (kept.length > 0) failures.push(...kept);
 }
 
 /** Whether two entries are the same failure happening again. */
@@ -117,8 +247,16 @@ function gapBetween(one, other) {
  * The message is trimmed by the same reader the crash screen uses, so the line
  * in the report and the line on the screen are one text rather than two that
  * almost agree.
+ *
+ * A failure that repeats after a reload finds the entry the reload kept - the
+ * name, the message and the place are the same three strings they were - and is
+ * counted on it rather than written beside it, which is what stops a crash loop
+ * that reloads the page from filing twelve lines and forgetting the rest of the
+ * story.
  */
 export function recordFailure(error, { where = "", at = new Date() } = {}) {
+  restoreFailures();
+
   const described = describeFailure(error, { at });
   const entry = {
     at: described.at || "",
@@ -151,22 +289,31 @@ export function recordFailure(error, { where = "", at = new Date() } = {}) {
     if (GENERIC_PLACES.has(kept.where) && !GENERIC_PLACES.has(entry.where)) kept.where = entry.where;
     failures.splice(seen, 1);
     failures.unshift(kept);
+    keepFailures();
     return { ...kept };
   }
 
   failures.unshift({ ...entry, count: 1 });
   if (failures.length > ERROR_LOG_LIMIT) failures.length = ERROR_LOG_LIMIT;
+  keepFailures();
   return { ...failures[0] };
 }
 
-/** The last failures, newest first, as copies: a caller cannot edit the log. */
+/**
+ * The last failures, newest first, as copies: a caller cannot edit the log.
+ *
+ * The first of these is also the first read of the tab's stored list, so a
+ * report built straight after a reload carries what happened before it.
+ */
 export function recentFailures(limit = ERROR_LOG_LIMIT) {
+  restoreFailures();
   const wanted = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : ERROR_LOG_LIMIT;
   return failures.slice(0, wanted).map((entry) => ({ ...entry }));
 }
 
 /** How many failures have been logged altogether, repeats included. */
 export function failureCount() {
+  restoreFailures();
   return failures.reduce((total, entry) => total + entry.count, 0);
 }
 
@@ -174,9 +321,24 @@ export function failureCount() {
  * Forgets everything, which is what the tests do between two of their own runs
  * and what a device handed to somebody else would need. Nothing calls it on the
  * way past: a log that clears itself is a log nobody can read.
+ *
+ * What the tab was keeping goes with it, or the next write would put it back.
  */
 export function clearFailures() {
   failures.length = 0;
+  // Nothing is read back after this, not even on the next write: cleared means
+  // cleared, and a stored list that came back here would be the one thing this
+  // function is named against.
+  restored = true;
+
+  const store = sessionStore();
+  if (!store) return;
+  try {
+    store.removeItem(ERROR_LOG_KEY);
+  } catch {
+    // Nothing was kept, or nothing can be removed: either way there is nothing
+    // left to forget.
+  }
 }
 
 /**

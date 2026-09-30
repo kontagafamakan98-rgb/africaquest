@@ -27,9 +27,11 @@ The application makes no network request after loading its own assets: the level
 are files of its own, downloaded once from their free licence source and shipped with the
 rest of the game.
 
-Nothing else is kept. The failure log ("When something breaks", below) lives in the browser's
-memory, holds the last dozen failures of the session, and is gone when the tab is closed: it
-is not a key, not a file, and not a request.
+Nothing else is kept. The failure log ("When something breaks", below) is the one other name,
+and it is the tab's own: session storage under `aq_failures_v1`, holding the last dozen
+failures of the session and gone when the tab is closed. A reload keeps it, because a reload
+is the one thing the crash screen offers. It is not a cookie, not a database, and not a
+request.
 
 ## Running locally
 
@@ -307,16 +309,24 @@ the status layer, and the write still fails for its caller, so a screen that
 thought it had saved knows it has not. When the browser saves again, the line goes
 away on its own.
 
-Both are written down as they happen, in a log of the session kept in the
-browser's memory (`src/lib/error-log.js`): the last dozen failures, newest first,
-each one a name, a message and the screen or the place it came from, capped so
-that nothing here can grow. A failure that happens again is counted rather than
-stored again, which is what makes a loop that throws a thousand times one line
-instead of a log it emptied. The list is read by the progress report a teacher
+Both are written down as they happen, in a log of the session kept in the tab's
+own storage (`src/lib/error-log.js`, session storage under `aq_failures_v1`): the
+last dozen failures, newest first, each one a name, a message and the screen or the
+place it came from, capped so that nothing here can grow. It is the one thing kept
+here that survives a reload, and that is the point rather than an oversight:
+reloading the page is the only thing the crash screen offers, so a log held in
+memory alone would be gone at the exact moment somebody decided to look for it. A
+failure that happens again is counted rather than stored again, which is what makes
+a loop that throws a thousand times one line instead of a log it emptied - and a
+crash loop that reloads the page goes on counting on the same line rather than
+filling the dozen with itself. The list is read by the progress report a teacher
 exports, so what went wrong on a tablet travels with the file rather than being
-described from memory afterwards. Nothing about it is written to storage, sent
-anywhere, or about the reader: an error's own words, and where the application was
-when it threw.
+described from memory afterwards. What comes back out of that storage is read as
+the device's text and not this module's own: parsed behind a guard, rebuilt into
+those five fields, and capped again on the way in, because a stored list is exactly
+where a sixth field would otherwise be able to get in. Nothing about any of it is
+sent anywhere or about the reader: an error's own words, and where the application
+was when it threw.
 
 What is published is checked too, because a site that is not there is quiet: a
 half finished deployment, a repository whose Pages setting was changed, and a

@@ -22,10 +22,10 @@ import { describeFailure, failureReport } from "@/lib/failure-report.js";
  *
  * Nothing is sent anywhere: the lines exist while this screen is open, the copy
  * button is the only way they leave the device, and the one thing the boundary
- * writes down is a line in the failure log, which is the bounded memory of the
- * session (src/lib/error-log.js) that the progress report a teacher exports
- * carries. A crash that nobody kept would otherwise be lost the moment the page
- * is reloaded, which is the moment right after it happened.
+ * writes down is a line in the failure log (src/lib/error-log.js) - the bounded
+ * list of the session, kept in the tab's own storage so that a reload, which is
+ * the one thing this screen offers, does not take it away. The progress report a
+ * teacher exports carries that list.
  */
 class CrashCatcher extends Component {
   constructor(props) {

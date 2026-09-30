@@ -46,8 +46,9 @@ export default function StatsScreen({ progress, onReviewLevel }) {
         levels,
         t,
         student: activeProfile().name || t.defaultProfileName,
-        // What failed on this device since it was opened, which travels with the
-        // report rather than being described from memory by whoever sends it.
+        // What failed in this tab's session - a reload does not empty it, closing
+        // the tab does - which travels with the report rather than being
+        // described from memory by whoever sends it.
         failures: recentFailures(),
       });
       const { exportProgressReportPdf } = await import("../../lib/report-pdf");
