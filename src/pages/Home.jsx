@@ -2,8 +2,9 @@ import { Fragment, lazy, Suspense, useState, useCallback, useRef, useEffect } fr
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 // The brief of the game and the list of badges: what the map draws, and nothing
 // else. The questions, the lessons and the rest of the photographs are not
-// imported here at all - they are fetched right after the map, and the screens
-// that show them read them from the game data themselves.
+// imported here at all, and they are not fetched from here either: a lesson
+// downloads the one level it opens, and the screens that need every level read
+// the game data when they are opened themselves.
 import { BADGES } from "../components/game/badges";
 import { getLevelSummaries } from "../components/game/level-summary";
 import ScreenSkeleton from "../components/game/ScreenSkeleton.jsx";
@@ -111,15 +112,12 @@ export default function Home() {
     t,
   });
 
-  // The map is drawn from the brief alone, so the content of the game - the
-  // questions, their facts, the lesson stories and the rest of the gallery - is
-  // asked for as soon as the map is on screen. A player who taps a level then
-  // finds the browser already holding what that screen needs, and one who never
-  // does has lost nothing: the request runs beside the map, after it, and a
-  // failure is silent because the screen that needs the content asks again.
-  useEffect(() => {
-    import("../components/game/gameData").catch(() => {});
-  }, []);
+  // Nothing of the game's content is fetched from here. The map is drawn from
+  // the brief, and every screen a tap opens asks for what it shows: a lesson
+  // asks for its own level, the review asks for the levels it has something to
+  // ask about, and the reading tabs ask for the whole game. Prefetching all of
+  // it on the map would put the four hundred kilobytes of twenty levels back on
+  // the first screen, which is exactly what the split exists to avoid.
 
   // Save/restore scroll on tab switch
   const handleTabChange = (tabId) => {

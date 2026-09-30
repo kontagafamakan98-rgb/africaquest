@@ -1,16 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronLeft, Lightbulb, CheckCircle2, ArrowRight, BookOpen,
   CalendarClock, Users, MapPin, BookMarked,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LEVEL_IMAGES } from "./level-summary";
-// The full level, with its questions and its gallery, is read here and only
-// here: the map screen knows a lesson's title and picture, and deliberately not
-// what it teaches, so the screens that need the content ask this module for it.
-import { getLevels } from "./gameData";
+import ScreenSkeleton from "./ScreenSkeleton.jsx";
+// The level this lesson is about, asked for on its own: the map knows a lesson's
+// title and picture and deliberately not what it teaches, and the lesson is the
+// one screen that knows which level it is. So it downloads that level rather
+// than the whole game, and the screens that do need every level read gameData
+// themselves.
+import { loadLevel } from "./level-content";
 import AudioNarrator, { getLevelStory } from "./AudioNarrator";
-import { getLevelStudy } from "./level-study";
 import SourceReference from "./SourceReference";
 import LevelGallery from "./LevelGallery";
 import LevelPicture from "./LevelPicture";
@@ -24,28 +26,52 @@ import { useT, useLang } from "../i18n";
  *
  * It is opened by level id rather than handed a level. The map screen carries the
  * brief of the game - titles, pictures, the number of questions - and not the
- * questions themselves, so a lesson reads its own content from the game data,
- * which the screen before it has already asked the browser for.
+ * questions themselves, so a lesson asks the browser for the one level it is
+ * opening, with the study pack that belongs to it and no other.
  */
 export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, onFlashQuizAnswer }) {
   const t = useT();
   const lang = useLang();
-  const level = getLevels(lang).find((candidate) => candidate.id === levelId);
+  // Loading, then the level or nothing. Nothing rather than a crash, because a
+  // card can only open a level the game holds, but an address can be typed.
+  const [loaded, setLoaded] = useState({ ready: false, level: null });
+
+  useEffect(() => {
+    let alive = true;
+    setLoaded({ ready: false, level: null });
+    loadLevel(levelId, lang)
+      .then((level) => {
+        if (alive) setLoaded({ ready: true, level });
+      })
+      .catch(() => {
+        // A level that cannot be fetched says so with the wait it already has,
+        // rather than a screen that draws nothing at all.
+        if (alive) setLoaded({ ready: true, level: null });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [levelId, lang]);
+
+  const level = loaded.level;
 
   useEffect(() => {
     if (level) onStudied?.(level.id);
   }, [level?.id]);
+
+  if (!loaded.ready) return <ScreenSkeleton variant="quiz" />;
 
   // A card can only open a level the game holds; the guard is here rather than
   // in the caller so nothing below has to ask whether the level arrived.
   if (!level) return null;
 
   const story = getLevelStory(level.id, lang);
-  // The whole study pack of the level: the history in several paragraphs, the
-  // timeline, the people, the places and the words. The lesson story is the
+  // The study pack of this level, which travelled with it rather than being
+  // read from a module holding all twenty: the history in several paragraphs,
+  // the timeline, the people, the places and the words. The lesson story is the
   // narration the player listens to, and stands in for the history if a level
   // ever arrived without one.
-  const study = getLevelStudy(level.id, lang);
+  const study = level.study;
   const history = study?.essay?.length ? study.essay : story ? [story] : [];
   const img = LEVEL_IMAGES[level.id];
   const Icon = level.icon;

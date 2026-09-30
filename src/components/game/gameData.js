@@ -5,6 +5,9 @@ import {
 } from "lucide-react";
 // Explicit extension: the file is also loaded directly by the test runner.
 import { LEVELS_FR } from "./content-fr.js";
+// Imported as well as re-exported below: a re-export alone binds nothing here,
+// and getLevels reads the level through this function.
+import { localizeLevel } from "./localize-level.js";
 
 // The photographs live in their own module: the offline build needs the exact
 // list of files to cache, and the tests check it without loading the whole game.
@@ -3255,46 +3258,15 @@ export const LEVELS = [
   }
 ];
 
-// The levels above are authored in English and optionally translated. Only the
-// wording is swapped: icon, colour, order and the correct answer index always
-// come from the English data, so the quiz can never mark a different answer.
-// A missing translation falls back to English rather than showing a blank.
-export function localizeLevel(level, lang) {
-  if (lang !== "fr") return level;
-  const translated = LEVELS_FR[level.id];
-  if (!translated) return level;
-  // Question for question, otherwise we keep the English set rather than risk
-  // pairing a question with another question's answers.
-  if (!Array.isArray(translated.questions) || translated.questions.length !== level.questions.length) {
-    return level;
-  }
-
-  return {
-    ...level,
-    title: translated.title || level.title,
-    subtitle: translated.subtitle || level.subtitle,
-    region: translated.region || level.region,
-    questions: level.questions.map((question, index) => {
-      const fr = translated.questions[index] || {};
-      const options =
-        Array.isArray(fr.options) && fr.options.length === question.options.length
-          ? fr.options
-          : question.options;
-      return {
-        ...question,
-        question: fr.question || question.question,
-        options,
-        fact: fr.fact || question.fact,
-        // Only the reference wording is translated; the link stays the one
-        // verified for the English entry, so a translation can never point at
-        // a page nobody checked.
-        source: question.source
-          ? { ...question.source, label: fr.source || question.source.label }
-          : question.source,
-      };
-    }),
-  };
-}
+// The levels above are authored in English and optionally translated. The
+// wording of a level in another language is the level's own `fr` entry, which is
+// what the localizer reads, and which is why the same function serves both this
+// module and the one level a lesson downloads on its own (see level-content.js).
+// Only the wording is swapped: icon, colour, order and the correct answer index
+// always come from the English data, so the quiz can never mark a different
+// answer. A missing translation falls back to English rather than showing a
+// blank.
+export { localizeLevel } from "./localize-level.js";
 
 /**
  * Every level in the requested language, oldest first. The array order is the
@@ -3305,24 +3277,19 @@ export function localizeLevel(level, lang) {
 export function getLevels(lang) {
   return [...LEVELS]
     .sort((a, b) => a.order - b.order)
+    // The French wording is attached here, once, so that the localizer itself is
+    // about a level and its translation rather than about where the translation
+    // happens to be stored. The level a lesson downloads carries its own.
     .map((level) => ({
-      ...localizeLevel(level, lang),
+      ...localizeLevel({ ...level, fr: LEVELS_FR[level.id] }, lang),
       // Attached here rather than in localizeLevel, so that both languages carry
       // it and the translation logic stays about text only.
       gallery: getLevelGallery(level.id, lang),
     }));
 }
 
-export function calculateStars(score, total) {
-  const pct = score / total;
-  if (pct >= 0.9) return 3;
-  if (pct >= 0.7) return 2;
-  if (pct >= 0.5) return 1;
-  return 0;
-}
-
-export function getXPForScore(score, total) {
-  const base = score * 20;
-  const bonus = score === total ? 50 : 0;
-  return base + bonus;
-}
+// The scoring lives in its own module for the same reason the badges and the
+// difficulties do: the quiz must be able to score a run without downloading the
+// content of the game. Re-exported here so the screens that already read them
+// from this module keep working.
+export { calculateStars, getXPForScore } from "./scoring.js";

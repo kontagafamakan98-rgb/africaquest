@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { ChevronLeft, Clock, Zap, Star, ClipboardList } from "lucide-react";
-import { DIFFICULTIES } from "./gameData";
+import { DIFFICULTIES } from "./difficulties";
 import { questionCount } from "./question-bank.js";
 import { LEVEL_IMAGES } from "./level-summary";
 import { useT, DIFFICULTY_LABEL_KEYS } from "../i18n";

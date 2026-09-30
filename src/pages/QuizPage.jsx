@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { progressStore } from "@/api/progress-store";
-import { BADGES, getXPForScore, DIFFICULTIES, getLevels } from "../components/game/gameData";
+// The badges, the difficulties and the scoring: three small tables that say what
+// a run is worth, and none of them the questions the run is played on.
+import { BADGES } from "../components/game/badges";
+import { getXPForScore } from "../components/game/scoring";
+import { DIFFICULTIES } from "../components/game/difficulties";
+// The brief and the level itself, asked for separately on purpose: the regions
+// the badges are worked out from come from the brief every screen already has,
+// and the questions come from the one level being played.
+import { getLevelSummaries } from "../components/game/level-summary";
+import { loadLevel } from "../components/game/level-content";
 import QuizScreen from "../components/game/QuizScreen";
 import ScreenSkeleton from "../components/game/ScreenSkeleton.jsx";
 import DifficultyPicker from "../components/game/DifficultyPicker";
@@ -119,13 +128,32 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
   const queryClient = useQueryClient();
   const [difficulty, setDifficulty] = useState(null);
   const lang = useLang();
-  const levels = getLevels(lang);
+  // The brief of each level, not its questions: what the badges are earned from.
+  const levels = getLevelSummaries(lang);
 
   const urlParams = new URLSearchParams(window.location.search);
   const levelId = levelIdProp ?? urlParams.get("levelId");
   const handleBack = onBack ?? (() => window.history.back());
 
-  const level = levels.find((l) => l.id === Number(levelId));
+  // The level being played, downloaded on its own. `ready` tells the two empty
+  // states apart: a level still arriving, and a level that does not exist.
+  const [opened, setOpened] = useState({ ready: false, level: null });
+  useEffect(() => {
+    let alive = true;
+    setOpened({ ready: false, level: null });
+    loadLevel(levelId, lang)
+      .then((level) => {
+        if (alive) setOpened({ ready: true, level });
+      })
+      .catch(() => {
+        if (alive) setOpened({ ready: true, level: null });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [levelId, lang]);
+
+  const level = opened.level;
 
   const { data: progressList, isLoading } = useQuery({
     queryKey: ["progress"],
@@ -161,10 +189,15 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
   });
 
   // An unknown level id must leave the screen, but never by calling a parent
-  // setState during render: that warns and can loop.
+  // setState during render: that warns and can loop. A level that is still
+  // arriving is not an unknown one, which is what `ready` is for.
   useEffect(() => {
-    if (!level) handleBack();
-  }, [level]);
+    if (opened.ready && !level) handleBack();
+  }, [opened.ready, level]);
+
+  // The wait is the wait a quiz already has: the same skeleton the screen shows
+  // while the progress is read.
+  if (!opened.ready) return <ScreenSkeleton variant="quiz" />;
 
   if (!level) return null;
 

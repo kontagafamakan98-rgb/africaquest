@@ -38,6 +38,12 @@ const STEPS = [
     args: ["scripts/generate-level-facts.mjs", "--check"],
   },
   {
+    id: "levels",
+    name: "Contenu par niveau (la leçon télécharge un niveau)",
+    command: process.execPath,
+    args: ["scripts/generate-level-content.mjs", "--check"],
+  },
+  {
     id: "tests",
     name: "Tests unitaires et règles de design",
     command: process.execPath,

@@ -4,8 +4,9 @@ import { build } from "esbuild";
 import path from "node:path";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import React from "react";
+import React, { act } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { Landmark } from "lucide-react";
@@ -67,7 +68,7 @@ const loadScreens = (() => {
           // Kept out of the bundle so the providers mounted here and the screens
           // under them share one copy: two copies of React is two hook systems,
           // and two copies of the query client is a context nobody finds.
-          external: ["react", "react-dom", "react-router-dom", "@tanstack/react-query", "lucide-react"],
+          external: ["react", "react-dom", "react-dom/client", "react-router-dom", "@tanstack/react-query", "lucide-react"],
           logLevel: "silent",
         });
         // Written inside the project, so the packages kept out of the bundle - 
@@ -225,9 +226,8 @@ const PLAYED_PROGRESS = {
 const queryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } });
 
-/** Draw one element to markup, then read it back with axe. */
-async function draw(element) {
-  const html = renderToStaticMarkup(element);
+/** What a screen drew, read back by axe in a document of its own. */
+async function auditMarkup(html) {
   assert.ok(html.trim().length > 0, "the screen draws something rather than nothing");
 
   // axe is handed the very markup the screen produced, in a document of its
@@ -253,6 +253,45 @@ async function draw(element) {
   return html;
 }
 
+/** Draw one element to markup, then read it back with axe. */
+async function draw(element) {
+  return auditMarkup(renderToStaticMarkup(element));
+}
+
+/**
+ * Draw one element the way a browser does, effects and all, then read it back.
+ *
+ * The screens that read their own content - the lesson asks for its level when
+ * it is opened - draw the wait first and the content on a later render, and a
+ * server render runs no effect at all. So these are mounted for real, into the
+ * jsdom this file already installs, and given the turns of the event loop the
+ * data needs before what they drew is read back. `settled` is the screen's own
+ * content arriving: without it the wait would be read as the screen.
+ */
+async function drawLive(element, settled) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+
+  try {
+    await act(async () => {
+      root.render(element);
+    });
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (settled && settled(container.innerHTML)) break;
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+    return await auditMarkup(container.innerHTML);
+  } finally {
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  }
+}
+
 /** The markup a piece of text becomes, so text read from the data can be looked
  * for in what the screen drew without failing on an ampersand. */
 function escaped(text) {
@@ -262,6 +301,14 @@ function escaped(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#x27;");
+}
+
+/** The markup a piece of text becomes inside an element the DOM wrote, where
+ * only what could be read as markup is escaped and a quote is just a character.
+ * A screen mounted in a browser is read this way; one serialized to a string is
+ * read the way above. */
+function escapedText(text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 test("the quiz screen draws a level, its first question and its answers", async () => {
@@ -338,14 +385,18 @@ test("the lesson screen draws the whole study pack of a level", async () => {
   // rather than left to whatever the last run happened to store.
   globalThis.localStorage.setItem("aq_lang", "fr");
   const levelId = 3;
-  const html = await draw(
+  // The lesson asks for its level when it is opened, so it is mounted rather
+  // than rendered to a string, and waited for: the level arriving is the moment
+  // the screen is worth reading.
+  const html = await drawLive(
     h(LessonScreen, {
       levelId,
       onStartQuiz() {},
       onBack() {},
       onStudied() {},
       onFlashQuizAnswer() {},
-    })
+    }),
+    (markup) => markup.includes("Grand Zimbabwe")
   );
   globalThis.localStorage.removeItem("aq_lang");
 
@@ -353,8 +404,8 @@ test("the lesson screen draws the whole study pack of a level", async () => {
   const study = getLevelStudy(levelId, "fr");
 
   assert.match(html, /Grand Zimbabwe/, "the level is named in the language asked for");
-  assert.ok(html.includes(escaped(study.essay[0])), "the history opens the lesson");
-  assert.ok(html.includes(escaped(study.essay[3])), "and it runs to more than one paragraph");
+  assert.ok(html.includes(escapedText(study.essay[0])), "the history opens the lesson");
+  assert.ok(html.includes(escapedText(study.essay[3])), "and it runs to more than one paragraph");
 
   // Every part of the pack is really drawn, and says the thing it is about: a
   // section that stopped being rendered would leave the lesson a caption again.
@@ -364,10 +415,10 @@ test("the lesson screen draws the whole study pack of a level", async () => {
     ["the places", study.places[0].text],
     ["the words", study.glossary[0].text],
   ].forEach(([part, text]) => {
-    assert.ok(html.includes(escaped(text)), `${part} of the lesson is on the screen`);
+    assert.ok(html.includes(escapedText(text)), `${part} of the lesson is on the screen`);
   });
-  assert.ok(html.includes(escaped(study.glossary[0].term)), "a word names its term");
-  assert.ok(html.includes(escaped(level.questions[0].fact)), "and the key points are still drawn");
+  assert.ok(html.includes(escapedText(study.glossary[0].term)), "a word names its term");
+  assert.ok(html.includes(escapedText(level.questions[0].fact)), "and the key points are still drawn");
 });
 
 // A check nobody has seen fail is a check nobody knows is running. Two faults

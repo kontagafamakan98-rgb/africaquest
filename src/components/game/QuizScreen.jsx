@@ -6,7 +6,11 @@ import StarDisplay from "./StarDisplay";
 import HintModal, { MAX_ELIMINATIONS } from "./HintModal";
 import SourceReference from "./SourceReference";
 import LevelPicture from "./LevelPicture";
-import { calculateStars, getXPForScore, DIFFICULTIES } from "./gameData";
+// The three ways to play and what a run is worth, neither of which needs the
+// questions of twenty levels: the level being played arrives on its own, through
+// the loader in level-content.js.
+import { DIFFICULTIES } from "./difficulties";
+import { calculateStars, getXPForScore } from "./scoring";
 import { LEVEL_IMAGES } from "./level-summary";
 import { useT, DIFFICULTY_LABEL_KEYS } from "../i18n";
 import { formatDuration } from "../../lib/progress-report";

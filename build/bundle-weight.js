@@ -122,6 +122,38 @@ export const BUNDLE_BUDGETS = {
   // the quiz, which offers a search under a notice that carries no page. Small
   // today, and the room here is for the institutions a longer game would quote.
   "/assets/publishers.js": 15 * 1024,
+  // One lesson's own material, asked for only when that lesson is opened: its
+  // questions, their references, their study pack and the gallery of the level.
+  // The content of the whole game used to arrive in the lesson's chunk, which
+  // meant a player who opened one level downloaded all twenty. These twenty
+  // lines are what the split costs: they are read one at a time, never together,
+  // so each is a budget of its own rather than a share of one big number. The
+  // room left is for a level that grows a few questions or a longer essay.
+  "/assets/level-01.js": 48 * 1024,
+  "/assets/level-02.js": 48 * 1024,
+  "/assets/level-03.js": 48 * 1024,
+  "/assets/level-04.js": 48 * 1024,
+  "/assets/level-05.js": 48 * 1024,
+  "/assets/level-06.js": 48 * 1024,
+  "/assets/level-07.js": 48 * 1024,
+  "/assets/level-08.js": 48 * 1024,
+  "/assets/level-09.js": 48 * 1024,
+  "/assets/level-10.js": 48 * 1024,
+  "/assets/level-11.js": 48 * 1024,
+  "/assets/level-12.js": 48 * 1024,
+  "/assets/level-13.js": 48 * 1024,
+  "/assets/level-14.js": 48 * 1024,
+  "/assets/level-15.js": 48 * 1024,
+  "/assets/level-16.js": 48 * 1024,
+  "/assets/level-17.js": 48 * 1024,
+  "/assets/level-18.js": 48 * 1024,
+  "/assets/level-19.js": 48 * 1024,
+  "/assets/level-20.js": 48 * 1024,
+  // The one function that turns a level - whole game or single lesson - into the
+  // language on screen. Both roads to a level go through it, so it is shared
+  // rather than copied, and it is small because it is only the rule for swapping
+  // wording and nothing about the levels themselves.
+  "/assets/localize-level.js": 15 * 1024,
   "/assets/index.es.js": 200 * 1024,
   "/assets/jspdf.es.min.js": 450 * 1024,
   "/assets/html2canvas.esm.js": 240 * 1024,
@@ -140,11 +172,12 @@ export const BUNDLE_BUDGETS = {
   "/assets/StatsScreen.js": 35 * 1024,
   "/assets/QuizScreen.js": 30 * 1024,
   "/assets/ReviewScreen.js": 25 * 1024,
-  // The lesson screen carries the study pack of every level: the history in
-  // several paragraphs, the timeline, the people, the places and the words, in
-  // both languages. That is a library of lessons rather than a screen of code,
-  // and this line follows the text, as the narrator's line above already does.
-  "/assets/LessonScreen.js": 200 * 1024,
+  // The lesson screen is a screen again: the study pack of every level used to
+  // travel inside this chunk, which made it a library of lessons a player
+  // downloaded in full to read one. The material now travels with the level the
+  // lesson opened, in that level's own chunk above, so this line follows the
+  // screen rather than the text and sits with the other screens.
+  "/assets/LessonScreen.js": 30 * 1024,
   "/assets/QuizPage.js": 20 * 1024,
   "/assets/PhotoCredits.js": 20 * 1024,
   "/assets/Bibliography.js": 20 * 1024,

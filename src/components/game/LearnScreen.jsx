@@ -1,12 +1,14 @@
 import { ChevronRight, Check, GraduationCap } from "lucide-react";
-import { getLevels } from "./gameData";
+// The brief of each level, not its questions: this tab lists the lessons and
+// opens one, and the lesson is what downloads the level it opens.
+import { getLevelSummaries } from "./level-summary";
 import { levelMastery, averageMastery } from "./learning";
 import { useT, useLang } from "../i18n";
 
 export default function LearnScreen({ progress, onOpenLesson }) {
   const t = useT();
   const lang = useLang();
-  const levels = getLevels(lang);
+  const levels = getLevelSummaries(lang);
   const studied = progress.studied_levels || [];
   const levelScores = progress.level_scores || {};
   const mastery = averageMastery(levelScores, levels);

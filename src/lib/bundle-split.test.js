@@ -122,22 +122,76 @@ test("the quiz, the lesson, the review and the statistics arrive when they are o
   }
 });
 
-test("the content of the game is asked for right after the map, not before it", () => {
-  // The map is drawn from the brief, and the questions, the lessons and the
-  // gallery follow it: a dynamic import in a screen the first paint loads is what
-  // makes them arrive beside the map instead of in front of it. Naming the
-  // module here is the point - the walk above proves no *static* import reaches
-  // it, and this proves something still asks for it at all.
-  const asks = [...firstPaint()].filter((file) => {
-    if (!/\.(jsx|js)$/.test(file)) return false;
-    return /import\(\s*["'][^"']*\/gameData["']\s*\)/.test(readFileSync(path.join(ROOT, file), "utf8"));
-  });
+test("a level's questions are asked for one level at a time, when it is opened", () => {
+  // The map is drawn from the brief and no longer asks for the whole game: the
+  // twenty levels were four hundred kilobytes, and a player who opens one of
+  // them was downloading all twenty. What a lesson reads now is one level, and
+  // the loader below is what turns them into twenty requests. The walk above
+  // proves no *static* import reaches the content; this proves a lesson can
+  // still get at it, one level at a time.
+  const upfront = [...firstPaint()].map((file) => file.split(path.sep).join("/"));
+  assert.ok(
+    !upfront.some((file) => file.includes("/game/levels/")),
+    "a level module is downloaded before the map can be drawn"
+  );
 
-  assert.ok(asks.length > 0, "nothing asks for the content of the game once the map is drawn");
-  for (const file of asks) {
-    if (!file.endsWith("Home.jsx")) continue;
-    assert.match(readFileSync(path.join(ROOT, file), "utf8"), /useEffect/, "the map asks for it after it is on screen");
+  const loader = read("src/components/game/level-content.js");
+  const asked = [...loader.matchAll(/import\(\s*["']\.\/levels\/([^"']+)["']\s*\)/g)].map(
+    (match) => match[1]
+  );
+  assert.equal(asked.length, 20, "every level has a loader of its own");
+  assert.equal(new Set(asked).size, 20, "and none of them is declared twice");
+
+  // Each loader points at a file that is really there, and the two lists are the
+  // same twenty: a level added to the game whose module nobody asks for, or a
+  // module left behind by a level that was renumbered, fails here.
+  const directory = path.join(ROOT, "src", "components", "game", "levels");
+  assert.ok(existsSync(directory), "the levels have a directory of their own");
+  assert.deepEqual(readdirSync(directory).sort(), [...asked].sort(), "the loaders and the level files are the same twenty");
+
+  // The screens that open a level go through the loader, and none of the three
+  // reads the whole game, which is what keeps twenty levels out of the chunk a
+  // lesson downloads.
+  for (const [file, what] of [
+    ["src/components/game/LessonScreen.jsx", "the lesson"],
+    ["src/pages/QuizPage.jsx", "the quiz"],
+  ]) {
+    assert.match(read(file), /loadLevel\(/, `${what} no longer loads one level at a time`);
   }
+  for (const [file, what] of [
+    ["src/components/game/LessonScreen.jsx", "the lesson"],
+    ["src/pages/QuizPage.jsx", "the quiz"],
+    ["src/components/game/LearnScreen.jsx", "the study list"],
+  ]) {
+    assert.doesNotMatch(
+      read(file),
+      /from\s*["'][^"']*gameData["']/,
+      `${what} imports the whole game again`
+    );
+  }
+
+  // The study pack of all twenty levels used to be read from one module by the
+  // lesson, which put the material of the whole game in front of a player who
+  // opened one level. It now travels with the level the lesson downloaded, so
+  // the lesson must not read that module and must draw what came with the level.
+  assert.doesNotMatch(
+    read("src/components/game/LessonScreen.jsx"),
+    /from\s*["'][^"']*level-study["']/,
+    "the lesson downloads the study pack of every level again"
+  );
+  assert.match(
+    read("src/components/game/LessonScreen.jsx"),
+    /level\.study/,
+    "the lesson draws the study pack of the level it downloaded"
+  );
+
+  // And the map prefetches none of it: asking for the whole game beside the map
+  // would put the four hundred kilobytes straight back on the first screen.
+  assert.doesNotMatch(
+    read("src/pages/Home.jsx"),
+    /import\(\s*["'][^"']*gameData["']\s*\)/,
+    "the map asks for the whole game again"
+  );
 });
 
 // The pages that ask for a screen on demand, and what that screen is.

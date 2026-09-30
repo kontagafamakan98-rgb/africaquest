@@ -5,6 +5,7 @@ import path from "node:path";
 import { BADGES, LEVELS, getLevels, localizeLevel } from "./gameData.js";
 import { LEVELS_FR } from "./content-fr.js";
 import { LEVEL_STUDY, getLevelStudy } from "./level-study.js";
+import { LEVEL_CONTENT_IDS, loadLevel } from "./level-content.js";
 import { auditTranslations, extractLevelStories } from "../../lib/translation-audit.js";
 
 const OPTION_COUNT = 4;
@@ -168,6 +169,44 @@ test("no paragraph of the study material is reused from one level to the next", 
       });
     });
   });
+});
+
+test("a level a lesson downloads is the level the whole game holds", async () => {
+  // The lessons read one level at a time, from modules generated out of the same
+  // tables the whole game is written from. Two copies of one text drift; the
+  // only thing that keeps them together is a check that compares them, so the
+  // comparison is here, field for field, in both languages, over all twenty
+  // levels: a question added, a reference corrected or a photograph recaptioned
+  // in the game and not in the module fails the moment this runs.
+  assert.deepEqual(
+    LEVEL_CONTENT_IDS,
+    LEVELS.map((level) => level.id),
+    "every level has a module of its own, and no id is missing"
+  );
+
+  for (const id of LEVEL_CONTENT_IDS) {
+    for (const lang of ["en", "fr"]) {
+      const downloaded = await loadLevel(id, lang);
+      const whole = getLevels(lang).find((level) => level.id === id);
+      // The study pack travels with the level and is not part of the level the
+      // whole game holds, so it is set aside here and held to its own source
+      // just below: the rest of the level has to be the very level the game
+      // holds, field for field, in both languages.
+      const { study, ...single } = downloaded;
+      assert.deepEqual(
+        single,
+        whole,
+        `level ${id} in ${lang}: the level a lesson downloads is not the level the game holds`
+      );
+      assert.deepEqual(
+        study,
+        getLevelStudy(id, lang),
+        `level ${id} in ${lang}: the study pack a lesson downloads is not the one the game teaches`
+      );
+    }
+  }
+
+  assert.equal(await loadLevel(999, "en"), null, "a level that does not exist comes back empty");
 });
 
 test("the study material is read back for the language asked for", () => {
