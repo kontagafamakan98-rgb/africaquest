@@ -40,6 +40,25 @@ npm install
 npm run dev
 ```
 
+Pushing is the one step that needs something the repository cannot hold. The remote is HTTPS,
+so a push authenticates with a token the machine keeps - in the Windows Credential Manager
+through Git Credential Manager here, in the Keychain on macOS, in libsecret on Linux - rather
+than with a password typed into a page. A fresh clone that asks for a sign-in window instead
+of pushing usually needs one line, because of how the credential is filed:
+
+- Git Credential Manager stores the token under a username, and git asks the helper without
+  one whenever the remote address carries no username. Recording the account once, in this
+  repository's own config, is the whole difference:
+  `git config credential.https://github.com.username <account>`.
+- The token itself should be a fine-grained one, limited to this repository with
+  **Contents: read and write**. A classic token arrives with scopes - administration,
+  deletion, workflow - that a push here has no use for, which is a lot of reach for a command
+  that only ever adds a commit.
+
+No token belongs in this repository, in its config or in the address of its remote: the
+credential store is the only place one lives, so a push cannot leave a secret behind in a
+file that travels with the work.
+
 ## Scripts
 
 - `npm run dev` starts the development server.
