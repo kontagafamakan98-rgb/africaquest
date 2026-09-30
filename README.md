@@ -1,9 +1,11 @@
 # Africa History Quest
 
 An educational quiz game that helps young learners explore the history of Africa.
-Players progress through eight thematic levels (Ancient Egypt, Kush, Great Zimbabwe,
-Mali, Axum, Songhai, the Zulu Kingdom and African Independence), each available in
-three difficulty modes with stars, XP, badges and a daily streak.
+Players progress through twenty levels that follow the whole timeline, from the first
+humans to Africa today - Ancient Egypt, Kush, Great Zimbabwe, Mali, Axum, Songhai, the
+Zulu Kingdom, African Independence and the periods between them - each with a study
+pack to read before the quiz and three difficulty modes with stars, XP, badges and a
+daily streak. Every level and every question is written in English and in French.
 
 ## Stack
 
@@ -66,10 +68,11 @@ file that travels with the work.
 - `npm run preview` serves the production build.
 - `npm run lint` runs ESLint.
 - `npm run verify` runs every gate the project has: the translations, the photograph budgets
-  and fingerprints, the application icons, the brief the first screen reads, the tests and the
-  house rules, the linters, the annotations the code is read through - twice, once for the
-  program that ships and once for the build modules that run under Node - and then a production
-  build, which the last step weighs, bundle by bundle, against the pass it is compared with.
+  and fingerprints, the application icons, the brief the first screen reads, the content written
+  for each level, the tests and the house rules, the linters, the annotations the code is read
+  through - twice, once for the program that ships and once for the build modules that run under
+  Node - and then a production build, which the last step weighs, bundle by bundle, against the
+  pass it is compared with.
 - `npm run typecheck` is that reading on its own, and it is the one gate that never runs the
   code: it holds every JSDoc annotation to what its function really does, so a parameter
   typed narrower than the values it receives is an error here rather than a surprise later.
@@ -78,6 +81,10 @@ file that travels with the work.
   they run under Node and are not part of what ships, and `jsconfig.node.json` reads the two
   modules under `src/lib/` that call Node's own libraries - the icon rasteriser and the
   photograph fingerprints - with Node's typings, since neither could run in a page at all.
+- `npm run level:content` writes the module of every level - its questions, their references,
+  its study pack and its gallery - from the three tables the rest of the game is written from;
+  `npm run check:levels` is that write held to what is on disk, and it runs inside the
+  verification.
 - `npm run photos:stamp` records the fingerprint of every photograph, after the pictures have
   changed.
 - `npm run weights` weighs the build bundle by bundle and compares it with the last recorded
@@ -220,16 +227,27 @@ table, and checked by `npm run verify`. The brief carries the twenty levels' tit
 languages, their place in the timeline, the icon and the picture on each card, and how many
 questions each level holds - everything a card draws, and nothing else.
 
-The questions, their facts and sources, the lesson stories and the rest of the gallery live in
-`gameData.js` and `level-images.js`. The map asks for them as soon as it is on screen, so they
-arrive beside it rather than in front of it: the entry file is about 155 kB instead of 345 kB, and
-a screen opened by a tap finds the content already in the browser. On a connection where that
-matters, the map is painted after less than half the download it used to wait for.
+The questions, their facts and sources, the study packs, the lesson stories and the rest of the
+gallery live in `gameData.js` and `level-images.js`, and the map asks for none of them: nothing
+of the game's content is fetched from the first screen, so the entry file is about 171 kB rather
+than the 345 kB of the whole game.
+
+What a tap opens asks for what that screen shows, and only that. A lesson is one level, so it asks
+for the one level it is opening: `scripts/generate-level-content.mjs` writes a module per level
+out of the same tables the rest of the game is written from, `src/components/game/level-content.js`
+turns the twenty modules into twenty requests, and the lesson downloads about 24 kB - its own
+questions, their references, its study pack and its gallery - instead of the four hundred
+kilobytes of all twenty. The lesson's own chunk fell from 139 kB to 12 kB as a result. The screens
+that really need every level - the review inbox, the bibliography, the statistics - read
+`gameData.js` when they are opened, which is why it still exists.
 
 That boundary is held by tests rather than by memory: `src/lib/bundle-split.test.js` walks the
-static imports of the entry file and fails on one that reaches the content, and
-`src/components/game/level-summary.test.js` compares the brief with the three tables it is written
-from, down to the icon, the card picture and the AVIF list.
+static imports of the entry file and fails on one that reaches the content, refuses a level module
+that the map could reach, and refuses the lesson screen that reads any module but the level it
+downloaded; `src/components/game/level-summary.test.js` compares the brief with the three tables it
+is written from, down to the icon, the card picture and the AVIF list; and
+`src/components/game/content.test.js` compares each level a lesson downloads with the level the
+whole game holds, field for field, in both languages.
 
 ## The look of a screen
 

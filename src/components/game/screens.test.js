@@ -46,6 +46,17 @@ export { default as StatsScreen } from "@/components/game/StatsScreen.jsx";
 export { default as TeacherPage } from "@/pages/TeacherPage.jsx";
 export { getLevels } from "@/components/game/gameData.js";
 export { default as LessonScreen } from "@/components/game/LessonScreen.jsx";
+export { default as LearnScreen } from "@/components/game/LearnScreen.jsx";
+export { default as ReviewSession } from "@/components/game/ReviewSession.jsx";
+export { default as DifficultyPicker } from "@/components/game/DifficultyPicker.jsx";
+export { default as LevelGallery } from "@/components/game/LevelGallery.jsx";
+export { default as FlashQuiz } from "@/components/game/FlashQuiz.jsx";
+export { default as KnowledgeMap } from "@/components/game/KnowledgeMap.jsx";
+export { default as Bibliography } from "@/pages/Bibliography.jsx";
+export { default as PhotoCredits } from "@/pages/PhotoCredits.jsx";
+export { default as About } from "@/pages/About.jsx";
+export { default as PrivacyPolicy } from "@/pages/PrivacyPolicy.jsx";
+export { default as TermsOfService } from "@/pages/TermsOfService.jsx";
 `;
 
 /** Build the screens once, and hand back the imported module. */
@@ -419,6 +430,86 @@ test("the lesson screen draws the whole study pack of a level", async () => {
   });
   assert.ok(html.includes(escapedText(study.glossary[0].term)), "a word names its term");
   assert.ok(html.includes(escapedText(level.questions[0].fact)), "and the key points are still drawn");
+});
+
+test("the other screens a reader opens are drawn and audited too", async () => {
+  // The four screens above carry the application, and the rest of it is opened
+  // from the settings screen, from a card, from the review inbox or from a
+  // lesson. They are drawn here for the same reason: a screen that throws while
+  // it draws, or one that hands axe a fault, is a screen a player meets as a
+  // blank page. Each page is mounted inside a router because it carries its way
+  // back to the game as a link.
+  const screens = await loadScreens();
+  const {
+    LearnScreen,
+    ReviewSession,
+    DifficultyPicker,
+    LevelGallery,
+    FlashQuiz,
+    KnowledgeMap,
+    Bibliography,
+    PhotoCredits,
+    About,
+    PrivacyPolicy,
+    TermsOfService,
+  } = screens;
+
+  const photo = {
+    file: "/photos/level-1-1.jpg",
+    caption: "The pyramids of Giza, built as royal tombs more than 4,500 years ago.",
+    credit: "Unsplash",
+    author: "Unsplash",
+    licence: "Unsplash",
+    source: "https://example.org/photo",
+  };
+
+  const drawn = [
+    ["the study list", h(LearnScreen, { progress: PLAYED_PROGRESS, onOpenLesson() {} })],
+    [
+      "the review session",
+      h(ReviewSession, {
+        items: [{ levelId: 1, index: 0, question: LEVEL.questions[0] }],
+        title: "Review",
+        subtitle: "Come back",
+        region: "North Africa",
+        onExit() {},
+      }),
+    ],
+    ["the difficulty picker", h(DifficultyPicker, { level: LEVEL, levelScores: {}, onSelect() {}, onBack() {} })],
+    ["the level gallery", h(LevelGallery, { photos: [photo] })],
+    ["the flash quiz", h(FlashQuiz, { items: [{ index: 0, question: LEVEL.questions[0] }], onAnswer() {} })],
+    [
+      "the knowledge map",
+      h(KnowledgeMap, {
+        questionStats: PLAYED_PROGRESS.question_stats,
+        onReviewLevel() {},
+      }),
+    ],
+    ["the bibliography", h(Bibliography)],
+    ["the photo credits", h(PhotoCredits)],
+    ["the about page", h(About)],
+    ["the privacy notice", h(PrivacyPolicy)],
+    ["the terms of use", h(TermsOfService)],
+  ];
+
+  for (const [what, element] of drawn) {
+    // Both providers, for the same reason the teacher page is drawn with them:
+    // a screen that reads the query cache is one nobody can mount without it,
+    // and a page carries its way back to the game as a link. A screen that draws
+    // nothing is named, so the failure says which one rather than only that one
+    // of them is empty.
+    try {
+      await draw(
+        h(
+          QueryClientProvider,
+          { client: queryClient() },
+          h(MemoryRouter, { initialEntries: ["/"] }, element)
+        )
+      );
+    } catch (error) {
+      assert.fail(`${what}: ${error.message}`);
+    }
+  }
 });
 
 // A check nobody has seen fail is a check nobody knows is running. Two faults

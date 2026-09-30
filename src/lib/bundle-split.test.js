@@ -45,8 +45,11 @@ const DEFERRED = [
 ];
 
 // The content of the game, which the map is drawn without. It arrives in its own
-// file, asked for as soon as the map is on screen, and a single ordinary import
-// at the top of one of the files above would put it back in front of the map.
+// file, asked for by the screens that really need every level (the review inbox,
+// the bibliography, the statistics) and not by the map at all, and a single
+// ordinary import at the top of one of the files above would put it back in
+// front of the map. A lesson asks for one level instead, through the modules the
+// test below holds, rather than for the whole game.
 // The photograph table is here for the same reason: the gallery it carries -
 // sixty captions, their authors and their licences - is only read by the screens
 // that show it. So are the two modules the references come from: the list of
