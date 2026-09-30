@@ -62,7 +62,9 @@ export const PUBLISHERS = [
   {
     id: "sahistory",
     name: { en: "South African History Online", fr: "South African History Online" },
-    host: "www.sahistory.org.za",
+    // The bare domain: the www host has answered with a redirect to it since the
+    // site was rebuilt, so a link that keeps the www arrives one hop late.
+    host: "sahistory.org.za",
   },
   {
     id: "african-union",

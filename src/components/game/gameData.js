@@ -705,7 +705,7 @@ export const LEVELS = [
         options: ["Nigeria", "Kenya", "South Africa", "Egypt"],
         correct: 2,
         fact: "The Zulu Kingdom was in what is now KwaZulu-Natal province in South Africa!",
-        source: { label: "South African History Online, The Zulu Kingdom", url: "https://www.sahistory.org.za/article/zulu-kingdom" },
+        source: { label: "South African History Online, The Zulu Kingdom", url: "https://sahistory.org.za/article/zulu-kingdom-and-colony-natal" },
       },
       {
         question: "What weapon was most associated with Zulu warriors?",
@@ -768,14 +768,14 @@ export const LEVELS = [
         options: ["Dingane", "Mpande", "Cetshwayo", "Senzangakhona"],
         correct: 0,
         fact: "Dingane ruled from 1828 until 1840, when he was defeated by his half-brother Mpande and the Boers!",
-        source: { label: "South African History Online, The Zulu Kingdom", url: "https://www.sahistory.org.za/article/zulu-kingdom" },
+        source: { label: "South African History Online, The Zulu Kingdom", url: "https://sahistory.org.za/article/zulu-kingdom-and-colony-natal" },
       },
       {
         question: "What happened to Zululand after the Anglo-Zulu War of 1879?",
         options: ["It remained fully independent", "It was divided into chiefdoms and later annexed by Britain", "It became part of Mozambique", "It was returned to Shaka's heirs"],
         correct: 1,
         fact: "Britain split Zululand into thirteen chiefdoms after 1879 and finally annexed it in 1897, ending Zulu independence!",
-        source: { label: "South African History Online, The Zulu Kingdom", url: "https://www.sahistory.org.za/article/zulu-kingdom" },
+        source: { label: "South African History Online, The Zulu Kingdom", url: "https://sahistory.org.za/article/zulu-kingdom-and-colony-natal" },
       }
     ]
   },
