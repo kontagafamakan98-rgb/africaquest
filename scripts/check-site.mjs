@@ -51,14 +51,23 @@ async function ask(entry) {
     });
     // A picture is compared byte by byte and a document is read as text: the
     // signature of a PNG starts with a byte that is not valid UTF-8, so asking
-    // for it as text would replace the very thing being looked for.
+    // for it as text would replace the very thing being looked for. And the
+    // bytes are read with the one decoder that maps each of them to its own
+    // character, because Node labels TextDecoder("latin1") as windows-1252: the
+    // first byte of a PNG comes back as U+2030 there rather than U+0089, so the
+    // signature never matched a real file. Buffer's latin1 is the byte one.
     const body =
       entry.kind === "picture"
-        ? new TextDecoder("latin1").decode((await response.arrayBuffer()).slice(0, 200_000))
+        ? Buffer.from(await response.arrayBuffer()).toString("latin1").slice(0, 200_000)
         : (await response.text()).slice(0, 200_000);
-    return { entry, status: response.status, contentType: response.headers.get("content-type") || "", body };
+    // `kind` is carried beside the entry, not left inside it: the verdict reads
+    // the answer and not the request, and an answer with no kind is a file
+    // recognised by nothing, which is how a healthy site comes back as four
+    // wrong files. It read `entry` alone and did exactly that until the site was
+    // first published and answered with the right content.
+    return { entry, kind: entry.kind, status: response.status, contentType: response.headers.get("content-type") || "", body };
   } catch (error) {
-    return { entry, status: 0, contentType: "", body: "", error };
+    return { entry, kind: entry.kind, status: 0, contentType: "", body: "", error };
   }
 }
 

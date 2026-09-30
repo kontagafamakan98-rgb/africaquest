@@ -64,6 +64,28 @@ test("each file is recognised by something it cannot be without", () => {
   assert.equal(looksLike("nothing-like-this", page), false);
 });
 
+test("the bytes of a picture are read with the decoder that keeps them", () => {
+  // Node labels TextDecoder("latin1") as windows-1252, where the byte 0x89 of a
+  // PNG decodes to U+2030 rather than U+0089: the signature the check looks for
+  // then never matches a real file, and the link preview is reported as wrong
+  // however well it was published. Buffer's latin1 maps every byte to its own
+  // character, and it is the one a picture is read with.
+  const png = Buffer.from([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+  ]);
+  assert.equal(looksLike("picture", png.toString("latin1")), true, "a real PNG is recognised");
+  assert.equal(
+    looksLike("picture", new TextDecoder("latin1").decode(png)),
+    false,
+    "and the platform's latin1 is not the decoder that keeps the bytes"
+  );
+  assert.match(
+    read("scripts/check-site.mjs"),
+    /toString\("latin1"\)/,
+    "the check reads a picture through the platform decoder again"
+  );
+});
+
 test("what an answer means is not the same question as whether it answered", () => {
   const page = { kind: "page" };
   const good = { status: 200, body: '<div id="root"></div><title>Africa History Quest</title>' };
@@ -110,6 +132,12 @@ test("the check is asked for, paced, and stays out of the verification", () => {
   // The address is the one the build writes, from the same module: one address
   // in this repository rather than three that can disagree.
   assert.match(script, /siteOrigin/, "the check invents its own address");
+  // What was fetched is handed to the verdict with its kind beside the entry.
+  // The verdict reads the answer and not the request, so an answer carrying no
+  // kind is a file recognised by nothing: the script once passed the entry
+  // alone, and every healthy file came back as "wrong" the day the site was
+  // first published and answered with the content it should have.
+  assert.match(script, /return \{ entry, kind: entry\.kind,/, "the verdict is not told what it is looking at");
   assert.match(script, /SITE_FILES/, "the check no longer follows the list the tests read");
   assert.match(script, /site-health\.js/, "the verdicts are not the ones the tests read");
   // A refusal is not read as a verdict of its own: only four files are asked
