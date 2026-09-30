@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { BADGES, LEVELS, getLevels, localizeLevel } from "./gameData.js";
 import { LEVELS_FR } from "./content-fr.js";
+import { LEVEL_STUDY, getLevelStudy } from "./level-study.js";
 import { auditTranslations, extractLevelStories } from "../../lib/translation-audit.js";
 
 const OPTION_COUNT = 4;
@@ -96,6 +97,83 @@ test("every level has a lesson story, told in both languages", () => {
     assert.ok(story.fr.trim().split(/\s+/).length >= 20, `level ${level.id}: the french story is a real one`);
     assert.notEqual(story.en, story.fr, `level ${level.id}: a story is not translated by copying it`);
   });
+});
+
+test("every level carries a full study pack, in both languages", () => {
+  // A lesson is the history in several paragraphs, the dated moments that hold
+  // the period together, the people, the places and the words. The floors below
+  // are guards rather than targets: they are what makes a pack a lesson rather
+  // than a caption, and they are set below what every level already holds.
+  const FLOORS = { essay: 3, timeline: 5, people: 4, places: 4, glossary: 5 };
+
+  assert.deepEqual(
+    Object.keys(LEVEL_STUDY).map(Number).sort((a, b) => a - b),
+    LEVELS.map((level) => level.id),
+    "the study material covers exactly the levels the game teaches"
+  );
+
+  LEVELS.forEach((level) => {
+    const entry = LEVEL_STUDY[level.id];
+    assert.ok(entry, `level ${level.id} has no study material`);
+
+    ["en", "fr"].forEach((lang) => {
+      const study = entry[lang];
+      assert.ok(study, `level ${level.id}: the ${lang} study pack is missing`);
+
+      Object.entries(FLOORS).forEach(([field, floor]) => {
+        assert.ok(Array.isArray(study[field]), `level ${level.id} ${lang}: ${field} must be a list`);
+        assert.ok(
+          study[field].length >= floor,
+          `level ${level.id} ${lang}: ${field} holds ${study[field].length} rows, under the ${floor} a lesson needs`
+        );
+      });
+
+      // Every paragraph and every row really says something, and names the thing
+      // it is about rather than carrying an empty label.
+      study.essay.forEach((paragraph, index) => {
+        assert.ok(nonEmpty(paragraph), `level ${level.id} ${lang}: essay paragraph ${index + 1} is empty`);
+      });
+      ["timeline", "people", "places", "glossary"].forEach((field) => {
+        study[field].forEach((row, index) => {
+          const label = field === "glossary" ? row.term : row.name ?? row.year;
+          assert.ok(nonEmpty(label), `level ${level.id} ${lang}: ${field} row ${index + 1} has no name`);
+          assert.ok(nonEmpty(row.text), `level ${level.id} ${lang}: ${field} row ${index + 1} says nothing`);
+        });
+      });
+    });
+
+    // The two languages line up row by row, and neither is the other copied
+    // across: a translated lesson is a second lesson, not a label.
+    Object.keys(FLOORS).forEach((field) => {
+      assert.equal(
+        entry.en[field].length,
+        entry.fr[field].length,
+        `level ${level.id}: the ${field} is not paired between the languages`
+      );
+      assert.notDeepEqual(entry.fr[field], entry.en[field], `level ${level.id}: the ${field} is the English one`);
+    });
+  });
+});
+
+test("no paragraph of the study material is reused from one level to the next", () => {
+  const seen = new Set();
+  LEVELS.forEach((level) => {
+    ["en", "fr"].forEach((lang) => {
+      LEVEL_STUDY[level.id][lang].essay.forEach((paragraph, index) => {
+        assert.ok(
+          !seen.has(paragraph),
+          `level ${level.id} ${lang}, paragraph ${index + 1}: the same paragraph is used twice`
+        );
+        seen.add(paragraph);
+      });
+    });
+  });
+});
+
+test("the study material is read back for the language asked for", () => {
+  assert.equal(getLevelStudy(1, "fr"), LEVEL_STUDY[1].fr, "the French pack is the French one");
+  assert.equal(getLevelStudy(1, "de"), LEVEL_STUDY[1].en, "an unknown language falls back to English");
+  assert.equal(getLevelStudy(999), null, "a level with no material comes back empty rather than as an error");
 });
 
 test("the badge for the end of the game asks for the whole timeline", () => {

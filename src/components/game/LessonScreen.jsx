@@ -1,5 +1,8 @@
 import { useEffect } from "react";
-import { ChevronLeft, Lightbulb, CheckCircle2, ArrowRight, BookOpen } from "lucide-react";
+import {
+  ChevronLeft, Lightbulb, CheckCircle2, ArrowRight, BookOpen,
+  CalendarClock, Users, MapPin, BookMarked,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LEVEL_IMAGES } from "./level-summary";
 // The full level, with its questions and its gallery, is read here and only
@@ -7,6 +10,7 @@ import { LEVEL_IMAGES } from "./level-summary";
 // what it teaches, so the screens that need the content ask this module for it.
 import { getLevels } from "./gameData";
 import AudioNarrator, { getLevelStory } from "./AudioNarrator";
+import { getLevelStudy } from "./level-study";
 import SourceReference from "./SourceReference";
 import LevelGallery from "./LevelGallery";
 import LevelPicture from "./LevelPicture";
@@ -37,6 +41,12 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
   if (!level) return null;
 
   const story = getLevelStory(level.id, lang);
+  // The whole study pack of the level: the history in several paragraphs, the
+  // timeline, the people, the places and the words. The lesson story is the
+  // narration the player listens to, and stands in for the history if a level
+  // ever arrived without one.
+  const study = getLevelStudy(level.id, lang);
+  const history = study?.essay?.length ? study.essay : story ? [story] : [];
   const img = LEVEL_IMAGES[level.id];
   const Icon = level.icon;
   // Same questions in either language: only their wording changes.
@@ -71,17 +81,89 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
       <main className="max-w-lg mx-auto px-4 py-5 space-y-6">
         <AudioNarrator levelId={level.id} />
 
-        {story && (
+        {history.length > 0 && (
           <section>
             <h2 className="flex items-center gap-2 text-xs font-extrabold text-slate-700 uppercase tracking-widest mb-2">
               <BookOpen className="w-4 h-4 text-amber-600" aria-hidden="true" />
               {t.lessonStory}
             </h2>
-            <p className="text-sm text-slate-700 leading-relaxed">{story}</p>
+            <div className="space-y-3">
+              {history.map((paragraph, index) => (
+                <p key={index} className="text-sm text-slate-700 leading-relaxed">{paragraph}</p>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {study?.timeline?.length > 0 && (
+          <section>
+            <h2 className="flex items-center gap-2 text-xs font-extrabold text-slate-700 uppercase tracking-widest mb-3">
+              <CalendarClock className="w-4 h-4 text-amber-600" aria-hidden="true" />
+              {t.lessonTimeline}
+            </h2>
+            <ol className="space-y-3">
+              {study.timeline.map((entry, index) => (
+                <li key={index} className="border-l-2 border-amber-200 pl-3">
+                  <p className="text-xs font-bold text-amber-700">{entry.year}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{entry.text}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {study?.people?.length > 0 && (
+          <section>
+            <h2 className="flex items-center gap-2 text-xs font-extrabold text-slate-700 uppercase tracking-widest mb-3">
+              <Users className="w-4 h-4 text-amber-600" aria-hidden="true" />
+              {t.lessonPeople}
+            </h2>
+            <dl className="space-y-2.5">
+              {study.people.map((entry, index) => (
+                <div key={index} className="bg-white border border-slate-200 rounded-xl p-3">
+                  <dt className="text-sm font-bold text-slate-800">{entry.name}</dt>
+                  <dd className="text-sm text-slate-700 leading-relaxed">{entry.text}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
+
+        {study?.places?.length > 0 && (
+          <section>
+            <h2 className="flex items-center gap-2 text-xs font-extrabold text-slate-700 uppercase tracking-widest mb-3">
+              <MapPin className="w-4 h-4 text-amber-600" aria-hidden="true" />
+              {t.lessonPlaces}
+            </h2>
+            <dl className="space-y-2.5">
+              {study.places.map((entry, index) => (
+                <div key={index} className="bg-white border border-slate-200 rounded-xl p-3">
+                  <dt className="text-sm font-bold text-slate-800">{entry.name}</dt>
+                  <dd className="text-sm text-slate-700 leading-relaxed">{entry.text}</dd>
+                </div>
+              ))}
+            </dl>
           </section>
         )}
 
         <LevelGallery photos={level.gallery} />
+
+        {study?.glossary?.length > 0 && (
+          <section>
+            <h2 className="flex items-center gap-2 text-xs font-extrabold text-slate-700 uppercase tracking-widest mb-3">
+              <BookMarked className="w-4 h-4 text-amber-600" aria-hidden="true" />
+              {t.lessonWords}
+            </h2>
+            <dl className="space-y-2.5">
+              {study.glossary.map((entry, index) => (
+                <div key={index} className="bg-white border border-slate-200 rounded-xl p-3">
+                  <dt className="text-sm font-bold text-slate-800">{entry.term}</dt>
+                  <dd className="text-sm text-slate-700 leading-relaxed">{entry.text}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
 
         <section>
           <h2 className="flex items-center gap-2 text-xs font-extrabold text-slate-700 uppercase tracking-widest mb-3">

@@ -44,6 +44,7 @@ export { default as ReviewScreen } from "@/components/game/ReviewScreen.jsx";
 export { default as StatsScreen } from "@/components/game/StatsScreen.jsx";
 export { default as TeacherPage } from "@/pages/TeacherPage.jsx";
 export { getLevels } from "@/components/game/gameData.js";
+export { default as LessonScreen } from "@/components/game/LessonScreen.jsx";
 `;
 
 /** Build the screens once, and hand back the imported module. */
@@ -325,6 +326,48 @@ test("the teacher page draws inside a router and a query client", async () => {
       h(MemoryRouter, { initialEntries: ["/TeacherPage"] }, h(TeacherPage))
     )
   );
+});
+
+test("the lesson screen draws the whole study pack of a level", async () => {
+  const { LessonScreen, getLevels } = await loadScreens();
+  // Read through the same module the screen reads, so the two cannot drift
+  // apart and both be wrong: the test is a copy of nothing.
+  const { getLevelStudy } = await import("./level-study.js");
+
+  // The screen follows the language the browser is set to, so it is set here
+  // rather than left to whatever the last run happened to store.
+  globalThis.localStorage.setItem("aq_lang", "fr");
+  const levelId = 3;
+  const html = await draw(
+    h(LessonScreen, {
+      levelId,
+      onStartQuiz() {},
+      onBack() {},
+      onStudied() {},
+      onFlashQuizAnswer() {},
+    })
+  );
+  globalThis.localStorage.removeItem("aq_lang");
+
+  const level = getLevels("fr").find((candidate) => candidate.id === levelId);
+  const study = getLevelStudy(levelId, "fr");
+
+  assert.match(html, /Grand Zimbabwe/, "the level is named in the language asked for");
+  assert.ok(html.includes(escaped(study.essay[0])), "the history opens the lesson");
+  assert.ok(html.includes(escaped(study.essay[3])), "and it runs to more than one paragraph");
+
+  // Every part of the pack is really drawn, and says the thing it is about: a
+  // section that stopped being rendered would leave the lesson a caption again.
+  [
+    ["the timeline", study.timeline[0].text],
+    ["the people", study.people[0].text],
+    ["the places", study.places[0].text],
+    ["the words", study.glossary[0].text],
+  ].forEach(([part, text]) => {
+    assert.ok(html.includes(escaped(text)), `${part} of the lesson is on the screen`);
+  });
+  assert.ok(html.includes(escaped(study.glossary[0].term)), "a word names its term");
+  assert.ok(html.includes(escaped(level.questions[0].fact)), "and the key points are still drawn");
 });
 
 // A check nobody has seen fail is a check nobody knows is running. Two faults

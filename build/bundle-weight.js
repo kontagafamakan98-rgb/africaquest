@@ -140,7 +140,11 @@ export const BUNDLE_BUDGETS = {
   "/assets/StatsScreen.js": 35 * 1024,
   "/assets/QuizScreen.js": 30 * 1024,
   "/assets/ReviewScreen.js": 25 * 1024,
-  "/assets/LessonScreen.js": 25 * 1024,
+  // The lesson screen carries the study pack of every level: the history in
+  // several paragraphs, the timeline, the people, the places and the words, in
+  // both languages. That is a library of lessons rather than a screen of code,
+  // and this line follows the text, as the narrator's line above already does.
+  "/assets/LessonScreen.js": 200 * 1024,
   "/assets/QuizPage.js": 20 * 1024,
   "/assets/PhotoCredits.js": 20 * 1024,
   "/assets/Bibliography.js": 20 * 1024,
