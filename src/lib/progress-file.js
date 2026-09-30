@@ -76,10 +76,12 @@ export function checkBackupFile(file) {
 }
 
 // Ceilings that keep a hand-made file from exhausting memory on load. They sit
-// far above anything the game itself can produce.
-const MAX_QUESTIONS = 4000;
-const MAX_HISTORY = 5000;
-const MAX_LIST_ITEMS = 200;
+// far above anything the game itself can produce. They are exported because a
+// reader can be handed a file that reaches them, and what the application does
+// at that size is measured rather than assumed: see src/lib/load-stress.js.
+export const MAX_QUESTIONS = 4000;
+export const MAX_HISTORY = 5000;
+export const MAX_LIST_ITEMS = 200;
 const MAX_LEVEL_ID = 200;
 const QUESTION_KEY = /^\d+:\d+$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -123,20 +125,31 @@ function toLevelId(value) {
 function toIdList(value) {
   if (!Array.isArray(value)) return [];
   const ids = [];
-  value.forEach((entry) => {
+  // A Set for the same reason as the counter in toQuestionStats(): whether an id
+  // was already kept is a question about the list, and asking the list itself
+  // makes the answer slower with every entry added.
+  const seen = new Set();
+  for (const entry of value) {
+    if (ids.length >= MAX_LIST_ITEMS) break;
     const id = toLevelId(entry);
-    if (id !== null && !ids.includes(id) && ids.length < MAX_LIST_ITEMS) ids.push(id);
-  });
+    if (id === null || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
   return ids;
 }
 
 function toTextList(value) {
   if (!Array.isArray(value)) return [];
   const items = [];
-  value.forEach((entry) => {
+  const seen = new Set();
+  for (const entry of value) {
+    if (items.length >= MAX_LIST_ITEMS) break;
     const text = toText(entry);
-    if (text && !items.includes(text) && items.length < MAX_LIST_ITEMS) items.push(text);
-  });
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    items.push(text);
+  }
   return items;
 }
 
@@ -165,12 +178,20 @@ function toStat(value) {
 function toQuestionStats(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const stats = {};
-  Object.entries(value).forEach(([key, entry]) => {
-    if (Object.keys(stats).length >= MAX_QUESTIONS) return;
-    if (!QUESTION_KEY.test(key)) return;
+  // The number kept is counted rather than asked for: the ceiling allows four
+  // thousand answers, and calling Object.keys() on the growing record once per
+  // answer would rebuild that whole key list four thousand times, which is what
+  // turned a repair into most of a second. The budget for that work is held in
+  // src/lib/load-stress.js, and the script that measures it is scripts/stress-load.mjs.
+  let kept = 0;
+  for (const [key, entry] of Object.entries(value)) {
+    if (kept >= MAX_QUESTIONS) break;
+    if (!QUESTION_KEY.test(key)) continue;
     const stat = toStat(entry);
-    if (stat) stats[key] = stat;
-  });
+    if (!stat) continue;
+    stats[key] = stat;
+    kept += 1;
+  }
   return stats;
 }
 

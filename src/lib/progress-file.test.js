@@ -211,3 +211,26 @@ test("importStudentProfile registers a new student with progress in the roster",
   assert.equal(res3.updated, false);
   assert.equal(listProfiles().length, 2);
 });
+
+test("a file whose student has no name still lands in the roster", async () => {
+  // A backup exported from a device whose profile was never named carries no
+  // name at all, and the teacher space falls back to the file name: a file
+  // called africa-quest-2026-09-27.json has nothing left to make a name from.
+  // The roster still needs an entry to hold the progress, so it gets a
+  // placeholder the teacher can rename - and this path used to throw instead,
+  // on a name that was never defined.
+  const { importStudentProfile, listStudentsWithProgress } = await import("../api/profiles-store.js");
+
+  const memory = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => (memory.has(key) ? memory.get(key) : null),
+    setItem: (key, value) => memory.set(key, String(value)),
+    removeItem: (key) => memory.delete(key),
+    clear: () => memory.clear(),
+  };
+
+  const imported = importStudentProfile("", playedProgress);
+  assert.equal(imported.profile.name, "Student");
+  assert.equal(imported.updated, false);
+  assert.equal(listStudentsWithProgress()[0].progress.total_xp, playedProgress.total_xp);
+});
