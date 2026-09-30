@@ -138,7 +138,7 @@ export const LEVEL_FACTS = [
     color: "from-stone-500 to-amber-800",
     icon: "Footprints",
     image: "/photos/level-9-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "Les origines de l'humanité", subtitle: "L'Afrique, berceau de l'humanité", region: "Toute l'Afrique" },
   },
   {
@@ -152,7 +152,7 @@ export const LEVEL_FACTS = [
     color: "from-sky-500 to-blue-700",
     icon: "Anchor",
     image: "/photos/level-10-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "Carthage et l'Afrique du Nord antique", subtitle: "La rivale de Rome", region: "Afrique du Nord" },
   },
   {
@@ -166,7 +166,7 @@ export const LEVEL_FACTS = [
     color: "from-orange-700 to-red-800",
     icon: "Hammer",
     image: "/photos/level-11-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "L'âge du fer", subtitle: "Terres cuites nok et expansion bantoue", region: "Afrique centrale et australe" },
   },
   {
@@ -180,7 +180,7 @@ export const LEVEL_FACTS = [
     color: "from-yellow-600 to-red-700",
     icon: "Mountain",
     image: "/photos/level-12-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "L'Éthiopie médiévale", subtitle: "Lalibela et la dynastie salomonide", region: "Corne de l'Afrique" },
   },
   {
@@ -194,7 +194,7 @@ export const LEVEL_FACTS = [
     color: "from-yellow-400 to-amber-600",
     icon: "Gem",
     image: "/photos/level-13-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "L'empire du Ghana", subtitle: "Wagadu, pays de l'or", region: "Afrique de l'Ouest" },
   },
   {
@@ -208,7 +208,7 @@ export const LEVEL_FACTS = [
     color: "from-lime-600 to-emerald-800",
     icon: "Scroll",
     image: "/photos/level-14-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "Kanem-Bornou et les cités haoussa", subtitle: "Cavaliers, savants et remparts", region: "Sahel central" },
   },
   {
@@ -222,7 +222,7 @@ export const LEVEL_FACTS = [
     color: "from-cyan-500 to-teal-700",
     icon: "Ship",
     image: "/photos/level-15-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "La côte swahili", subtitle: "Kilwa, Zanzibar et le commerce de mousson", region: "Côte est-africaine" },
   },
   {
@@ -236,7 +236,7 @@ export const LEVEL_FACTS = [
     color: "from-green-600 to-emerald-800",
     icon: "Building2",
     image: "/photos/level-16-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "Les royaumes de la forêt", subtitle: "Kongo, Bénin, Ifé et Oyo", region: "Afrique centrale et de l'Ouest" },
   },
   {
@@ -250,7 +250,7 @@ export const LEVEL_FACTS = [
     color: "from-slate-500 to-slate-800",
     icon: "Globe",
     image: "/photos/level-17-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "La traite atlantique", subtitle: "Exil, résistance et abolition", region: "Afrique atlantique" },
   },
   {
@@ -264,7 +264,7 @@ export const LEVEL_FACTS = [
     color: "from-rose-600 to-red-900",
     icon: "Map",
     image: "/photos/level-18-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "La conquête coloniale", subtitle: "Résistances, Adoua et panafricanisme", region: "Sur tout le continent" },
   },
   {
@@ -278,7 +278,7 @@ export const LEVEL_FACTS = [
     color: "from-amber-700 to-stone-800",
     icon: "Scale",
     image: "/photos/level-19-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "L'apartheid", subtitle: "La longue marche vers la liberté en Afrique du Sud", region: "Afrique australe" },
   },
   {
@@ -292,7 +292,7 @@ export const LEVEL_FACTS = [
     color: "from-teal-500 to-green-700",
     icon: "Rocket",
     image: "/photos/level-20-1.jpg",
-    questionCount: 10,
+    questionCount: 15,
     fr: { title: "L'Afrique d'aujourd'hui", subtitle: "Union, croissance et nouveaux défis", region: "Sur tout le continent" },
   },
 ];

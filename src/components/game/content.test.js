@@ -7,9 +7,9 @@ import { LEVELS_FR } from "./content-fr.js";
 import { auditTranslations, extractLevelStories } from "../../lib/translation-audit.js";
 
 const OPTION_COUNT = 4;
-// A level is one lesson and one quiz on one period. Every level now carries at
-// least ten questions, and the fuller ones fifteen: what matters is that every
-// period is taught, and that every lesson is full enough to study from.
+// A level is one lesson and one quiz on one period. Every level now carries the
+// full fifteen questions, and the floor is kept below that as a guard rather
+// than as a target.
 const MIN_QUESTIONS_PER_LEVEL = 10;
 const MAX_QUESTIONS_PER_LEVEL = 15;
 const LEVEL_COUNT = 20;
@@ -44,6 +44,17 @@ test("the game holds the levels, questions and answers it claims", () => {
       `level ${level.id} has ${level.questions.length} questions, outside the ${MIN_QUESTIONS_PER_LEVEL} to ${MAX_QUESTIONS_PER_LEVEL} range`
     );
   });
+});
+
+test("every level carries a full lesson of fifteen questions", () => {
+  // The difficulty setting chooses among the questions of a level: the easy
+  // band is its first third, and the harder settings open the following bands.
+  // A level with fewer questions than the full fifteen would leave one of those
+  // bands too thin to fill, so no lesson is allowed to be a short one.
+  const short = LEVELS.filter((level) => level.questions.length < MAX_QUESTIONS_PER_LEVEL).map(
+    (level) => `level ${level.id} has ${level.questions.length}`
+  );
+  assert.deepEqual(short, [], "levels a difficulty setting would find half empty");
 });
 
 test("the levels are one timeline, from the first humans to today", () => {

@@ -114,8 +114,10 @@ export const BUNDLE_BUDGETS = {
   // The content of the game, and the libraries one screen needs to draw it.
   // gameData is the questions and the lessons, so it grows with the game rather
   // than with the code, and its budget is the one that is meant to be raised as
-  // levels are added.
-  "/assets/gameData.js": 240 * 1024,
+  // levels are added. It stood at 240 KB while twelve of the twenty levels were
+  // still short ones; those twelve now teach a full lesson of fifteen questions
+  // in both languages, which is the growth this line was written for.
+  "/assets/gameData.js": 330 * 1024,
   // The institutions the references come from: read by the bibliography, and by
   // the quiz, which offers a search under a notice that carries no page. Small
   // today, and the room here is for the institutions a longer game would quote.
