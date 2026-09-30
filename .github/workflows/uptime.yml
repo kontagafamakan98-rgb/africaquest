@@ -1,0 +1,49 @@
+# Asks the published site, once a day, whether it is still there.
+#
+# Nothing here is a server: the application is a folder of files on GitHub Pages,
+# and the way it fails is quiet. A half finished deployment, a repository whose
+# Pages setting was changed, a build that published an empty directory: in every
+# one of them the address still answers, and what it answers with is not the
+# application. So the check reads the four files that say what the site is, and
+# fails when one of them is not what it should be (see scripts/check-site.mjs).
+#
+# A failing scheduled run is what tells the publisher: GitHub notifies the owner
+# of a workflow that failed, in the app and by email, which is why there is no
+# third party watching the site and no secret in this file. A run that succeeds
+# says nothing to anybody, which is the point.
+#
+# It is deliberately not part of the Verify workflow: the gate decides whether a
+# change belongs on main, and this says whether what was published is reachable,
+# which depends on a host rather than on the code.
+name: Uptime
+
+on:
+  schedule:
+    # 06:17 UTC rather than on the hour: a check that runs with everybody else's
+    # is a check that waits for its turn.
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Ask the published site whether it is still there
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is verified on
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # No install step: this script reads files over the network and imports
+      # nothing outside the repository.
+      - name: Read the published site
+        run: node scripts/check-site.mjs
