@@ -163,3 +163,26 @@ test("the brief is written by the script the verification runs", () => {
     LEVELS.reduce((sum, level) => sum + level.questions.length, 0)
   );
 });
+test("the brief is built once per language, and rebuilt by nothing else", () => {
+  // The map paints whenever the clock ticks, and it asks for these twenty cards
+  // every time. None of what they are made of can change while the application
+  // is running, so a list built once per language is the whole cost; the same
+  // object coming back is what says the work was not done twice.
+  const english = getLevelSummaries("en");
+  const french = getLevelSummaries("fr");
+
+  assert.equal(getLevelSummaries("en"), english, "the English brief was rebuilt");
+  assert.equal(getLevelSummaries("fr"), french, "the French brief was rebuilt");
+  assert.notEqual(english, french, "the two languages share one list");
+
+  // And the kept list is the right one: the language still decides the wording,
+  // in the order the timeline runs.
+  assert.equal(english.length, LEVEL_SUMMARIES.length);
+  assert.deepEqual(
+    english.map((level) => level.order),
+    [...english.map((level) => level.order)].sort((one, other) => one - other),
+    "the kept list is no longer in timeline order"
+  );
+  assert.notEqual(english[0].title, french[0].title, "the two lists read the same");
+  assert.equal(french[0].id, english[0].id, "a level keeps its id in both languages");
+});

@@ -72,12 +72,29 @@ export const TOTAL_QUESTIONS = LEVEL_SUMMARIES.reduce(
  *
  * A missing French wording falls back to the English one, exactly as the full
  * levels do, so switching the language can never leave a gap on a card.
+ *
+ * The result is kept, one list per language, because none of it can change
+ * while the application is running: the facts are a generated file, the order is
+ * the writing of that file, and the language is one of two. The map paints on
+ * every frame that the clock ticks, and rebuilding twenty cards each time to
+ * throw them away is work nobody asked for; two lists, built once, are what a
+ * map of twenty cards costs. The same list object comes back for the same
+ * language, which is also what lets a caller hand it to a dependency array.
  */
+// Kept in an object rather than a Map, and not by preference: this module
+// imports the Map *icon* from the icon set, which shadows the constructor of the
+// same name, so `new Map()` here is a TypeError and nothing else.
+const summariesByLang = { en: null, fr: null };
+
 export function getLevelSummaries(lang = "en") {
-  return [...LEVEL_SUMMARIES]
+  const code = lang === "fr" ? "fr" : "en";
+  const kept = summariesByLang[code];
+  if (kept) return kept;
+
+  const levels = [...LEVEL_SUMMARIES]
     .sort((a, b) => a.order - b.order)
     .map((level) => {
-      const french = lang === "fr" ? level.fr : null;
+      const french = code === "fr" ? level.fr : null;
       return {
         ...level,
         title: french?.title || level.title,
@@ -85,4 +102,7 @@ export function getLevelSummaries(lang = "en") {
         region: french?.region || level.region,
       };
     });
+
+  summariesByLang[code] = levels;
+  return levels;
 }
