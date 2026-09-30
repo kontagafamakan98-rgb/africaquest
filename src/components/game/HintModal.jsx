@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { X, Lightbulb, Eraser, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "../i18n";
@@ -27,7 +27,11 @@ export default function HintModal({
   const allUsed = !canEliminate && !canReveal;
 
   return (
-    <AnimatePresence>
+    <>
+      {/* Drawn only while the sheet is open, and animated in: not handed to
+          AnimatePresence, for the reason written at the settings sheet - an
+          exiting pair can be left behind in the document, and the scrim it
+          leaves covers a page nothing can be clicked on. */}
       {open && (
         <>
           {/* A tap on the scrim closes the sheet, which is what a thumb tries
@@ -38,7 +42,6 @@ export default function HintModal({
             aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           />
@@ -50,7 +53,6 @@ export default function HintModal({
             tabIndex={-1}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
-            exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl max-w-lg mx-auto focus:outline-none"
             style={{ paddingBottom: "calc(1.5rem + var(--sab))" }}
@@ -125,6 +127,6 @@ export default function HintModal({
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }

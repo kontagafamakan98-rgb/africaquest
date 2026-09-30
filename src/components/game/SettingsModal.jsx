@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { X, Trash2, Info, AlertTriangle, Globe, ShieldCheck, FileText, GraduationCap, ChevronRight, Download, Upload, Camera, BookOpen, Bell, BellOff, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -124,7 +124,16 @@ export default function SettingsModal({ open, onClose, reminder }) {
   };
 
   return (
-    <AnimatePresence>
+    <>
+      {/* The scrim and the sheet are drawn only while the sheet is open, and
+          they animate in. They are deliberately not handed to AnimatePresence,
+          which is what the other sheets of the application use: this is the one
+          sheet that offers the language, so it can be open when the language
+          changes, and that change re-renders the whole application. The pair
+          that was leaving was then never taken back out of the document - an
+          invisible scrim across the page, on which nothing could be clicked any
+          more until the tab was reloaded. Arriving is animated here and leaving
+          is not, which is the trade this failure is worth. */}
       {open && (
         <>
           {/* A tap on the scrim closes the sheet: a convenience for a thumb,
@@ -135,7 +144,6 @@ export default function SettingsModal({ open, onClose, reminder }) {
             aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           />
@@ -147,7 +155,6 @@ export default function SettingsModal({ open, onClose, reminder }) {
             tabIndex={-1}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
-            exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl max-w-lg mx-auto focus:outline-none"
             style={{ paddingBottom: "calc(4.5rem + var(--sab))" }}
@@ -398,7 +405,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 

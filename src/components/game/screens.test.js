@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { build } from "esbuild";
 import path from "node:path";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import React, { act } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -509,6 +509,29 @@ test("the other screens a reader opens are drawn and audited too", async () => {
     } catch (error) {
       assert.fail(`${what}: ${error.message}`);
     }
+  }
+});
+
+test("the sheets that can be open while the language changes are drawn directly", () => {
+  // The settings sheet is the one sheet from which the language is chosen, so
+  // it is the one that can be open while the whole application re-renders. Handed
+  // to AnimatePresence, the pair that was leaving was never taken back out of the
+  // document after such a re-render: the sheet stayed behind, invisible, and its
+  // scrim covered the page, on which nothing could be clicked any more until the
+  // tab was reloaded. Both sheets therefore animate in and not out, and this is
+  // what refuses a return to the shape that failed.
+  for (const file of [
+    "src/components/game/SettingsModal.jsx",
+    "src/components/game/HintModal.jsx",
+  ]) {
+    const source = readFileSync(path.join(ROOT, file), "utf8");
+    // The word may be written in a comment that explains why not; it is the
+    // element that is refused.
+    assert.doesNotMatch(
+      source,
+      /<AnimatePresence/,
+      `${file} hands its sheet back to AnimatePresence, which can leave it in the page`
+    );
   }
 });
 
