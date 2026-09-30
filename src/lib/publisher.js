@@ -19,15 +19,15 @@ import { CONTACT_EMAIL } from "./contact.js";
 /** Everything needed to identify the publisher in both legal documents. */
 export const PUBLISHER = {
   /** Trade name shown to the reader. */
-  name: "",
+  name: "KOJO",
   /** Registered company name, when it differs from the trade name. */
-  legalName: "",
+  legalName: "Aider la nouvelle génération à apprendre l'histoire plus facilement",
   /** Legal form, for example "Société par actions simplifiée". */
-  legalForm: "",
+  legalForm: "Entreprise individuelle",
   /** Full postal address of the registered office. */
-  address: "",
+  address: "Hamdallaye ACI 2000, Bamako, Mali",
   /** Registration number, SIREN or RCS entry. */
-  registration: "",
+  registration: "ML.52025.090NC",
   /** Address that receives legal notices and data protection requests. */
   email: CONTACT_EMAIL,
 };
@@ -37,9 +37,9 @@ export const PUBLISHER = {
  * own is hosted somewhere, and the law asks for that company to be named.
  */
 export const HOST = {
-  name: "",
-  address: "",
-  phone: "",
+  name: "Famakan Kontaga",
+  address: "Hamdallaye ACI 2000, près du Bougie Ba, Bamako, Mali",
+  phone: "+223 72817558",
 };
 
 /** Data protection officer, when the publisher has appointed one. */
