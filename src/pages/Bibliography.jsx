@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, BookOpen, ExternalLink, Search } from "lucide-react";
 import { useT, useLang } from "../components/i18n";
@@ -34,9 +35,17 @@ const counted = (count, singular, plural) => `${count} ${count === 1 ? singular 
  * two are shown differently on purpose, because they are not the same claim: a
  * link is an address somebody opened, a search only opens a search.
  */
+/** How many institutions are drawn before the screen asks whether to go on. */
+const INSTITUTIONS_PAGE = 4;
+
 export default function Bibliography() {
   const t = useT();
   const lang = useLang();
+  // Every work the game quotes, with its questions, is two hundred lines long:
+  // drawn in one go, a reader who came to check one reference waits for all of
+  // them. The institutions are therefore revealed a few at a time, and the
+  // counts in the header are still the whole bibliography.
+  const [shown, setShown] = useState(INSTITUTIONS_PAGE);
 
   const institutions = getBibliography(lang);
   const works = institutions.reduce((total, institution) => total + institution.works.length, 0);
@@ -74,7 +83,7 @@ export default function Bibliography() {
       <main className="max-w-lg mx-auto px-5 py-6 space-y-6">
         <p className="text-sm text-slate-600 leading-relaxed">{t.bibliographyIntro}</p>
 
-        {institutions.map((institution) => (
+        {institutions.slice(0, shown).map((institution) => (
           <section key={institution.id} aria-labelledby={`bibliography-${institution.id}`}>
             <h2 id={`bibliography-${institution.id}`} className="text-base font-extrabold text-slate-800">
               {institution.name}
@@ -135,6 +144,16 @@ export default function Bibliography() {
             </ul>
           </section>
         ))}
+
+        {shown < institutions.length && (
+          <button
+            type="button"
+            onClick={() => setShown((count) => count + INSTITUTIONS_PAGE)}
+            className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:border-amber-400 active:scale-[0.99]"
+          >
+            {t.showMore} · {institutions.length - shown}
+          </button>
+        )}
       </main>
     </div>
   );

@@ -24,6 +24,10 @@ import { getLevels } from "../components/game/gameData";
  * format the browser can read, and a second way of drawing a photograph would
  * quietly download the heaviest one.
  *
+ * The list is drawn a few levels at a time (see CREDITS_PAGE): a reference
+ * screen is read a line at a time, and laying out two hundred rows to answer a
+ * question about one picture is work the reader pays for in waiting.
+ *
  * Each of them is asked for as a thumbnail, which is the whole point of this
  * screen having copies of its own: what is drawn here is eighty pixels square,
  * and the lesson versions it used to draw would have been sixty full width
@@ -40,17 +44,27 @@ import { getLevels } from "../components/game/gameData";
  * tap, which is what keeps a screen of credits from being a screen of sixty
  * photographs.
  */
+/** How many levels of credits are drawn before the screen asks whether to go on. */
+const CREDITS_PAGE = 6;
+
 export default function PhotoCredits() {
   const t = useT();
   const lang = useLang();
   // The photograph whose viewer is open, or null. Held here rather than in the
   // row, so only one can ever be open.
   const [open, setOpen] = useState(null);
+  // A credit line is a thumbnail and four lines of text, and this screen holds
+  // two hundred of them: all of it at once is a long page to lay out on a phone
+  // for a reader who came to check one picture. The list is therefore revealed by
+  // the level, six at a time, which is a screenful and a bit; the count in the
+  // header is still the whole gallery, so nothing is hidden, only deferred.
+  const [shown, setShown] = useState(CREDITS_PAGE);
 
   const levels = getLevels(lang)
     .map((level) => ({ id: level.id, title: level.title, photos: level.gallery }))
     .filter((level) => level.photos.length > 0);
   const total = levels.reduce((count, level) => count + level.photos.length, 0);
+  const visible = levels.slice(0, shown);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -83,7 +97,7 @@ export default function PhotoCredits() {
       <main className="max-w-lg mx-auto px-5 py-6 space-y-6">
         <p className="text-sm text-slate-600 leading-relaxed">{t.photoCreditsIntro}</p>
 
-        {levels.map((level) => (
+        {visible.map((level) => (
           <section key={level.id} aria-labelledby={`photo-credits-${level.id}`}>
             <h2
               id={`photo-credits-${level.id}`}
@@ -143,6 +157,16 @@ export default function PhotoCredits() {
             </ul>
           </section>
         ))}
+
+        {shown < levels.length && (
+          <button
+            type="button"
+            onClick={() => setShown((count) => count + CREDITS_PAGE)}
+            className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition-colors hover:border-amber-400 active:scale-[0.99]"
+          >
+            {t.showMore} · {levels.length - shown}
+          </button>
+        )}
       </main>
 
       <PhotoViewer photo={open} onClose={() => setOpen(null)} />

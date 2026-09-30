@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 
@@ -322,6 +323,43 @@ test("the waiting, the empty and the failed states are all drawn", () => {
   assert.match(stats, /t\.noDataYet/, "a player who has not played gets a screen of zeroes");
   assert.match(stats, /t\.exportFailed/, "a report that could not be written says nothing");
 
+  // A screen that fails to be drawn is the one failure with nothing left to draw
+  // it: the boundary sits above the router, so a value the data does not have, a
+  // chunk that could not be fetched and a mistake in the drawing itself all end
+  // in a message rather than a white page. And the message says what to do, and
+  // keeps the trace for the person who has to send it on.
+  const crash = readFileSync(path.join(ROOT, "src", "components", "AppCrash.jsx"), "utf8");
+  assert.match(app, /AppCrash/, "nothing catches a screen that fails to be drawn");
+  assert.ok(
+    app.indexOf("<AppCrash>") < app.indexOf("<Router"),
+    "the boundary is inside the router, so a failure in the router itself escapes it"
+  );
+  assert.match(crash, /getDerivedStateFromError/, "the boundary does not catch a render");
+  assert.match(crash, /componentDidCatch/, "the boundary forgets which screen was being drawn");
+  assert.match(crash, /t\.appCrashedReload/, "the crash screen offers no way out");
+  assert.match(crash, /t\.appCrashedCopy/, "the crash screen keeps no trace to send on");
+  assert.match(crash, /role="alert"/, "a reader who cannot see the screen is not told it broke");
+  assert.match(crash, /failureReport/, "the trace is not the one the tests read");
+
+  // The screen that breaks while writing the trace of a break is the one screen
+  // that has to hold, and the module that writes it is tested on its own.
+  assert.ok(
+    existsSync(path.join(ROOT, "src", "lib", "failure-report.js")),
+    "the trace is built by a module of its own"
+  );
+
+  // A browser that refuses to save is the one failure the player cannot see for
+  // themselves: the game keeps scoring and everything is gone at the next
+  // reload. So the refusal is remembered, and said out loud.
+  const status = readFileSync(path.join(ROOT, "src", "components", "AppStatus.jsx"), "utf8");
+  assert.match(status, /watchSaveRefusal/, "a save the browser refused is never mentioned");
+  assert.match(status, /t\.saveFailed/, "the reader is not told their progress cannot be saved");
+  assert.match(
+    readFileSync(path.join(ROOT, "src", "api", "progress-store.js"), "utf8"),
+    /rememberRefusal\(error\)/,
+    "a refused write is not remembered anywhere"
+  );
+
   // And the failures nobody can be shown on the way in: an address the app does
   // not know, and a device that has lost its network.
   assert.match(app, /PageNotFound/, "an unknown address has no page of its own");
@@ -330,6 +368,32 @@ test("the waiting, the empty and the failed states are all drawn", () => {
     /t\.offline/,
     "a device with no network is not told"
   );
+});
+
+test("a list long enough to be a page is drawn a page at a time", () => {
+  // Two hundred lines of credits, and every reference of the game with its
+  // questions: both are reference screens, opened to settle one question, and
+  // drawn in one go the reader waits for the whole list to be laid out before
+  // reading the first line of it. The two counts in each header are still the
+  // whole thing, so a page that has not been revealed yet never reads as absent.
+  for (const [file, size, list] of [
+    ["src/pages/PhotoCredits.jsx", "CREDITS_PAGE", "levels"],
+    ["src/pages/Bibliography.jsx", "INSTITUTIONS_PAGE", "institutions"],
+  ]) {
+    const source = readFileSync(path.join(ROOT, file), "utf8");
+    const first = Number(new RegExp(`const ${size} = (\\d+);`).exec(source)?.[1]);
+    assert.ok(
+      Number.isFinite(first) && first >= 3 && first <= 8,
+      `${file}: the first page holds ${first} sections`
+    );
+    assert.match(source, /slice\(0, shown\)/, `${file} still draws the whole list at once`);
+    assert.match(source, /t\.showMore/, `${file} has no way of seeing the rest`);
+    assert.match(source, new RegExp(`${list}\\.length - shown`), `${file} does not say how much is left`);
+    assert.match(source, /active:scale-\[0\.99\]/, `${file} does not answer a press`);
+  }
+
+  const credits = readFileSync(path.join(ROOT, "src", "pages", "PhotoCredits.jsx"), "utf8");
+  assert.match(credits, /\{total\} \{t\.photoCreditsPhotographs\}/, "the credits screen stopped counting the whole gallery");
 });
 
 test("nothing a reader typed or picked is ever placed in the page as markup", () => {
@@ -461,4 +525,192 @@ test("the app takes no payments, and never pretends to verify one", () => {
   const readme = readFileSync(path.join(ROOT, "README.md"), "utf8");
   assert.match(readme, /no checkout, no payment data and no webhook/, "the README no longer says there are no payments");
   assert.match(readme, /signature check needs a secret/, "the README no longer says why a check cannot live here");
+});
+
+test("no key, token or password is kept where every reader can download it", () => {
+  // Everything this application is made of is served to whoever asks for it. A
+  // secret in here is therefore not a secret, it is a published string: the app
+  // uses none, and this rule is what keeps that a fact rather than a memory.
+  assert.deepEqual(
+    scan(
+      /(?:sk|pk)_(?:live|test)_[0-9A-Za-z]|AIza[0-9A-Za-z_-]{12,}|ghp_[0-9A-Za-z]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|Bearer\s+[0-9A-Za-z._-]{24,}/
+    ),
+    [],
+    "something that looks like a credential is in the shipped files"
+  );
+
+  // And nothing is smuggled in beside them: an environment file is the one
+  // place a key can live, it is not part of the build, and a dotfile in public/
+  // would be published under its own name.
+  const shipped = readdirSync(path.join(ROOT, "public"));
+  assert.deepEqual(shipped.filter((name) => name.startsWith(".")), [], "public/ holds a hidden file");
+  assert.match(readFileSync(path.join(ROOT, ".gitignore"), "utf8"), /^\.env$/m, ".env is not ignored");
+});
+
+test("an address is https, and nothing is fetched from anywhere else", () => {
+  // The application loads its own files and nothing else: no analytics, no
+  // fonts, no script from a third party, so there is no third party to audit and
+  // nothing about a reader that could leave the device. The one http address
+  // below is not a request, it is the name of the SVG namespace, which is a
+  // fixed string that no browser ever fetches.
+  const plain = scan(/http:\/\//).filter((hit) => !hit.includes("www.w3.org"));
+  assert.deepEqual(plain, [], "an address that is not https");
+
+  assert.deepEqual(
+    scan(/<script[^>]+src="https?:|@import\s|url\(\s*['"]?https?:|fetch\(\s*["'`]https?:|sendBeacon|new Image\(|XMLHttpRequest/),
+    [],
+    "something is loaded from another origin"
+  );
+
+  assert.deepEqual(
+    scan(/googletagmanager|google-analytics|analytics\.|plausible|matomo|posthog|mixpanel|hotjar|clarity\.ms|sentry|doubleclick|segment\.io/i),
+    [],
+    "a measuring script found its way in"
+  );
+
+  // And nothing is left on the reader's device that a banner would have to ask
+  // about: this application sets no cookie at all, which is why it has no
+  // consent banner to show. A banner over an application that stores nothing
+  // would ask for a permission nobody needs.
+  assert.deepEqual(scan(/\bdocument\.cookie\b/), [], "the app sets a cookie");
+});
+
+test("a dialog holds the keyboard while it is open, and gives it back after", () => {
+  // A sheet that can be opened but not left from a keyboard, or one that keeps
+  // the focus somewhere behind it, is a screen a reader without a pointer cannot
+  // get out of. One hook does that work for every dialog here, so a dialog that
+  // does not use it is the whole mistake, and the hook itself is held to the
+  // three things it promises.
+  const dialogs = sourceFiles.filter(
+    (file) => file.endsWith(".jsx") && readFileSync(file, "utf8").includes('role="dialog"')
+  );
+  assert.ok(dialogs.length >= 4, `only ${dialogs.length} dialog(s) found`);
+
+  for (const file of dialogs) {
+    assert.match(
+      readFileSync(file, "utf8"),
+      /useModalA11y/,
+      `${path.relative(ROOT, file)} opens a dialog the keyboard cannot leave`
+    );
+  }
+
+  const hook = readFileSync(path.join(ROOT, "src", "lib", "use-modal-a11y.js"), "utf8");
+  assert.match(hook, /event\.key === "Escape"/, "Escape no longer closes a dialog");
+  assert.match(hook, /event\.key !== "Tab"/, "Tab no longer stays inside the dialog");
+  assert.match(hook, /previouslyFocused\.current\?\.focus/, "the focus is not given back where it was");
+  assert.match(hook, /FOCUSABLE/, "the dialog no longer knows what it may move the focus to");
+});
+
+test("nothing rushes a reader and nothing is ticked for them", () => {
+  // A countdown, a nearly sold out class, a consent box already ticked: each one
+  // takes a decision away from the person making it. This application asks for
+  // nothing, sells nothing and sends nothing, so none of them belong here.
+  assert.deepEqual(
+    scan(/limited time|only \d+ (?:seats|left)|hurry|act now|last chance|offre limit|places restantes|derni\u00e8res places|d\u00e9p\u00eachez/i),
+    [],
+    "the copy puts a clock on a decision"
+  );
+  assert.deepEqual(scan(/defaultChecked|checked=\{true\}/), [], "something is ticked before a reader reads it");
+  assert.deepEqual(scan(/aria-hidden="true"[^>]*tabIndex/), [], "something hidden can still be reached by a keyboard");
+});
+
+test("a field the browser may help with says so, and a secret says otherwise", () => {
+  // A field that says nothing about itself is a field the browser guesses at,
+  // and it usually guesses wrong: a student's name filled with the teacher's, a
+  // teacher's code remembered from the last person who used the tablet. There
+  // are three fields somebody types in, and each one carries its own answer.
+  const TEXTUAL = /^(?:text|search|email|tel|url|password|number)?$/;
+  const misses = [];
+  let fields = 0;
+
+  for (const file of sourceFiles.filter((candidate) => candidate.endsWith(".jsx"))) {
+    const source = readFileSync(file, "utf8");
+    for (const match of source.matchAll(/<input\b/g)) {
+      const close = source.indexOf(">", match.index);
+      const element = source.slice(match.index, close === -1 ? undefined : close + 1);
+      const type = /\btype="([^"]*)"/.exec(element)?.[1] ?? "";
+      if (!TEXTUAL.test(type)) continue;
+      fields += 1;
+      if (!/\bautoComplete=["{]/.test(element)) {
+        misses.push(`${path.relative(ROOT, file)}: a ${type || "text"} field the browser has to guess at`);
+      }
+    }
+  }
+
+  assert.deepEqual(misses, []);
+  assert.ok(fields >= 3, `only ${fields} field(s) somebody types in`);
+
+  const teacher = readFileSync(path.join(ROOT, "src", "pages", "TeacherPage.jsx"), "utf8");
+  // A name is a name: the browser may offer the last one that was typed.
+  assert.equal(
+    (teacher.match(/name="student-name"[\s\S]{0,60}autoComplete="name"/g) || []).length,
+    2,
+    "the two places a student is named are not both marked as a name"
+  );
+  // The code is not: it is the one thing on that screen a stranger must not
+  // find already filled in, and it is not remembered.
+  const code = teacher.slice(teacher.indexOf('id="teacher-code"'));
+  assert.match(code.slice(0, 300), /autoComplete="off"/, "the teacher code is remembered by the browser");
+});
+
+test("every picture either says what it is or says that it is decoration", () => {
+  // An image with no alt at all is read out as its file name, and one that
+  // carries a description a screen reader has already heard is read twice. Both
+  // are mistakes: a picture described by the words on it is marked decorative
+  // with an empty alt, and one that says something of its own is described.
+  const misses = [];
+
+  for (const file of sourceFiles.filter((candidate) => candidate.endsWith(".jsx"))) {
+    const source = readFileSync(file, "utf8");
+    for (const match of source.matchAll(/<img\b|<LevelPicture\b/g)) {
+      // A tag can span lines, so the alt is looked for in the whole of the
+      // element rather than on one line. The one wrapper in the app hands its
+      // remaining props to the element it draws, which is how a caller's alt
+      // reaches the picture; a caller has no spread and has to write one.
+      const element = source.slice(match.index, source.indexOf(">", match.index) + 1);
+      const carries = /\balt[=:]/.test(element) || /\{\.\.\.(?:rest|props)\}/.test(element);
+      if (!carries) misses.push(`${path.relative(ROOT, file)}: a picture without an alt`);
+    }
+  }
+
+  assert.deepEqual(misses, []);
+
+  // The wrapper really does pass the caller's alt on, rather than swallowing it
+  // and giving every picture the same one.
+  const wrapper = readFileSync(path.join(ROOT, "src", "components", "game", "LevelPicture.jsx"), "utf8");
+  assert.match(wrapper, /<img[^>]*\{\.\.\.rest\}/s, "the picture wrapper drops the props it was given");
+
+  // And what a picture carries when it is described is a caption written for a
+  // reader, not a file name.
+  assert.match(
+    readFileSync(path.join(ROOT, "src", "components", "game", "LevelGallery.jsx"), "utf8"),
+    /alt=\{photo\.caption\}/,
+    "the gallery stopped describing its photographs"
+  );
+});
+
+test("every script in the project is one the runner can read", () => {
+  // The checks that need the network, the generators, the sweepers: none of them
+  // runs during the build, and none of them is loaded by another test - they are
+  // read as text here, and what is asserted about them is the words they print.
+  // Which leaves one thing nobody looks at: whether they are a program at all.
+  // A missing backtick in one of them passes the whole verification and is found
+  // by whoever runs it, months later, on the afternoon a page needed checking. So
+  // they are parsed, once each, by the same runner that will run them.
+  const directory = path.join(ROOT, "scripts");
+  const scripts = readdirSync(directory).filter((name) => name.endsWith(".mjs"));
+  assert.ok(scripts.length >= 10, `only ${scripts.length} scripts were found`);
+
+  const broken = [];
+  for (const name of scripts) {
+    const checked = spawnSync(process.execPath, ["--check", path.join(directory, name)], { encoding: "utf8" });
+    if (checked.status === 0) continue;
+    const reason = (checked.stderr || "")
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.includes("Error"));
+    broken.push(`${name}: ${reason || "the runner cannot read it"}`);
+  }
+
+  assert.deepEqual(broken, []);
 });

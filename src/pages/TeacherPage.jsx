@@ -395,6 +395,10 @@ function ClassDashboard({ levels }) {
           </label>
           <input
             id="new-student"
+            type="text"
+            name="student-name"
+            autoComplete="name"
+            maxLength={40}
             value={newName}
             onChange={(event) => setNewName(event.target.value)}
             placeholder={t.studentNamePlaceholder}
@@ -444,6 +448,9 @@ function ClassDashboard({ levels }) {
                         </label>
                         <input
                           id={`rename-${profile.id}`}
+                          type="text"
+                          name="student-name"
+                          autoComplete="name"
                           value={draftName}
                           onChange={(event) => setDraftName(event.target.value)}
                           maxLength={40}
