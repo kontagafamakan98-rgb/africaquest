@@ -21,10 +21,15 @@ import { buildProgressReport, formatDuration } from "../../lib/progress-report";
 // Everything below is derived from the player's stored progress, nothing is invented.
 function levelStats(levelScores, levelId) {
   const entries = Object.values(levelScores[String(levelId)] || {});
-  if (entries.length === 0) return { stars: 0, bestScore: null, attempts: 0 };
+  if (entries.length === 0) return { stars: 0, bestScore: null, bestTotal: null, attempts: 0 };
+  const best = entries.reduce((top, entry) => ((entry.score || 0) > (top.score || 0) ? entry : top), entries[0]);
   return {
     stars: Math.max(...entries.map((e) => e.stars || 0)),
     bestScore: Math.max(...entries.map((e) => e.score || 0)),
+    // The number of questions that best run was played over, when the result
+    // recorded it: the difficulties ask different counts now, so the length of
+    // the whole level is only the fallback for records written before that.
+    bestTotal: best?.total || null,
     attempts: entries.length,
   };
 }
@@ -180,7 +185,7 @@ export default function StatsScreen({ progress, onReviewLevel }) {
             const isCompleted = completedLevels.includes(level.id);
             let status = t.notStarted;
             if (stats.bestScore !== null) {
-              status = `${t.bestScore}: ${stats.bestScore}/${level.questions.length}`;
+              status = `${t.bestScore}: ${stats.bestScore}/${stats.bestTotal ?? level.questions.length}`;
             }
             if (isCompleted && stats.bestScore === null) status = t.levelComplete;
             return (

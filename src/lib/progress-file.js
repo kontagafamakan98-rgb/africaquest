@@ -205,7 +205,15 @@ function toLevelScores(value) {
     DIFFICULTIES.forEach((difficulty) => {
       const entry = byDifficulty[difficulty];
       if (!entry || typeof entry !== "object" || Array.isArray(entry)) return;
-      kept[difficulty] = { score: toCount(entry.score), stars: toCount(entry.stars) };
+      // The number of questions the run was played over is kept beside the
+      // score, because the difficulties do not all ask the same count. A record
+      // written before that was true simply has none, and the reader falls back
+      // to the length of the level.
+      kept[difficulty] = {
+        score: toCount(entry.score),
+        stars: toCount(entry.stars),
+        ...(entry.total !== undefined ? { total: toCount(entry.total) } : {}),
+      };
     });
     if (Object.keys(kept).length > 0) scores[levelId] = kept;
   });

@@ -36,7 +36,10 @@ function buildNewProgress(progress, levels, { level, difficulty, score, total, s
     ...prevScores,
     [String(level.id)]: {
       ...prevLevelScores,
-      [difficulty]: isNewBest ? { score, stars } : prevDiffScore,
+      // The total travels with the score: the three difficulties no longer
+      // ask the same number of questions, so the statistics screen cannot take
+      // the length of the whole level for the length of this run.
+      [difficulty]: isNewBest ? { score, stars, total } : prevDiffScore,
     },
   };
 

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
-import { ChevronLeft, Clock, Zap, Star } from "lucide-react";
+import { ChevronLeft, Clock, Zap, Star, ClipboardList } from "lucide-react";
 import { DIFFICULTIES } from "./gameData";
+import { questionCount } from "./question-bank.js";
 import { LEVEL_IMAGES } from "./level-summary";
 import { useT, DIFFICULTY_LABEL_KEYS } from "../i18n";
 import AudioNarrator from "./AudioNarrator";
@@ -48,6 +49,10 @@ export default function DifficultyPicker({ level, levelScores, onSelect, onBack 
           {Object.values(DIFFICULTIES).map((diff) => {
             const best = levelScores?.[diff.id];
             const DiffIcon = diff.icon;
+            // How many questions this setting really asks. The count comes from
+            // the same selection the quiz runs on, so the row cannot promise a
+            // shorter run than the player gets.
+            const count = questionCount(level.questions, diff.id);
             return (
               <button
                 key={diff.id}
@@ -77,6 +82,10 @@ export default function DifficultyPicker({ level, levelScores, onSelect, onBack 
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
                     {diff.timeLimit > 0 ? `${diff.timeLimit}${t.perQuestion}` : t.noTimeLimit}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ClipboardList className="w-3.5 h-3.5" aria-hidden="true" />
+                    {count} {t.difficultyQuestions}
                   </span>
                   <span className="flex items-center gap-1">
                     <Zap className="w-3.5 h-3.5 text-amber-500" />

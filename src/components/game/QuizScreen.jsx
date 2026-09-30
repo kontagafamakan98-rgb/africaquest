@@ -11,6 +11,7 @@ import { LEVEL_IMAGES } from "./level-summary";
 import { useT, DIFFICULTY_LABEL_KEYS } from "../i18n";
 import { formatDuration } from "../../lib/progress-report";
 import { sessionRecap } from "./learning";
+import { selectQuestions } from "./question-bank.js";
 
 export default function QuizScreen({ level, difficulty, onComplete, onBack, onAnswer, reviewMode = false, nextReviewText = null, history = null }) {
   const t = useT();
@@ -31,7 +32,9 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
   const startedAtRef = useRef(Date.now());
 
   const diff = DIFFICULTIES[difficulty] || DIFFICULTIES.easy;
-  const questions = level.questions;
+  // The difficulty chooses the questions as well as the clock. A review session
+  // is already a hand picked list, so it is asked as it stands.
+  const questions = reviewMode ? level.questions : selectQuestions(level.questions, difficulty);
   const q = questions[currentQ];
   const progress = ((currentQ + (isAnswered ? 1 : 0)) / questions.length) * 100;
 
@@ -69,8 +72,10 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
     setIsAnswered(true);
     const isCorrect = idx === q.correct;
     if (isCorrect) setScore((s) => s + 1);
-    // Feed the learning memory so mistakes can be reviewed later.
-    onAnswer?.(currentQ, isCorrect);
+    // Feed the learning memory so mistakes can be reviewed later. The position
+    // the question holds in its own level travels with it, because the memory is
+    // keyed by that position and not by its place in the chosen set.
+    onAnswer?.(q.__index ?? currentQ, isCorrect);
   };
 
   const handleNext = () => {
