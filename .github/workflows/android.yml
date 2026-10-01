@@ -9,6 +9,10 @@
 # and the Android SDK, and the runner brings both. It is started by hand and on a
 # version tag, not on every push to main: a wrapper is not rebuilt for a change
 # that only the site cares about.
+#
+# A version tag does one thing a hand-held run cannot: the APK is attached to a
+# release, so a download link handed to somebody keeps working. An artifact is
+# the copy that expires, and a version is the one people mean to keep.
 name: Android
 
 on:
@@ -71,9 +75,44 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
+      # Kept as well as released: a hand-held run has no tag to hang a release
+      # on, and the artifact is what somebody downloads the same day.
       - name: Keep the APK
         uses: actions/upload-artifact@v4
         with:
           name: africa-history-quest-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+  # A job of its own rather than two more steps in the one above, for the reason
+  # the site is published from a second job as well: a build that compiles
+  # whatever a pull request contains is not the same trust as one allowed to
+  # write to the repository, and the write is only ever a release.
+  release:
+    name: Attach the APK to the release
+    needs: apk
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Take the APK the build produced
+        uses: actions/download-artifact@v4
+        with:
+          name: africa-history-quest-apk
+          path: apk
+
+      # `gh` rather than an action of its own: the runner carries the command,
+      # and the release is created here so that pushing a tag twice, or pushing a
+      # tag whose build failed once, leaves one release rather than an error.
+      - name: Publish the release this tag names
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" \
+              --notes "Africa History Quest $TAG. It opens from a home screen and runs with no network at all, and the progress it saves stays on the device. A debug APK: installable as it is, signed with a debug key, and not the release build the Play Store would take."
+          gh release upload "$TAG" apk/app-debug.apk --clobber --repo "$GITHUB_REPOSITORY"

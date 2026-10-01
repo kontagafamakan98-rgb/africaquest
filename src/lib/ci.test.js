@@ -322,6 +322,50 @@ test("the database is only ever written back by a person who meant it", () => {
   assert.match(source, /if \[ \"\$CONFIRM\" != \"push\" \]/, "the database is overwritten without a typed confirmation");
 });
 
+test("the APK is attached to a release, so a version tag outlives the artifact that expires", () => {
+  // An artifact belongs to a run and is deleted on a schedule, so the link
+  // somebody was handed stops working and the version they were told about
+  // cannot be downloaded again. A tag is the one push that names a version, and
+  // the release it makes is the only write this workflow is allowed - which is
+  // why it sits in a job of its own, apart from the build that compiles whatever
+  // a pull request contains.
+  const file = path.join(ROOT, ".github", "workflows", "android.yml");
+  assert.ok(existsSync(file), "the wrapper is not built by a workflow");
+
+  const source = readFileSync(file, "utf8");
+  assert.match(source, /^name: Android$/m, "the workflow is named Android");
+
+  // A hand-held run and a version tag both build and both keep the artifact; the
+  // tag adds the release, and it is never a branch push that does.
+  const triggers = triggerBlock(source);
+  assert.match(triggers, /^ {2}workflow_dispatch:$/m, "the build cannot be asked for by hand");
+  assert.match(triggers, /^ {2}push:\n {4}tags: \["v\*"\]$/m, "a version tag does not start the build");
+  assert.match(source, /^permissions:\n {2}contents: read$/m, "the build only reads the repository");
+  assert.doesNotMatch(source, /continue-on-error/, "a build that failed is reported as one that worked");
+
+  // The release ships the APK the build produced rather than one of its own, so
+  // the two downloads are the same file rather than two builds that can differ.
+  const kept = source.indexOf("actions/upload-artifact@");
+  const taken = source.indexOf("actions/download-artifact@");
+  assert.ok(kept > 0, "the APK is not kept as an artifact at all");
+  assert.ok(taken > kept, "the release compiles the APK a second time instead of reading the artifact");
+
+  // `contents: write` on the job rather than on the file: the build above has no
+  // business writing anything, and the release has no other use for the token.
+  assert.match(source, /^ {4}permissions:\n {6}contents: write$/m, "no job may write a release");
+  assert.match(source, /^ {4}needs: apk$/m, "the release does not wait for the build");
+  assert.match(source, /if: startsWith\(github\.ref, 'refs\/tags\/v'\)/, "a release is made on a branch push");
+  assert.match(source, /timeout-minutes:\s*\d+/, "a hung release cannot hold a runner for hours");
+
+  // One release per tag rather than an error on the second run, and the APK is
+  // attached under the name somebody is told to look for.
+  assert.match(source, /gh release view[^\n]*>/, "an existing release is not asked about first");
+  assert.match(source, /gh release create "\$TAG"/, "the release is not named after the tag that made it");
+  assert.match(source, /gh release upload "\$TAG" apk\/app-debug\.apk --clobber/, "the APK is not attached, or a second run fails on the copy already there");
+  assert.match(source, /GH_TOKEN: \$\{\{ github\.token \}\}/, "the release is made without the token the run is given");
+  assert.match(source, /debug APK/, "the release does not say which build it carries");
+});
+
 test("the workflow installs the image library the photograph check reads with", () => {
   // Half of `npm run verify` opens every JPEG and reads its pixels through
   // Pillow. A runner that has Python but not Pillow fails on the gallery, which

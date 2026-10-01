@@ -301,6 +301,11 @@ The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`. It is
 installable on a device as it is; a release build is signed with a key of its own, which is a step
 nobody has taken yet.
 
+On a version tag the same APK is attached to the release that tag names, so the download link keeps
+working after the run's artifact has been cleaned up: an artifact is a copy that expires, and a
+release is the copy people are meant to keep. Hand-held runs still keep the artifact, and a
+release is only ever made from a tag.
+
 ## Project layout
 
 ```
