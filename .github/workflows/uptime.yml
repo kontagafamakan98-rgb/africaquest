@@ -40,11 +40,23 @@ on:
     # is a check that waits for its turn.
     - cron: "17 6 * * *"
   workflow_dispatch:
+    # The latest release is what the daily run asks about, and it is what a
+    # person wants almost every time. Naming an older one is how a drift is looked
+    # at again after it was dealt with, and how one is reproduced on purpose to
+    # see the check and the issue it leaves do their work at all - the released
+    # app catching up is the one day the issue is never opened.
+    inputs:
+      release:
+        description: "The version tag to compare the branch with, instead of the latest release."
+        required: false
+        type: string
 
 permissions:
   contents: read
   # Only for the step that opens and closes the issue about a release that is
-  # behind the site. Everything else here reads.
+  # behind the site. Everything else here reads, and nothing else is asked for:
+  # a token that may write an issue is not a token that may write the repository.
+  issues: write
 
 jobs:
   check:
@@ -78,7 +90,16 @@ jobs:
       - name: Ask whether the downloadable Android app is older than the site
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/check-release.mjs --report drift-report.json
+          RELEASE: ${{ inputs.release }}
+        run: |
+          # The release is put on the command line only when one was named by
+          # hand: with none, the check asks about the latest release, which is
+          # what the daily run wants.
+          if [ -n "$RELEASE" ]; then
+            node scripts/check-release.mjs --release "$RELEASE" --report drift-report.json
+          else
+            node scripts/check-release.mjs --report drift-report.json
+          fi
 
       # The alarm above is a failing run, and a run is easy to lose: it is one of
       # hundreds, and once it is green again there is nothing left to read. So the

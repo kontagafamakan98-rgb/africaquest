@@ -440,7 +440,24 @@ test("the check is asked for by the daily run, and stays out of the verification
   assert.match(uptime, /--report drift-report\.json/, "the check no longer leaves its verdict for the issue");
   assert.match(uptime, /node scripts\/announce-drift\.mjs/, "the daily run no longer leaves an issue");
   assert.match(uptime, /if: always\(\)/, "the issue would be skipped exactly when it matters");
-  assert.match(uptime, /issues: write/, "the run is not allowed to open the issue it is asked to open");
+  // The permission is read out of the block rather than out of the file: the
+  // words appear in the header comment too, and a test that matched them there
+  // would pass on a workflow that grants nothing at all.
+  const granted = uptime.slice(uptime.indexOf("\npermissions:"), uptime.indexOf("\njobs:"));
+  assert.match(granted, /^ {2}contents: read\s*$/m, "the run no longer reads the repository");
+  assert.match(granted, /^ {2}issues: write\s*$/m, "the run is not allowed to open the issue it is asked to open");
+
+  // And the run can be asked about one older release by hand, which is how a
+  // drift is looked at again after it was dealt with, and how the check and the
+  // issue it leaves are seen to work on the day nothing has drifted at all.
+  assert.match(uptime, /inputs:/, "the run can no longer be asked about a release by hand");
+  assert.match(uptime, /inputs\.release/, "the release named by hand is not handed to the check");
+  assert.match(uptime, /--release "\$RELEASE"/, "the named release is not what the check compares with");
+  assert.match(
+    uptime,
+    /node scripts\/check-release\.mjs --report drift-report\.json/,
+    "a run that names no release no longer asks about the latest one"
+  );
   assert.match(
     read("scripts/announce-drift.mjs"),
     /issueDecision\(/,
