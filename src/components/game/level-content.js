@@ -42,6 +42,12 @@ const LOADERS = {
   18: () => import("./levels/level-18.js"),
   19: () => import("./levels/level-19.js"),
   20: () => import("./levels/level-20.js"),
+  21: () => import("./levels/level-21.js"),
+  22: () => import("./levels/level-22.js"),
+  23: () => import("./levels/level-23.js"),
+  24: () => import("./levels/level-24.js"),
+  25: () => import("./levels/level-25.js"),
+  26: () => import("./levels/level-26.js"),
 };
 
 /** The ids a level module was written for, in order. */

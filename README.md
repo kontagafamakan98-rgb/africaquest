@@ -1,7 +1,7 @@
 # Africa History Quest
 
 An educational quiz game that helps young learners explore the history of Africa.
-Players progress through twenty levels that follow the whole timeline, from the first
+Players progress through twenty-six levels that follow the whole timeline, from the first
 humans to Africa today - Ancient Egypt, Kush, Great Zimbabwe, Mali, Axum, Songhai, the
 Zulu Kingdom, African Independence and the periods between them - each with a study
 pack to read before the quiz and three difficulty modes with stars, XP, badges and a
@@ -100,16 +100,16 @@ file that travels with the work.
 
 ## Photographs
 
-Each of the sixty level photographs ships as a JPEG, a WebP beside it, and — where it pays
+Each of the seventy-eight level photographs ships as a JPEG, a WebP beside it, and — where it pays
 off — an AVIF in front of that one. A browser is offered them lightest first and draws the
 first it can read; the JPEG is only there for a browser that reads neither.
 
-The service worker installs none of the full pictures. It carries the code and the sixty
-thumbnails, about a sixth of a megabyte of photographs, and every full picture is fetched the
+The service worker installs none of the full pictures. It carries the code and the seventy-eight
+thumbnails, about a fifth of a megabyte of photographs, and every full picture is fetched the
 first time its level is opened and kept from then on. Installing the whole gallery up front
-was two and a fifth megabytes most players never look at, on the very first load; now the
-install carries two and a half megabytes, nearly all of it code, and the one hundred and
-sixty-eight full pictures it leaves out weigh seven and a half. The offline copy stays
+was nearly three megabytes most players never look at, on the very first load; now the
+install carries two and a half megabytes, nearly all of it code, and the two hundred and
+fourteen full pictures it leaves out weigh nine and a third. The offline copy stays
 complete for every level that has really been played rather than for the ones nobody opened.
 `src/lib/offline.test.js` holds it: each photograph's full files are left out of the install,
 and the one thumbnail that stands for the picture is in.
@@ -135,23 +135,23 @@ asked for an AVIF that is not there shows no picture rather than the one behind 
 
 Each picture also ships a thumbnail, written by the same script in the same run: a WebP of
 a hundred and sixty pixels on the long edge, which is what the photo credits screen draws
-beside each name. That screen listed sixty lesson-sized pictures before, about two megabytes
-to fill sixty eighty-pixel squares; it now downloads about a hundred and seventy kilobytes
+beside each name. That screen listed seventy-eight lesson-sized pictures before, about two megabytes
+to fill seventy-eight eighty-pixel squares; it now downloads about two hundred and twenty kilobytes
 in total. No AVIF is written at that size, and that is a measurement rather than a shortcut:
 at a hundred and sixty pixels it came out heavier than the WebP every time the two were
 weighed, which is the same rule that leaves part of the gallery without a third format.
 
 A fourth file exists for the pictures the map draws, and it is the one that changed the first
-screen. The home screen shows twenty cards, one photograph each, three hundred and fifty-eight
-pixels wide on a phone, and those twenty pictures were being drawn from the light version:
+screen. The home screen shows twenty-six cards, one photograph each, three hundred and fifty-eight
+pixels wide on a phone, and those twenty-six pictures were being drawn from the light version:
 six hundred and forty across, which is what a screen of doubled pixel density asks for and a
 third more than an ordinary one needs. `scripts/optimize-photos.mjs` now writes a fourth
-hundred-and-eighty-pixel copy for those twenty pictures, and `LevelPicture.jsx` offers it as
+hundred-and-eighty-pixel copy for those twenty-six pictures, and `LevelPicture.jsx` offers it as
 one candidate beside the light version rather than in place of it, so a sharper screen still
-receives the sharper file and a school laptop receives two hundred kilobytes fewer. The twenty
-copies weigh about three hundred kilobytes together against five hundred and fifteen for the
-light versions, and `src/lib/photo-weight.test.js` holds the budget of one copy and of the
-twenty. It is a WebP and nothing else, for the reason a thumbnail is: at that size an AVIF's
+receives the sharper file and a school laptop receives two hundred and seventy kilobytes fewer. The
+twenty-six copies weigh about three hundred and eighty kilobytes together against six hundred and
+sixty for the light versions, and `src/lib/photo-weight.test.js` holds the budget of one copy and of
+the twenty-six. It is a WebP and nothing else, for the reason a thumbnail is: at that size an AVIF's
 header costs more than its pixels save. No lesson ships one - a lesson draws its pictures at
 six hundred and forty pixels, where the light version is already the right file.
 
@@ -165,7 +165,7 @@ around the picture close it, and the focus goes back to the thumbnail that opene
 
 The one part of this that no build can hold is the page each credit points at: it is on
 somebody else's wiki, and it can be deleted between two releases. `npm run check:photos`
-follows all sixty of them on demand and says when one is gone, which is the failure a reader
+follows all seventy-eight of them on demand and says when one is gone, which is the failure a reader
 would find instead of a licence. It asks with HEAD, so no page is downloaded to learn whether
 it exists, and it keeps a page that could not be read apart from a page that is not there, so a
 bad connection is never reported as a badly credited photograph. Like the check on the search
@@ -239,21 +239,21 @@ src/
 
 The map is drawn from a brief of the game (`src/components/game/level-facts.js`), written by
 `scripts/generate-level-facts.mjs` out of the level table, the French wording and the photograph
-table, and checked by `npm run verify`. The brief carries the twenty levels' titles in both
+table, and checked by `npm run verify`. The brief carries the twenty-six levels' titles in both
 languages, their place in the timeline, the icon and the picture on each card, and how many
 questions each level holds - everything a card draws, and nothing else.
 
 The questions, their facts and sources, the study packs, the lesson stories and the rest of the
 gallery live in `gameData.js` and `level-images.js`, and the map asks for none of them: nothing
-of the game's content is fetched from the first screen, so the entry file is about 171 kB rather
-than the 345 kB of the whole game.
+of the game's content is fetched from the first screen, so the entry file is about 180 kB rather
+than the 460 kB of the whole game.
 
 What a tap opens asks for what that screen shows, and only that. A lesson is one level, so it asks
 for the one level it is opening: `scripts/generate-level-content.mjs` writes a module per level
 out of the same tables the rest of the game is written from, `src/components/game/level-content.js`
-turns the twenty modules into twenty requests, and the lesson downloads about 24 kB - its own
-questions, their references, its study pack and its gallery - instead of the four hundred
-kilobytes of all twenty. The lesson's own chunk fell from 139 kB to 12 kB as a result. The screens
+turns the twenty-six modules into twenty-six requests, and the lesson downloads about 24 kB - its own
+questions, their references, its study pack and its gallery - instead of the six hundred
+kilobytes of all twenty-six. The lesson's own chunk fell from 139 kB to 12 kB as a result. The screens
 that really need every level - the review inbox, the bibliography, the statistics - read
 `gameData.js` when they are opened, which is why it still exists.
 
@@ -356,7 +356,7 @@ judgement, and the failure says which file to open rather than what to write in 
 
 The names are compared with the content hash taken out, so `assets/gameData-Ws8p2oa0.js` is
 recorded as `assets/gameData.js`: the hash changes with the content, and without that every build
-would look like twenty new files and twenty vanished ones.
+would look like fifty-four new files and fifty-four vanished ones.
 
 `npm run weights:record` writes the current build down as the pass to compare against. It is a
 separate command on purpose: a threshold that moves itself is not a threshold. It records weights
@@ -439,7 +439,7 @@ what tells the publisher, since GitHub notifies the owner of a scheduled workflo
 that failed. That is why no third party watches this site and no secret is kept
 for one.
 
-Two screens hold long lists: the credits (two hundred rows of photographs) and the
+Two screens hold long lists: the credits (seventy-eight rows of photographs) and the
 bibliography (every reference of the game with its questions). Both are reference
 screens, opened to settle one question, so each draws a few groups and offers the
 rest, while the counts in the header stay the whole thing: what is not drawn yet
@@ -461,19 +461,19 @@ measures.
 
 What a hundred thousand readers can exhaust is the transfer, and it is arithmetic
 rather than a guess. A first visit is the code the page loads with - the entry bundle,
-the five chunks it declares beside itself and the stylesheet, one hundred and seventy-five
+the five chunks it declares beside itself and the stylesheet, one hundred and seventy-eight
 kilobytes compressed, which `npm run weights` prints line by line - plus the photographs of
-the map: three hundred kilobytes of card copies on an ordinary screen, five hundred and
-fifteen of light versions on a screen of doubled pixel density. A hundred thousand first
-visits is therefore between forty-six and sixty-six gigabytes, against the soft hundred
+the map: three hundred and eighty kilobytes of card copies on an ordinary screen, six hundred and
+sixty of light versions on a screen of doubled pixel density. A hundred thousand first
+visits is therefore between fifty-six and eighty-four gigabytes, against the soft hundred
 gigabytes a month GitHub Pages allows, and the range is the honest way to write it: which
 end a month lands on is decided by the screens of the readers, not by us. Repeat visits are
 answered from the browser's cache instead, since every file is content-hashed and installed
 by the service worker. That threshold is worth knowing for the month a link travels, and it
 is the only one there is: nothing behind these files counts the readers for us.
 
-Two shapes are built and walked: a player who finished the game (twenty levels, two
-hundred questions answered once, some 24 KB of record) and the heaviest record the
+Two shapes are built and walked: a player who finished the game (twenty-six levels, five
+hundred and forty-six questions answered once, some 55 KB of record) and the heaviest record the
 importer accepts (four thousand answers, five thousand finished levels, some 800 KB).
 What each path may cost is a decision kept in `src/lib/load-stress.js`, written in the
 unit a reader feels it in — a tap that blocks the screen, a file that loads while
@@ -484,7 +484,7 @@ record took eight hundred milliseconds, because the reader asked the growing rec
 its key list once per answer and so paid the square of the number of answers. It now
 costs a few milliseconds, and the budget is what keeps it there. The other number worth
 knowing is the one a shared tablet meets: a browser gives one origin about 5 MB, which
-holds some two hundred finished players or six of the ceiling — and the ceiling only ever
+holds some ninety finished players or six of the ceiling — and the ceiling only ever
 arrives as an imported file, since nothing the game writes comes near it.
 
 The stress run is deliberately not part of `npm run verify`: a timing on a shared runner
@@ -576,13 +576,13 @@ evidence.
 A verified link is a promise in two halves, and only one of them is visible from here: that the
 page answers, and that it is still the work. A site that answers a retired article with a
 landing page and a 200 keeps the first while breaking the second, and no build can tell, because
-the page is somebody else's. `npm run check:references` follows the twenty-two pages the verified
+the page is somebody else's. `npm run check:references` follows the thirty-seven pages the verified
 references point at, reads the title each one answers with, and holds it against the two names
 the citation carries: the work's own, and the institution that publishes it. A page that answers
 under a title naming neither is the failure it is looking for, and a page that names its
 institution alone is reported as the weaker answer it is. The pages are downloaded rather than
 asked about with HEAD, since a title is not part of a status code, and it is the reason this
-check reads twenty-two pages where the credits check asks about sixty. Reading a title is a
+check reads thirty-seven pages where the credits check asks about seventy-eight. Reading a title is a
 heuristic and the report says so: it is not a proof that the page is the work, since only a
 person can read a page, but it is the difference between a link that opens the work and a link
 that opens another page. What it cannot read it does not count as confirmed: the World Heritage

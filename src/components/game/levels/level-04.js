@@ -14,7 +14,7 @@ import { Coins } from "lucide-react";
 
 export default {
   id: 4,
-  order: 12,
+  order: 15,
   era: "medieval",
   from: 1235,
   title: "Mali Empire",

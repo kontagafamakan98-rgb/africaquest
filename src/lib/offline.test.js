@@ -214,11 +214,11 @@ test("no level photograph is fetched from a third party any more", () => {
   // Every level of the timeline carries its own photographs now, so what is
   // checked here is that each picture belongs to a real level, that the whole
   // twenty of them are illustrated, and that none was lost on the way.
-  assert.equal(LEVEL_PHOTOS.length, 60, "no photograph leaves the list");
+  assert.equal(LEVEL_PHOTOS.length, 78, "no photograph leaves the list");
   const photographed = [...new Set(LEVEL_PHOTOS.map((photo) => photo.level))];
   assert.deepEqual(
     photographed,
-    Array.from({ length: 20 }, (_, index) => index + 1),
+    Array.from({ length: 26 }, (_, index) => index + 1),
     "the illustrated levels, in id order"
   );
   const shippedLevels = new Set(LEVELS.map((level) => level.id));

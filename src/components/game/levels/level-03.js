@@ -14,7 +14,7 @@ import { Castle } from "lucide-react";
 
 export default {
   id: 3,
-  order: 10,
+  order: 12,
   era: "medieval",
   from: 1100,
   title: "Great Zimbabwe",

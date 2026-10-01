@@ -14,7 +14,7 @@ import { Globe } from "lucide-react";
 
 export default {
   id: 17,
-  order: 15,
+  order: 19,
   era: "earlyModern",
   from: 1500,
   title: "The Atlantic Slave Trade",

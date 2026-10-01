@@ -15,7 +15,7 @@ const OPTION_COUNT = 4;
 // target.
 const MIN_QUESTIONS_PER_LEVEL = 10;
 const MAX_QUESTIONS_PER_LEVEL = 21;
-const LEVEL_COUNT = 20;
+const LEVEL_COUNT = 26;
 // The periods of African history, in the order they happened.
 const ERAS = ["origins", "ancient", "medieval", "earlyModern", "modern", "contemporary"];
 // The stories live in the lesson component, so they are checked where they are

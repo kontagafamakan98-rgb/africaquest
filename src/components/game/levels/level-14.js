@@ -14,7 +14,7 @@ import { Scroll } from "lucide-react";
 
 export default {
   id: 14,
-  order: 8,
+  order: 10,
   era: "medieval",
   from: 800,
   title: "Kanem-Bornu and the Hausa Cities",

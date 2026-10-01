@@ -142,8 +142,8 @@ test("a level's questions are asked for one level at a time, when it is opened",
   const asked = [...loader.matchAll(/import\(\s*["']\.\/levels\/([^"']+)["']\s*\)/g)].map(
     (match) => match[1]
   );
-  assert.equal(asked.length, 20, "every level has a loader of its own");
-  assert.equal(new Set(asked).size, 20, "and none of them is declared twice");
+  assert.equal(asked.length, 26, "every level has a loader of its own");
+  assert.equal(new Set(asked).size, 26, "and none of them is declared twice");
 
   // Each loader points at a file that is really there, and the two lists are the
   // same twenty: a level added to the game whose module nobody asks for, or a

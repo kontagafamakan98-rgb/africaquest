@@ -117,7 +117,7 @@ export const BUNDLE_BUDGETS = {
   // levels are added. It stood at 240 KB while twelve of the twenty levels were
   // still short ones; every level now teaches a full lesson of twenty-one
   // questions in both languages, which is the growth this line was written for.
-  "/assets/gameData.js": 400 * 1024,
+  "/assets/gameData.js": 560 * 1024,
   // The institutions the references come from: read by the bibliography, and by
   // the quiz, which offers a search under a notice that carries no page. Small
   // today, and the room here is for the institutions a longer game would quote.
@@ -149,6 +149,12 @@ export const BUNDLE_BUDGETS = {
   "/assets/level-18.js": 48 * 1024,
   "/assets/level-19.js": 48 * 1024,
   "/assets/level-20.js": 48 * 1024,
+  "/assets/level-21.js": 48 * 1024,
+  "/assets/level-22.js": 48 * 1024,
+  "/assets/level-23.js": 48 * 1024,
+  "/assets/level-24.js": 48 * 1024,
+  "/assets/level-25.js": 48 * 1024,
+  "/assets/level-26.js": 48 * 1024,
   // The one function that turns a level - whole game or single lesson - into the
   // language on screen. Both roads to a level go through it, so it is shared
   // rather than copied, and it is small because it is only the rule for swapping
@@ -167,7 +173,7 @@ export const BUNDLE_BUDGETS = {
   // material a player listens to before the quiz, rather than a screen of code.
   // The stories were rewritten at twice their former length, and this line
   // follows the text rather than the code.
-  "/assets/AudioNarrator.js": 55 * 1024,
+  "/assets/AudioNarrator.js": 72 * 1024,
   "/assets/TeacherPage.js": 35 * 1024,
   "/assets/StatsScreen.js": 35 * 1024,
   // The quiz is no longer one screen: it draws four shapes of question - four

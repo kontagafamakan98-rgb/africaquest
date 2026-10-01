@@ -14,7 +14,7 @@ import { Scale } from "lucide-react";
 
 export default {
   id: 19,
-  order: 18,
+  order: 24,
   era: "contemporary",
   from: 1948,
   title: "Apartheid",

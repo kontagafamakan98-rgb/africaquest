@@ -18,7 +18,7 @@ export const BADGES = [
   { id: "first_step", name: "First Step", icon: Footprints, description: "Complete your first level", requirement: { type: "levels", count: 1 } },
   { id: "rising_star", name: "Rising Star", icon: Star, description: "Earn 10 stars", requirement: { type: "stars", count: 10 } },
   { id: "knowledge_seeker", name: "Knowledge Seeker", icon: BookOpen, description: "Complete 4 levels", requirement: { type: "levels", count: 4 } },
-  { id: "history_hero", name: "History Hero", icon: Trophy, description: "Complete all levels", requirement: { type: "levels", count: 20 } },
+  { id: "history_hero", name: "History Hero", icon: Trophy, description: "Complete all levels", requirement: { type: "levels", count: 26 } },
   { id: "perfect_score", name: "Perfect Score", icon: Gem, description: "Get all questions right in a level", requirement: { type: "perfect", count: 1 } },
   { id: "xp_master", name: "XP Master", icon: Flame, description: "Earn 500 XP", requirement: { type: "xp", count: 500 } },
   { id: "streak_keeper", name: "Streak Keeper", icon: CalendarCheck, description: "Play 3 days in a row", requirement: { type: "streak", count: 3 } },

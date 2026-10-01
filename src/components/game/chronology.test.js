@@ -44,7 +44,7 @@ test("every lesson dates enough moments to ask a chronology question", () => {
   }
 
   // The whole game is illustrated and written, not a sample of it.
-  assert.equal(PACKS.length, 40, "twenty lessons, each in two languages");
+  assert.equal(PACKS.length, 52, "twenty-six lessons, each in two languages");
 });
 
 test("a lesson's timeline is written in the order it tells", () => {

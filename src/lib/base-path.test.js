@@ -89,11 +89,11 @@ test("a lesson read on its own prepares its gallery the same way", () => {
   // twice, under two directories, once the lesson prepared it again.
   const dir = path.join(ROOT, "src", "components", "game", "levels");
   const modules = readdirSync(dir).filter((file) => file.endsWith(".js"));
-  assert.equal(modules.length, 20, "one module per level");
+  assert.equal(modules.length, 26, "one module per level");
   const files = modules.flatMap((file) =>
     [...read(`src/components/game/levels/${file}`).matchAll(/file: "([^"]+)"/g)].map((match) => match[1])
   );
-  assert.equal(files.length, 120, "three photographs per level, in both languages");
+  assert.equal(files.length, 156, "three photographs per level, in both languages");
   assert.deepEqual(
     files.filter((file) => !file.startsWith("/photos/")),
     [],

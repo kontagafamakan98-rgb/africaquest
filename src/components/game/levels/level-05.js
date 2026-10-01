@@ -14,7 +14,7 @@ import { Church } from "lucide-react";
 
 export default {
   id: 5,
-  order: 6,
+  order: 7,
   era: "ancient",
   from: 100,
   title: "Kingdom of Axum",

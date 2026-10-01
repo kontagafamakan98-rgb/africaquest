@@ -14,7 +14,7 @@ import { Flag } from "lucide-react";
 
 export default {
   id: 8,
-  order: 19,
+  order: 25,
   era: "contemporary",
   from: 1951,
   title: "African Independence",

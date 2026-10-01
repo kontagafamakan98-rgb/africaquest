@@ -14,7 +14,7 @@ import { Gem } from "lucide-react";
 
 export default {
   id: 13,
-  order: 7,
+  order: 9,
   era: "medieval",
   from: 700,
   title: "The Ghana Empire",

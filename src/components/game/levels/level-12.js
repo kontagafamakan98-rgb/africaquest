@@ -14,7 +14,7 @@ import { Mountain } from "lucide-react";
 
 export default {
   id: 12,
-  order: 11,
+  order: 13,
   era: "medieval",
   from: 1137,
   title: "Medieval Ethiopia",

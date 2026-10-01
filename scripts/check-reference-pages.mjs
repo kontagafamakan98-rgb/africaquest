@@ -16,7 +16,7 @@
  * status code: the other checks can ask with HEAD and learn whether a page is
  * there, and whether it is the page the table names, and this one cannot, because
  * the failure it looks for is a page that is there and is not the work. So the
- * pages are downloaded, which is why there are twenty-two of them and not sixty,
+ * pages are downloaded, which is why there are thirty-seven of them and not seventy-eight,
  * and why the run reads them four at a time.
  *
  * What is read is a page's own title, held against the two names the citation

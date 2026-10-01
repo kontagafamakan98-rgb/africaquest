@@ -14,7 +14,7 @@ import { Swords } from "lucide-react";
 
 export default {
   id: 6,
-  order: 14,
+  order: 17,
   era: "medieval",
   from: 1464,
   title: "Songhai Empire",

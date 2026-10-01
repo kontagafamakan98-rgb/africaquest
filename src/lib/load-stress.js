@@ -70,7 +70,7 @@ export function heaviestProgress(now = Date.now()) {
 
   const history = Array.from({ length: MAX_HISTORY }, (_unused, index) => ({
     date: "2026-09-27",
-    level: 1 + (index % 20),
+    level: 1 + (index % 26),
     difficulty: "hard",
     score: 20,
     total: 20,
@@ -82,12 +82,12 @@ export function heaviestProgress(now = Date.now()) {
   const studied_levels = Array.from({ length: MAX_LIST_ITEMS }, (_unused, index) => 1 + (index % 200));
 
   return cleanProgress({
-    current_level: 20,
+    current_level: 26,
     total_xp: 120_000,
     stars_earned: 60,
-    completed_levels: Array.from({ length: 20 }, (_unused, index) => index + 1),
+    completed_levels: Array.from({ length: 26 }, (_unused, index) => index + 1),
     level_scores: Object.fromEntries(
-      Array.from({ length: 20 }, (_unused, index) => [
+      Array.from({ length: 26 }, (_unused, index) => [
         String(index + 1),
         { easy: { score: 7, stars: 3 }, medium: { score: 7, stars: 2 }, hard: { score: 6, stars: 1 } },
       ])

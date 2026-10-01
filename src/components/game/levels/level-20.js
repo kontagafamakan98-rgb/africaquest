@@ -14,7 +14,7 @@ import { Rocket } from "lucide-react";
 
 export default {
   id: 20,
-  order: 20,
+  order: 26,
   era: "contemporary",
   from: 1990,
   title: "Africa Today",

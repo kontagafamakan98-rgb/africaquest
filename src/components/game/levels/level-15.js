@@ -14,7 +14,7 @@ import { Ship } from "lucide-react";
 
 export default {
   id: 15,
-  order: 9,
+  order: 11,
   era: "medieval",
   from: 900,
   title: "The Swahili Coast",

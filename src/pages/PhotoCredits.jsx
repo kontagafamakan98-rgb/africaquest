@@ -25,12 +25,12 @@ import { getLevels } from "../components/game/gameData";
  * quietly download the heaviest one.
  *
  * The list is drawn a few levels at a time (see CREDITS_PAGE): a reference
- * screen is read a line at a time, and laying out two hundred rows to answer a
+ * screen is read a line at a time, and laying out seventy-eight rows to answer a
  * question about one picture is work the reader pays for in waiting.
  *
  * Each of them is asked for as a thumbnail, which is the whole point of this
  * screen having copies of its own: what is drawn here is eighty pixels square,
- * and the lesson versions it used to draw would have been sixty full width
+ * and the lesson versions it used to draw would have been seventy-eight full width
  * photographs, about two megabytes, to fill those squares. The thumbnail is
  * written by the same script that prepares every other file of a photograph:
  * under three kilobytes per row on average, seven at the heaviest.
@@ -41,7 +41,7 @@ import { getLevels } from "../components/game/gameData";
  * A thumbnail tells two pictures apart and shows neither of them, so each one is
  * a button: tapping it opens that photograph at the size it was made, with its
  * credit still beside it, in PhotoViewer. Nothing is fetched for this until the
- * tap, which is what keeps a screen of credits from being a screen of sixty
+ * tap, which is what keeps a screen of credits from being a screen of seventy-eight
  * photographs.
  */
 /** How many levels of credits are drawn before the screen asks whether to go on. */
@@ -54,7 +54,7 @@ export default function PhotoCredits() {
   // row, so only one can ever be open.
   const [open, setOpen] = useState(null);
   // A credit line is a thumbnail and four lines of text, and this screen holds
-  // two hundred of them: all of it at once is a long page to lay out on a phone
+  // seventy-eight of them: all of it at once is a long page to lay out on a phone
   // for a reader who came to check one picture. The list is therefore revealed by
   // the level, six at a time, which is a screenful and a bit; the count in the
   // header is still the whole gallery, so nothing is hidden, only deferred.
@@ -113,7 +113,7 @@ export default function PhotoCredits() {
                   <button
                     type="button"
                     onClick={() => setOpen(photo)}
-                    // A row of sixty buttons that all say the same thing is no
+                    // A row of seventy-eight buttons that all say the same thing is no
                     // use read aloud, so each one names the picture it opens.
                     aria-label={`${t.photoCreditsView} · ${photo.caption}`}
                     className="group relative w-20 h-20 shrink-0 rounded-xl"

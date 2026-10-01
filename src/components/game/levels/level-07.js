@@ -14,7 +14,7 @@ import { Shield } from "lucide-react";
 
 export default {
   id: 7,
-  order: 16,
+  order: 22,
   era: "modern",
   from: 1816,
   title: "Zulu Kingdom",

@@ -52,7 +52,7 @@ test("the ceiling really is the ceiling the reader allows", () => {
   assert.equal(progress.history.length, MAX_HISTORY);
   assert.equal(progress.badges.length, MAX_LIST_ITEMS);
   assert.equal(progress.studied_levels.length, MAX_LIST_ITEMS);
-  assert.equal(progress.completed_levels.length, 20, "twenty levels, and every one finished");
+  assert.equal(progress.completed_levels.length, 26, "twenty-six levels, and every one finished");
 
   // Built through the reader, so it holds exactly the fields a stored record
   // holds: nothing invented, nothing missing, and every value the type the rest
@@ -115,7 +115,12 @@ test("a small device holds a classroom, and the ceiling holds a few", () => {
   // The quota is per origin, not per student, so the number that matters on a
   // shared tablet is how many records fit in it before the browser refuses to
   // save at all - which the application then says out loud.
-  assert.ok(recordsPerQuota(finished) >= 100, `${recordsPerQuota(finished)} students in ${QUOTA_BYTES} bytes`);
+  // The floor is a classroom with room to spare rather than a count: the game
+  // grew from twenty levels to twenty-six, and the record a finished player
+  // really holds grew with it, so the same five megabytes now carry about
+  // ninety of them. Seventy-five is still two and a half classrooms on one
+  // origin, which is the claim the floor is here to keep.
+  assert.ok(recordsPerQuota(finished) >= 75, `${recordsPerQuota(finished)} students in ${QUOTA_BYTES} bytes`);
   assert.ok(recordsPerQuota(ceiling) >= 1, "the heaviest record a file may bring still fits once");
   assert.equal(recordsPerQuota(0), Number.POSITIVE_INFINITY, "a record of no size is not a division by zero");
   assert.equal(recordsPerQuota(3, 10), 3, "and it is a whole number of records");

@@ -14,7 +14,7 @@ import { Map } from "lucide-react";
 
 export default {
   id: 18,
-  order: 17,
+  order: 23,
   era: "modern",
   from: 1884,
   title: "Colonial Conquest",
