@@ -2,7 +2,7 @@
  * How the application behaves at the size of the record it allows.
  *
  * This is about the one thing that grows without anybody deciding it: a player's
- * own progress. Everything else here is fixed - twenty levels, a file of
+ * own progress. Everything else here is fixed - twenty-six levels, a file of
  * questions, a gallery of photographs - but the record on the device grows with
  * every answer, and the application allows a hand-made file to be far larger
  * than anything a player reaches. Two shapes are therefore built here, and the
@@ -13,7 +13,7 @@
  *   src/lib/progress-file.js. Nothing real comes close, and a file that does has
  *   to be survived rather than argued with;
  * - a player who finished the game, which is what one device really holds: ten
- *   questions a level, twenty levels, and one history entry per level per
+ *   questions a level, twenty-six levels, and one history entry per level per
  *   difficulty.
  *
  * The budgets below are decisions, not measurements. They are written in the

@@ -4,7 +4,7 @@
  * It sits outside gameData.js for the same reason the badges and the
  * difficulties do: that file carries the whole content of the game - the
  * questions, their facts and their references - and the quiz has to be able to
- * score a finished run without downloading the questions of twenty levels to do
+ * score a finished run without downloading the questions of twenty-six levels to do
  * it. Re-exported from gameData.js so the screens that already read them there
  * keep working.
  */

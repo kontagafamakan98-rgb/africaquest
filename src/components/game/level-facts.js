@@ -1,5 +1,5 @@
 /**
- * The brief of the game: the twenty levels as the first screen needs them.
+ * The brief of the game: the twenty-six levels as the first screen needs them.
  *
  * WRITTEN BY scripts/generate-level-facts.mjs. Do not edit by hand: the facts
  * below are read out of the level table, the French wording and the photograph
@@ -427,7 +427,7 @@ export const AVIF_FILES = [
 /**
  * The photographs a copy was written for at the width of a card.
  *
- * The map draws twenty cards, one picture each, three hundred and fifty eight
+ * The map draws twenty-six cards, one picture each, three hundred and fifty eight
  * pixels wide on a phone, and the light version of those pictures is six hundred
  * and forty across. These are the files written for that width, and a picture
  * that has one is offered to the browser in two widths rather than one, so the

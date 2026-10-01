@@ -120,7 +120,7 @@ export const BUNDLE_BUDGETS = {
   // The content of the game, and the libraries one screen needs to draw it.
   // gameData is the questions and the lessons, so it grows with the game rather
   // than with the code, and its budget is the one that is meant to be raised as
-  // levels are added. It stood at 240 KB while twelve of the twenty levels were
+  // levels are added. It stood at 240 KB while twelve of the twenty-six levels were
   // still short ones; every level now teaches a full lesson of twenty-one
   // questions in both languages, which is the growth this line was written for.
   "/assets/gameData.js": 560 * 1024,
@@ -131,7 +131,7 @@ export const BUNDLE_BUDGETS = {
   // One lesson's own material, asked for only when that lesson is opened: its
   // questions, their references, their study pack and the gallery of the level.
   // The content of the whole game used to arrive in the lesson's chunk, which
-  // meant a player who opened one level downloaded all twenty. These twenty
+  // meant a player who opened one level downloaded all twenty-six. These twenty-six
   // lines are what the split costs: they are read one at a time, never together,
   // so each is a budget of its own rather than a share of one big number. The
   // room left is for a level that grows a few questions or a longer essay.

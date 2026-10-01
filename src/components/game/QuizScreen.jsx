@@ -7,7 +7,7 @@ import HintModal, { MAX_ELIMINATIONS } from "./HintModal";
 import SourceReference from "./SourceReference";
 import LevelPicture from "./LevelPicture";
 // The three ways to play and what a run is worth, neither of which needs the
-// questions of twenty levels: the level being played arrives on its own, through
+// questions of twenty-six levels: the level being played arrives on its own, through
 // the loader in level-content.js.
 import { DIFFICULTIES, EXAM } from "./difficulties";
 import { calculateStars, getXPForScore } from "./scoring";

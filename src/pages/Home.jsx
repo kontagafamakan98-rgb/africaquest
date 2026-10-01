@@ -117,7 +117,7 @@ export default function Home() {
   // the brief, and every screen a tap opens asks for what it shows: a lesson
   // asks for its own level, the review asks for the levels it has something to
   // ask about, and the reading tabs ask for the whole game. Prefetching all of
-  // it on the map would put the four hundred kilobytes of twenty levels back on
+  // it on the map would put the four hundred kilobytes of twenty-six levels back on
   // the first screen, which is exactly what the split exists to avoid.
 
   // Save/restore scroll on tab switch

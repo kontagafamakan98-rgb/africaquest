@@ -13,7 +13,7 @@ import { AVIF_FILES, CARD_FILES, LEVEL_FACTS } from "./level-facts.js";
 /**
  * The brief of the game, ready for the screen that is shown first.
  *
- * The map draws twenty cards, and a card needs a title in the language on
+ * The map draws twenty-six cards, and a card needs a title in the language on
  * screen, its place in the timeline, an icon, a colour and a picture. That is
  * everything here, and it is deliberately the only copy of those facts the entry
  * file carries: without it the map would wait for the quiz, the lessons and
@@ -28,7 +28,7 @@ const ICONS = {
   Hammer, Landmark, Map, Mountain, Rocket, Scale, Scroll, Shield, Ship, Swords,
 };
 
-/** The twenty levels, in the order they are stored, with their card picture ready. */
+/** The twenty-six levels, in the order they are stored, with their card picture ready. */
 export const LEVEL_SUMMARIES = LEVEL_FACTS.map((fact) => ({
   id: fact.id,
   order: fact.order,
@@ -64,7 +64,7 @@ export const AVIF_PHOTOS = new Set(AVIF_FILES.map((file) => servedPath(file)));
 /**
  * The photographs that also ship a copy at the width of a card.
  *
- * The map draws twenty cards and they are the first screen a reader downloads:
+ * The map draws twenty-six cards and they are the first screen a reader downloads:
  * five hundred kilobytes of pictures for a hundred and seventy of application.
  * Those cards are three hundred and fifty eight pixels wide on a phone, and the
  * light version of the same picture is six hundred and forty across, so a copy
@@ -91,9 +91,9 @@ export const TOTAL_QUESTIONS = LEVEL_SUMMARIES.reduce(
  * The result is kept, one list per language, because none of it can change
  * while the application is running: the facts are a generated file, the order is
  * the writing of that file, and the language is one of two. The map paints on
- * every frame that the clock ticks, and rebuilding twenty cards each time to
+ * every frame that the clock ticks, and rebuilding twenty-six cards each time to
  * throw them away is work nobody asked for; two lists, built once, are what a
- * map of twenty cards costs. The same list object comes back for the same
+ * map of twenty-six cards costs. The same list object comes back for the same
  * language, which is also what lets a caller hand it to a dependency array.
  */
 // Kept in an object rather than a Map, and not by preference: this module

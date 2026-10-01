@@ -67,7 +67,7 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
 
   const story = getLevelStory(level.id, lang);
   // The study pack of this level, which travelled with it rather than being
-  // read from a module holding all twenty: the history in several paragraphs,
+  // read from a module holding all twenty-six: the history in several paragraphs,
   // the timeline, the people, the places and the words. The lesson story is the
   // narration the player listens to, and stands in for the history if a level
   // ever arrived without one.
@@ -264,7 +264,7 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
  * on screen, and that is the point rather than a way of saving space: the same
  * questions are the quiz, so a worksheet on the screen would hand the answers
  * to the reader it is meant to test. The key is printed because the sheet is
- * meant to be marked by somebody, and whoever marks twenty of them reads the
+ * meant to be marked by somebody, and whoever marks twenty-six of them reads the
  * key rather than the lesson.
  */
 function Worksheet({ level }) {

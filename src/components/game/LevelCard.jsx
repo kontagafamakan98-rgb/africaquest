@@ -31,7 +31,7 @@ export default function LevelCard({ level, isUnlocked, isCompleted, levelScores,
       {/* Coloured fallback is always present, the photo renders on top of it */}
       <div className={`absolute inset-0 bg-gradient-to-br ${level.color}`} />
       {img && (
-        /* The map draws twenty of these, and they are the first screen a reader
+        /* The map draws twenty-six of these, and they are the first screen a reader
            downloads: five hundred kilobytes of pictures, against a hundred and
            seventy for the application itself. `card` offers the copy written at
            the width a card is drawn, and `sizes` says how wide that is, so a

@@ -164,7 +164,7 @@ test("the brief is written by the script the verification runs", () => {
   );
 });
 test("the brief is built once per language, and rebuilt by nothing else", () => {
-  // The map paints whenever the clock ticks, and it asks for these twenty cards
+  // The map paints whenever the clock ticks, and it asks for these twenty-six cards
   // every time. None of what they are made of can change while the application
   // is running, so a list built once per language is the whole cost; the same
   // object coming back is what says the work was not done twice.

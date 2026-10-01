@@ -175,7 +175,7 @@ test("a level a lesson downloads is the level the whole game holds", async () =>
   // The lessons read one level at a time, from modules generated out of the same
   // tables the whole game is written from. Two copies of one text drift; the
   // only thing that keeps them together is a check that compares them, so the
-  // comparison is here, field for field, in both languages, over all twenty
+  // comparison is here, field for field, in both languages, over all twenty-six
   // levels: a question added, a reference corrected or a photograph recaptioned
   // in the game and not in the module fails the moment this runs.
   assert.deepEqual(

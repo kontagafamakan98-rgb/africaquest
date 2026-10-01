@@ -6,11 +6,11 @@
  *   node scripts/generate-level-content.mjs          # write src/components/game/levels/
  *   node scripts/generate-level-content.mjs --check  # fail when a file is out of date
  *
- * A lesson is one level, and it does not need the other nineteen to be read. The
+ * A lesson is one level, and it does not need the other twenty-five to be read. The
  * content of the whole game lives in gameData.js and content-fr.js, which is
  * what the screens that really need every level read - the review inbox, the
  * bibliography, the statistics. A lesson is not one of them, so rather than hand
- * it the whole game and let it throw away nineteen twentieths, the content of
+ * it the whole game and let it throw away almost all of it, the content of
  * each level is written down here, one module per level, and the lesson asks the
  * browser for the one it is opening.
  *
@@ -23,12 +23,12 @@
  *
  * The study pack of a level travels with it for the same reason the questions
  * do: a lesson draws its own history, timeline, people, places and words, and
- * has no use for the nineteen other lessons. It used to be read from one module
- * holding all twenty, which meant a player who opened one level downloaded the
+ * has no use for the twenty-five other lessons. It used to be read from one module
+ * holding all twenty-six, which meant a player who opened one level downloaded the
  * study material of the whole game.
  *
- * One module and not twenty: the bundler is what turns twenty modules into
- * twenty requests, and the size of the whole game is exactly what a player who
+ * One module and not twenty-six: the bundler is what turns twenty-six modules into
+ * twenty-six requests, and the size of the whole game is exactly what a player who
  * opens one lesson must not have to download.
  */
 
@@ -89,7 +89,7 @@ function moduleOf(level) {
  * them. Run \`npm run level:content\` after changing one of those.
  *
  * A lesson opens one level, so this is what it downloads: not the other
- * nineteen, and not the screens that need every level.
+ * twenty-five, and not the screens that need every level.
  */
 import { ${iconName(level)} } from "lucide-react";
 
@@ -145,7 +145,7 @@ if (check) {
   process.exit(1);
 }
 
-// The directory holds the twenty levels and nothing else: a file left behind by
+// The directory holds the twenty-six levels and nothing else: a file left behind by
 // a level that was renumbered is a chunk the build would still write.
 mkdirSync(DIRECTORY, { recursive: true });
 const known = new Set([...written.keys()].map((file) => path.basename(file)));

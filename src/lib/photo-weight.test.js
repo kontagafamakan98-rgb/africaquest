@@ -90,7 +90,7 @@ const BUDGET = {
    *
    * It is the file a map of one pixel density downloads, so it is also the one
    * that decides what the first screen costs. A budget of thirty two kilobytes
-   * is what the twenty of them come to at fourteen kilobytes each, which is the
+   * is what the twenty-six of them come to at fourteen kilobytes each, which is the
    * weight measured when they were written.
    */
   card: 32 * SIZE,
@@ -236,7 +236,7 @@ test("the card copy of a banner is the file the map draws, and it is the smaller
 });
 
 test("every banner ships a card copy, and the other pictures do not", () => {
-  // The map draws twenty cards, one picture each, and those twenty pictures are
+  // The map draws twenty-six cards, one picture each, and those twenty-six pictures are
   // what a reader arriving downloads before anything else. A hole here is the
   // card falling back to the light version, which is the download these files
   // exist to avoid; an extra one is a file nobody draws.

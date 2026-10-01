@@ -27,7 +27,7 @@ import { collectReviewQueue } from "../components/game/learning.js";
 
 // What the application does at the size of the record it allows.
 //
-// Every other measurement in this project is about fixed content: twenty levels,
+// Every other measurement in this project is about fixed content: twenty-six levels,
 // a gallery of photographs, a bundle. The record on a device is the one thing a
 // reader can make as large as the reader allows, and the interesting question is
 // not whether a normal player is fine - that is obvious - but what happens to
@@ -36,7 +36,7 @@ import { collectReviewQueue } from "../components/game/learning.js";
 // against the same table this file reads (npm run stress).
 //
 // Levels are needed for the shape a player really finished, so they are read
-// from the game itself rather than invented: a test of "twenty levels" that
+// from the game itself rather than invented: a test of "twenty-six levels" that
 // guesses how many questions a level holds is a test of nothing.
 
 const LEVELS = getLevels("en");

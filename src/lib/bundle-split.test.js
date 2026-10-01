@@ -127,9 +127,9 @@ test("the quiz, the lesson, the review and the statistics arrive when they are o
 
 test("a level's questions are asked for one level at a time, when it is opened", () => {
   // The map is drawn from the brief and no longer asks for the whole game: the
-  // twenty levels were four hundred kilobytes, and a player who opens one of
-  // them was downloading all twenty. What a lesson reads now is one level, and
-  // the loader below is what turns them into twenty requests. The walk above
+  // twenty-six levels were four hundred kilobytes, and a player who opens one of
+  // them was downloading all twenty-six. What a lesson reads now is one level, and
+  // the loader below is what turns them into twenty-six requests. The walk above
   // proves no *static* import reaches the content; this proves a lesson can
   // still get at it, one level at a time.
   const upfront = [...firstPaint()].map((file) => file.split(path.sep).join("/"));
@@ -150,10 +150,10 @@ test("a level's questions are asked for one level at a time, when it is opened",
   // module left behind by a level that was renumbered, fails here.
   const directory = path.join(ROOT, "src", "components", "game", "levels");
   assert.ok(existsSync(directory), "the levels have a directory of their own");
-  assert.deepEqual(readdirSync(directory).sort(), [...asked].sort(), "the loaders and the level files are the same twenty");
+  assert.deepEqual(readdirSync(directory).sort(), [...asked].sort(), "the loaders and the level files are the same twenty-six");
 
   // The screens that open a level go through the loader, and none of the three
-  // reads the whole game, which is what keeps twenty levels out of the chunk a
+  // reads the whole game, which is what keeps twenty-six levels out of the chunk a
   // lesson downloads.
   for (const [file, what] of [
     ["src/components/game/LessonScreen.jsx", "the lesson"],
@@ -173,7 +173,7 @@ test("a level's questions are asked for one level at a time, when it is opened",
     );
   }
 
-  // The study pack of all twenty levels used to be read from one module by the
+  // The study pack of all twenty-six levels used to be read from one module by the
   // lesson, which put the material of the whole game in front of a player who
   // opened one level. It now travels with the level the lesson downloaded, so
   // the lesson must not read that module and must draw what came with the level.

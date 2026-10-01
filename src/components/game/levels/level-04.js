@@ -8,7 +8,7 @@
  * them. Run `npm run level:content` after changing one of those.
  *
  * A lesson opens one level, so this is what it downloads: not the other
- * nineteen, and not the screens that need every level.
+ * twenty-five, and not the screens that need every level.
  */
 import { Coins } from "lucide-react";
 

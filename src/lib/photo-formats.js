@@ -88,8 +88,8 @@ export function avifPath(jpegPath) {
 /**
  * The copy of a photograph written for the cards of the map.
  *
- * The map draws twenty cards, one picture each, three hundred and fifty eight
- * pixels wide on a phone, and those twenty pictures are the first screen a
+ * The map draws twenty-six cards, one picture each, three hundred and fifty eight
+ * pixels wide on a phone, and those twenty-six pictures are the first screen a
  * reader downloads. The light version of the same picture is six hundred and
  * forty across, which is what a screen of doubled pixel density asks for and
  * twice what a screen of one density needs: this is that fourth hundred and

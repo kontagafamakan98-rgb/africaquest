@@ -35,7 +35,7 @@ import { AVIF_PHOTOS, CARD_PHOTOS } from "./level-summary";
  * at.
  *
  * `card` draws a picture at the size a card of the map shows it. The map draws
- * twenty of them and they are the first screen a reader downloads, so for those
+ * twenty-six of them and they are the first screen a reader downloads, so for those
  * the small copy written at four hundred and eighty pixels is offered as a
  * candidate beside the light version at six hundred and forty, with `sizes`
  * saying how wide the card is: a browser of one pixel density takes the smaller

@@ -4,8 +4,8 @@
  * The whole game lives in gameData.js, which is what the screens that really
  * need every level read: the review inbox, the bibliography, the statistics.
  * A lesson is not one of them. It shows one level, so it asks the browser for
- * one level, and the twenty modules below are what the bundler turns into
- * twenty requests instead of one of four hundred kilobytes. The study material
+ * one level, and the twenty-six modules below are what the bundler turns into
+ * twenty-six requests instead of one of four hundred kilobytes. The study material
  * travels with each level for the same reason: a lesson draws its own history,
  * timeline, people, places and words, and not the nineteen other lessons.
  *

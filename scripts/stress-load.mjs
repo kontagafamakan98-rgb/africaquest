@@ -13,7 +13,7 @@
  * Two shapes are weighed, and the distance between them is the point:
  *
  * - a player who finished the game, which is what a real device holds. Every
- *   question of every level answered once - some forty a level, twenty levels -
+ *   question of every level answered once - some forty a level, twenty-six levels -
  *   a dozen badges, one history entry per level per difficulty;
  * - the heaviest record the reader accepts, which is what an imported file may
  *   be: four thousand answers, five thousand finished levels, every list full.

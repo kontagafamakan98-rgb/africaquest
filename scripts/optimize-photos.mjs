@@ -154,7 +154,7 @@ const THUMB_LONG_EDGE = 160;
 /**
  * The small copy of a banner, for the cards of the map.
  *
- * The map draws twenty cards, each one a picture of a level, and those twenty
+ * The map draws twenty-six cards, each one a picture of a level, and those twenty-six
  * pictures are the first screen a reader downloads: five hundred kilobytes on a
  * cold visit, against a hundred and seventy for the whole application. They are
  * drawn three hundred and fifty eight pixels wide on a phone, and the light
@@ -512,7 +512,7 @@ if (!check && withAvif.length < drawn.length) {
   );
 }
 
-// The card copies are the weight of the first screen: twenty pictures, one per
+// The card copies are the weight of the first screen: twenty-six pictures, one per
 // level, drawn three hundred and fifty eight pixels wide on a phone. They are
 // what the map costs a reader who has just arrived, which is the one download
 // worth counting apart from the rest.

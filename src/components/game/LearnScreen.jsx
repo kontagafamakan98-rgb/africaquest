@@ -49,7 +49,7 @@ export default function LearnScreen({ progress, onOpenLesson }) {
                 and the mastery are read on the line under it. Held in a column
                 of their own on the right, as they used to be, they left about a
                 hundred and twenty pixels for the title, which is three words:
-                fourteen of the twenty levels were cut short with an ellipsis,
+                fourteen of the twenty-six levels were cut short with an ellipsis,
                 and the eighteen characters of "Kingdom of Kush" did not fit. */}
             <div className="flex-1 min-w-0">
               <p className="text-amber-200/80 text-[10px] uppercase tracking-[0.15em] font-bold">{level.region}</p>

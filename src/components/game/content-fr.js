@@ -1,4 +1,4 @@
-// French version of the twenty levels' content, keyed by level id.
+// French version of the twenty-six levels' content, keyed by level id.
 //
 // Only the wording lives here: the right answer index stays in gameData.jsx, so
 // a translation can never change which answer is correct. Questions follow the
