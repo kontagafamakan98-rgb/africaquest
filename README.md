@@ -98,6 +98,44 @@ file that travels with the work.
 - `npm run stress` walks the newest and the heaviest progress record the application accepts
   and holds every path that has to read one to a budget, outside the verification.
 
+## The content, and the database it is edited in
+
+The content of the game is written in a Neon database, and the repository holds the snapshot of
+it that ships. The four modules the game is read from - the levels, the French wording, the study
+material and the photographs - are generated from it by `npm run content:pull`, reviewed as the
+diff of those files and committed like any other change. So the database is the source rather than
+a copy, which is what keeps an edit made in its console from becoming a fork of the content nobody
+can see. Each of the four modules keeps its imports, its helpers and the prose that explains it:
+only the declaration of data, framed by two marker comments, is written from the database, so a
+command run against it cannot quietly delete a comment somebody wrote.
+
+The database is not part of what a reader downloads: nothing in the built application talks to
+it, which is what keeps the game working offline in the first place. Its compute scales to zero
+when idle and wakes on the next query, so the first one of a session waits a moment for it -
+nothing a player does depends on it, and nothing they do reaches it.
+
+`npm run content:push` writes the other way: it applies `db/schema.sql`, empties the six tables and
+writes the modules' content into them, a mirror rather than a merge. `npm run content:check` reads
+all six back and compares them row by row with the repository, and also rebuilds the four modules
+and compares their generated lines - so a file edited by hand where it is generated is named,
+rather than silently rewritten by the next pull. The connection string comes from `.env.local`,
+which `neon link` writes and no commit carries.
+
+`content:push` also leaves a dated row behind - the counts and the moment, in a table of its
+own rather than in the mirror - and the backend's `/health` answers with it. So what the
+database holds, and since when, can be read from outside, without a console and without a
+credential of its own: the counts, the date of the last push and who made it, beside the
+liveness the same answer already carries.
+
+That comparison needs a credential, so it is deliberately not a step of `npm run verify`: that
+gate runs on every pull request, on a machine that holds no database credential, and it has to
+mean the same thing there as anywhere else. It has a workflow of its own instead
+(`.github/workflows/content.yml`), on every push to `main` and on demand, with the production
+connection string in the `NEON_DATABASE_URL` secret. A run without that secret says so in an
+annotation and passes, because a missing credential is not a database that drifted; a run with it
+fails when the database no longer says what the repository holds, or the repository no longer
+says what the database would write.
+
 ## Photographs
 
 Each of the seventy-eight level photographs ships as a JPEG, a WebP beside it, and — where it pays

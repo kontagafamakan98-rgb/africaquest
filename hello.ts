@@ -29,8 +29,57 @@ import { neon } from "@neondatabase/serverless";
  * hundred: measured here, the same read that answered a sleeping compute took 576
  * ms where the warm one took 13, so anything past a quarter of a second is a wake
  * rather than a slow query.
+ *
+ * And the same answer carries what the database holds, because a health that says
+ * only "up" leaves the one question this backend exists to answer unasked: the
+ * counts of the content and the moment it was last written. `content_sync` is the
+ * row `content:push` leaves behind, so `lastPush` is the date of the last time
+ * somebody ran that command. A database that drifted from the repository is then
+ * visible from outside, without a console and without a credential, which is what
+ * makes this the smallest possible dashboard rather than only a liveness probe.
  */
 const WAKE_MS = 300;
+
+/** The counts and the date, in one statement: the driver sends one query a call. */
+const COUNTERS = [
+  "select",
+  "  (select count(*) from levels)::int as levels,",
+  "  (select count(*) from questions)::int as questions,",
+  "  (select count(*) from photographs)::int as photographs,",
+  "  (select pushed_at from content_sync where id = 1) as pushed_at,",
+  "  (select source from content_sync where id = 1) as pushed_by",
+].join("\n");
+
+/** What went wrong, as a line rather than an object nobody can read. */
+function describe(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * The content as the counters read it, or nothing when the query said nothing.
+ *
+ * Every field is optional in practice: `content_sync` is written by `content:push`
+ * and by nothing else, so a database that has just had its schema applied and no
+ * content written yet answers with the counts and no date at all. That is a state
+ * worth reporting as it is rather than as an error, since the tables behind it are
+ * perfectly healthy.
+ */
+function contentOf(rows: unknown): Record<string, unknown> | null {
+  const row = Array.isArray(rows) ? (rows[0] as Record<string, unknown> | undefined) : undefined;
+  if (!row) return null;
+
+  const when = row.pushed_at ? new Date(row.pushed_at as string) : null;
+  const pushedAt = when && !Number.isNaN(when.getTime()) ? when : null;
+
+  return {
+    levels: Number(row.levels) || 0,
+    questions: Number(row.questions) || 0,
+    photographs: Number(row.photographs) || 0,
+    lastPush: pushedAt ? pushedAt.toISOString() : null,
+    lastPushBy: row.pushed_by ?? null,
+    lastPushAgoSeconds: pushedAt ? Math.round((Date.now() - pushedAt.getTime()) / 1000) : null,
+  };
+}
 
 export default async function hello(request: Request = new Request("http://localhost/")): Promise<Response> {
   const path = new URL(request.url).pathname.replace(/\/+$/, "");
@@ -42,15 +91,31 @@ export default async function hello(request: Request = new Request("http://local
   const startedAt = Date.now();
   let database = "ok";
   let detail = "";
+  let content: Record<string, unknown> | null = null;
+  let contentDetail = "";
 
-  try {
-    const url = process.env.DATABASE_URL;
-    if (!url) throw new Error("DATABASE_URL is not set in this runtime");
-    const sql = neon(url);
-    await sql.query("select 1 as one");
-  } catch (error) {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
     database = "down";
-    detail = error instanceof Error ? error.message : String(error);
+    detail = "DATABASE_URL is not set in this runtime";
+  } else {
+    const sql = neon(url);
+    try {
+      await sql.query("select 1 as one");
+    } catch (error) {
+      database = "down";
+      detail = describe(error);
+    }
+    // Read only once the base has answered at all: what the counters fail on is a
+    // table that is not there yet, which is a deployment rather than a dead
+    // database, and the two must not be reported as one thing.
+    if (database === "ok") {
+      try {
+        content = contentOf(await sql.query(COUNTERS));
+      } catch (error) {
+        contentDetail = describe(error);
+      }
+    }
   }
 
   const tookMs = Date.now() - startedAt;
@@ -60,6 +125,8 @@ export default async function hello(request: Request = new Request("http://local
     function: "ok",
     database,
     detail: detail || undefined,
+    content,
+    contentDetail: contentDetail || undefined,
     tookMs,
     wokeFromSleep: tookMs >= WAKE_MS,
     at: new Date().toISOString(),

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 // The workflow is the gate a change passes before it reaches main, and it is
@@ -218,8 +218,16 @@ test("the shell each workflow runs is read by a shell before it runs", () => {
   // workflow that no longer parses is worth one more line - a tab is the one
   // character that breaks a YAML file while looking right in an editor, and
   // GitHub's answer to one is to run nothing at all.
-  for (const file of ["pages.yml", "verify.yml", "uptime.yml"]) {
-    const source = readFileSync(path.join(ROOT, ".github", "workflows", file), "utf8");
+  //
+  // The directory rather than a list of names: a workflow added tomorrow is a
+  // shell nobody reads unless this finds it, which is the same gap this test
+  // exists to close, one level up.
+  const directory = path.join(ROOT, ".github", "workflows");
+  const workflows = readdirSync(directory).filter((name) => name.endsWith(".yml"));
+  assert.ok(workflows.length >= 3, `only ${workflows.length} workflows were found`);
+
+  for (const file of workflows) {
+    const source = readFileSync(path.join(directory, file), "utf8");
     assert.doesNotMatch(source, /\t/, `${file} carries a tab`);
 
     const blocks = shellBlocks(source);

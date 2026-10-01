@@ -105,7 +105,37 @@ create table if not exists photographs (
   webp_sha256   text,
   avif_sha256   text,
   thumb_sha256  text,
+  card_sha256   text,                    -- the 480 px copy the map's cards draw
   primary key (level_id, position)
+);
+
+-- The column above was added after the table was first written, and a create
+-- table that already exists adds nothing: so the fourth fingerprint is put on an
+-- existing photographs table by its own statement. "if not exists" makes it safe
+-- on both, which is what lets the schema be applied before every write.
+alter table photographs add column if not exists card_sha256 text;
+
+-- When this content was last written here, and how much of it there was.
+--
+-- One row, replaced on every `content:push`: the counts as they stood at that
+-- moment, the moment itself, and who wrote it. Nothing in the game reads it. What
+-- reads it is the backend's own `/health`, which is the one place that can answer
+-- "is the database still what the repository says, and since when" without a
+-- credential of its own - and that answer is worth having, because the write is a
+-- command somebody runs by hand and the drift it is meant to catch is exactly a
+-- push that never happened.
+--
+-- It is deliberately not one of the six mirrored tables. A row that changes on
+-- every push cannot be compared with the repository, and the comparison is the
+-- whole of what `content:check` is.
+create table if not exists content_sync (
+  id          integer primary key check (id = 1),  -- one row, always this one
+  pushed_at   timestamptz not null,
+  levels      integer not null,
+  questions   integer not null,
+  study_notes integer not null,
+  photographs integer not null,
+  source      text                                  -- who wrote it, and from where
 );
 
 -- What the database knows about every photograph, for the credits screen and for

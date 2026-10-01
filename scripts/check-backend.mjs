@@ -48,6 +48,44 @@ const WAKE_MS = 300;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** A duration as a person reads it rather than counts it. */
+function humanize(seconds) {
+  if (seconds < 90) return `${seconds}s`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 90) return `${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 36) return `${hours}h`;
+  return `${Math.round(hours / 24)}d`;
+}
+
+/**
+ * What the backend says it holds, as lines.
+ *
+ * A health that answered "up" has told the truth about liveness and nothing about
+ * the thing this database is for. So the counts and the date of the last write are
+ * printed too: they are the half of the answer a reader can act on, and the only
+ * place they can be read without a console. A database whose schema is applied and
+ * whose content was never pushed says so instead, which is a state and not a
+ * failure.
+ */
+function contentLines(content, contentDetail) {
+  if (!content) {
+    return contentDetail ? [`  content: not readable (${String(contentDetail).slice(0, 200)})`] : [];
+  }
+
+  const lines = [
+    `  content: ${content.levels} levels, ${content.questions} questions, ${content.photographs} photographs`,
+  ];
+  if (content.lastPush) {
+    const ago = typeof content.lastPushAgoSeconds === "number" ? `, ${humanize(content.lastPushAgoSeconds)} ago` : "";
+    const by = content.lastPushBy ? ` by ${content.lastPushBy}` : "";
+    lines.push(`  last pushed ${content.lastPush}${ago}${by}`);
+  } else {
+    lines.push("  no push is recorded yet: the schema is applied, and nothing has written the content since");
+  }
+  return lines;
+}
+
 const given = process.argv.slice(2).find((argument) => !argument.startsWith("--"));
 const base = (given || process.env.NEON_FUNCTION_API_BASE_URL || "").replace(/\/+$/, "");
 
@@ -105,6 +143,7 @@ if (answer.status >= 200 && answer.status < 300 && state && typeof state.status 
           "  scaling to zero, which is how it is meant to behave, and not an outage."
       );
     }
+    for (const line of contentLines(state.content, state.contentDetail)) console.log(line);
     console.log("\nbackend: up");
     process.exit(0);
   }

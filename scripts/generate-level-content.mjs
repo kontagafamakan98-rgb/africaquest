@@ -38,6 +38,9 @@ import { fileURLToPath } from "node:url";
 import { LEVELS, levelGalleryRows } from "../src/components/game/gameData.js";
 import { LEVELS_FR } from "../src/components/game/content-fr.js";
 import { LEVEL_STUDY } from "../src/components/game/level-study.js";
+// The way a value of the content is written is shared with the script that writes
+// the four modules back from the database: one style, one place, two writers.
+import { pretty } from "../build/content-format.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIRECTORY = path.join(ROOT, "src", "components", "game", "levels");
@@ -48,42 +51,6 @@ const fileOf = (level) => path.join(DIRECTORY, `level-${String(level.id).padStar
 
 /** A string, as it is written in the source: quoted, escaped, one line. */
 const quote = (value) => JSON.stringify(value);
-
-/**
- * A value of the content, written the way a person would write it.
- *
- * The output is source rather than JSON: an array of short strings - the four
- * answers of a question - stays on one line, a row of short fields stays on one
- * line, and everything longer is broken over several. The point is a file
- * somebody can read and diff, since a review of a level's content is a review of
- * this file.
- */
-function pretty(value, indent) {
-  const pad = " ".repeat(indent);
-
-  if (typeof value === "string") return quote(value);
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (value === null) return "null";
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) return "[]";
-    if (value.every((item) => typeof item === "string" || typeof item === "number")) {
-      return `[${value.map((item) => pretty(item, indent)).join(", ")}]`;
-    }
-    const body = value.map((item) => `${pad}  ${pretty(item, indent + 2)},`).join("\n");
-    return `[\n${body}\n${pad}]`;
-  }
-
-  const keys = Object.keys(value);
-  if (keys.length === 0) return "{}";
-  const primitive = keys.every((key) => value[key] === null || typeof value[key] !== "object");
-  if (primitive) {
-    const inner = keys.map((key) => `${key}: ${pretty(value[key], indent)}`).join(", ");
-    if (pad.length + inner.length <= 100) return `{ ${inner} }`;
-  }
-  const body = keys.map((key) => `${pad}  ${key}: ${pretty(value[key], indent + 2)},`).join("\n");
-  return `{\n${body}\n${pad}}`;
-}
 
 /** The name of the icon a level is drawn with, as lucide exports it. */
 function iconName(level) {

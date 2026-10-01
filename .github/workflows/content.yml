@@ -1,0 +1,92 @@
+# Whether the repository still says what the database does.
+#
+# The game is a static site: nothing a player does touches Neon, and the content
+# the site ships is written in four modules a test can read and a runner can build
+# with no credential. Those modules are generated from Neon (`npm run content:pull`),
+# which is the source: content is edited in its console, pulled into the modules,
+# and committed. The two are kept in step by hand, and a pair kept by hand is
+# exactly the kind that drifts without anybody doing anything wrong: a row changed
+# in the console and never pulled, a module corrected by hand and silently rewritten
+# by the next pull. Nothing in the build notices either, because the build reads the
+# repository - so this is the check that notices, run where the credential is not on
+# anybody's laptop. It compares the six tables row by row and rebuilds the four
+# modules, so a generated line edited by hand is named too.
+#
+# It is a workflow of its own rather than a step of `npm run verify`, and that is
+# on purpose. The verification runs on every pull request, on a machine holding no
+# database credential, and it has to keep meaning the same thing there as on the
+# machine it was written on (see the note at the top of scripts/neon-content.mjs).
+# This one needs a secret, so this is the one that carries it.
+#
+# The secret is `NEON_DATABASE_URL`, the connection string of the production
+# branch - pooled or unpooled, the script reads both. A run that does not have it
+# - a pull request from a fork, a fresh clone, a project nobody configured - says
+# so in an annotation instead of failing, because a missing credential is not a
+# database that drifted, and a check that failed on one would be switched off
+# before it ever caught the other. Once the secret is there, a database that no
+# longer matches the repository fails this run, and the failure names the table
+# and the rows that differ.
+#
+# It runs once a day as well as on a push, and that is the half a push cannot
+# cover: the drift this is written for is not only the change nobody pushed, it is
+# the change nobody made in this repository - a row edited in the Neon console, a
+# table restored from a snapshot, a branch switched by mistake. None of those touches
+# this repository, so none of them starts a run, and a check that only ran on a
+# push would stay quiet about them for exactly as long as nothing else was pushed.
+name: Content
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 06:41 UTC rather than on the hour: a check that runs with everybody else's
+    # is a check that waits for its turn, and this one sits behind the Uptime
+    # check rather than beside it.
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+
+# A run whose branch has moved on is not worth finishing.
+concurrency:
+  group: content-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    name: The database against the repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is verified on
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install the dependencies from the lockfile
+        run: npm ci
+
+      # The secret arrives as DATABASE_URL, which is the name the content script
+      # reads; it prefers the unpooled address when the string it is given is one.
+      # A run with no secret is told apart from a database that drifted rather
+      # than being reported as one: the annotation is the whole output, and the
+      # run stays green, since a guard that is switched off is not a guard that
+      # failed.
+      - name: Compare the database with the repository
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::warning title=Neon credential missing::content:check was skipped - this run holds no NEON_DATABASE_URL, so the database was not compared with the repository. Add the secret (Settings, Secrets and variables, Actions) to make this check mean anything."
+            exit 0
+          fi
+          # Checks the six mirrored tables, then rebuilds the four modules from the
+          # database and compares their generated lines: a repository that no longer
+          # says what the database would write fails here.
+          npm run content:check

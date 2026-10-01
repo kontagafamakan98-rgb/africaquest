@@ -356,7 +356,6 @@ export default {
       {
         question: "Quel objet, dit descendu du ciel, est tenu pour l'âme de la nation asante ?",
         options: ["Le Tabouret d'or", "L'épée d'État", "Le parasol royal", "Le plateau de laiton"],
-        correct: 0,
         fact: "Le Tabouret d'or représente la nation entière plutôt que le roi, et personne n'a le droit de s'y asseoir.",
         source: "Encyclopaedia Britannica, notice « Golden Stool »",
       },
