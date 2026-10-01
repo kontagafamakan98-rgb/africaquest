@@ -107,7 +107,13 @@ export const BUNDLE_BUDGETS = {
   "/assets/index.css": 120 * 1024,
   "/assets/react.js": 175 * 1024,
   "/assets/motion.js": 140 * 1024,
-  "/assets/router.js": 35 * 1024,
+  // react-router 7, taken for the two advisories left open in 6.x, and the
+  // router is what that upgrade costs: the data router is part of the core
+  // now, so the chunk the game routes with is nearly twice what it was. The
+  // line follows the decision to leave the vulnerable line rather than the
+  // library somebody would have picked on weight alone, and the room here is
+  // for the next patch in that same line.
+  "/assets/router.js": 45 * 1024,
   "/assets/query.js": 60 * 1024,
   "/assets/icons.js": 60 * 1024,
 
