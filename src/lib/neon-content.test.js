@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { contentRows, summaryMarkdown } from "../../scripts/neon-content.mjs";
+import { contentRows, pushSource, summaryMarkdown } from "../../scripts/neon-content.mjs";
 import { LEVELS } from "../components/game/gameData.js";
 import { LEVEL_PHOTOS } from "./level-images.js";
 
@@ -144,6 +144,26 @@ test("the four modules frame their content with the markers the pull replaces be
     pkg.scripts["content:pull"] ?? "",
     /neon-content\.mjs pull/,
     "the command that writes the modules from the database is not a script"
+  );
+});
+
+test("the write records who made it, and the run it came from", () => {
+  // The one row that dates a push is also the only place "who wrote this" is
+  // answered, and the answer is asked of a database that has drifted. A runner
+  // names the person who set the run off - the pusher, or the one who started a
+  // reconciliation by hand - and the event beside them keeps those two apart. A
+  // laptop has no such names, and says so rather than inventing one.
+  assert.equal(pushSource({}), "local", "a hand run is not from a runner and does not claim a runner's name");
+  assert.equal(pushSource({ GITHUB_ACTOR: "octocat" }), "github:octocat", "the person is not named");
+  assert.equal(
+    pushSource({ GITHUB_ACTOR: "octocat", GITHUB_SHA: "a1b2c3d4e5" }),
+    "github:octocat a1b2c3d",
+    "the commit is not kept beside the name, seven characters of it"
+  );
+  assert.equal(
+    pushSource({ GITHUB_ACTOR: "octocat", GITHUB_SHA: "a1b2c3d4e5", GITHUB_EVENT_NAME: "workflow_dispatch" }),
+    "github:octocat a1b2c3d workflow_dispatch",
+    "a reconciliation by hand does not read apart from a push"
   );
 });
 

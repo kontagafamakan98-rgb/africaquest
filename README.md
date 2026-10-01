@@ -124,8 +124,8 @@ which `neon link` writes and no commit carries.
 `content:push` also leaves a dated row behind - the counts and the moment, in a table of its
 own rather than in the mirror - and the backend's `/health` answers with it. So what the
 database holds, and since when, can be read from outside, without a console and without a
-credential of its own: the counts, the date of the last push and who made it, beside the
-liveness the same answer already carries.
+credential of its own: the counts, the date of the last push, who made it and whether a push or
+a run started by hand carried it out, beside the liveness the same answer already carries.
 
 That comparison needs a credential, so it is deliberately not a step of `npm run verify`: that
 gate runs on every pull request, on a machine that holds no database credential, and it has to

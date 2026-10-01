@@ -21,6 +21,13 @@
 # so in an annotation and fails, since a sync that wrote nothing is not a sync
 # that succeeded.
 #
+# The write records who started it. The runner names the person who set the run
+# off in GITHUB_ACTOR, and the script writes that name, the commit it ran on and
+# the event that dispatched it into the row that dates the push - so a database
+# that has drifted can say who resynchronised it and whether it was this workflow
+# or a push, which is the one question about a write nobody can answer afterwards
+# from anywhere else.
+#
 # It is deliberately a workflow of its own rather than a job of the Content
 # workflow. That one compares the two ends and fails when they differ; this one
 # writes one end from the other. A workflow that did both would be one whose

@@ -132,16 +132,25 @@ const SYNC = {
 /**
  * Who is writing, and from where, as the one row that records it says it.
  *
- * The names are the runner's own when this runs in the Content workflow, where
- * "who pushed this" is a question somebody will ask of a database that drifted -
- * and the answer is worth more there than on a laptop, where it is always the
- * person who typed the command.
+ * The names are the runner's own when this runs in a workflow. GITHUB_ACTOR is
+ * the person who set the run off: the one who pushed the commit, on a push, and
+ * the one who opened the Actions tab and started it by hand, on a dispatch, which
+ * is the question somebody asks of a database that has drifted and that nothing
+ * else in it can answer. The event is kept beside the name so the two are told
+ * apart: a reconciliation a person began does not read like a push that carried
+ * it out. On a laptop there is no runner, and the answer is always the person who
+ * typed the command, which is what "local" says.
+ *
+ * The environment is a parameter rather than read from the process, so a test can
+ * hand this a run without being one: what it writes is a fact about a run, and a
+ * fact worth keeping is worth being able to build.
  */
-function pushSource() {
-  const parts = [];
-  if (process.env.GITHUB_ACTOR) parts.push(`github:${process.env.GITHUB_ACTOR}`);
-  if (process.env.GITHUB_SHA) parts.push(process.env.GITHUB_SHA.slice(0, 7));
-  return parts.length > 0 ? parts.join(" ") : "local";
+export function pushSource(env = process.env) {
+  if (!env.GITHUB_ACTOR) return "local";
+  const parts = [`github:${env.GITHUB_ACTOR}`];
+  if (env.GITHUB_SHA) parts.push(env.GITHUB_SHA.slice(0, 7));
+  if (env.GITHUB_EVENT_NAME) parts.push(env.GITHUB_EVENT_NAME);
+  return parts.join(" ");
 }
 
 /** The name of the icon a level is drawn with, the way the icon set writes it. */
@@ -579,14 +588,17 @@ async function push(sql) {
 
   // The row that dates the write, last: the moment it carries is the moment the
   // content was whole rather than the moment its first table landed.
+  const source = pushSource();
   await sql.query(SYNC.upsert, [
     rows.levels.length,
     rows.questions.length,
     rows.study_notes.length,
     rows.photographs.length,
-    pushSource(),
+    source,
   ]);
-  console.log(`content: ${SYNC.name}: this write recorded, ${rows.levels.length} level(s) at its moment`);
+  // The source is printed, not only stored: the run's log then says who the
+  // database will name, which is what a person checks before they trust a write.
+  console.log(`content: ${SYNC.name}: this write recorded by ${source}, ${rows.levels.length} level(s) at its moment`);
 
   console.log("\ncontent: the database now holds the content of the repository. Run `npm run content:check` to read it back.");
 }
