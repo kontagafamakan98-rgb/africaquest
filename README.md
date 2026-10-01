@@ -297,14 +297,18 @@ npm run android:sync
 cd android && ./gradlew assembleDebug
 ```
 
-The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`. It is a debug build,
-installable on a device as it is; a release build is signed with a key of its own, which is a step
-nobody has taken yet.
+The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`. A debug build installs on
+a device as it is. A release build has to be signed, because a device refuses one that is not, and
+the key that signs it is four repository secrets rather than a file in the repository:
+[ANDROID_RELEASE.md](ANDROID_RELEASE.md) has the command that makes the key, and how the four are
+set.
 
-On a version tag the same APK is attached to the release that tag names, so the download link keeps
-working after the run's artifact has been cleaned up: an artifact is a copy that expires, and a
-release is the copy people are meant to keep. Hand-held runs still keep the artifact, and a
-release is only ever made from a tag.
+On a version tag the APK is signed, it carries the version the tag names, and it is attached to the
+release that tag names, so the download link keeps working after the run's artifact has been cleaned
+up: an artifact is a copy that expires, and a release is the copy people are meant to keep. The
+version is worked out from the tag by `npm run android:version -- v1.2.3`, which is the script the
+workflow runs, so the number an installed app reports and the tag cannot drift apart. Hand-held runs
+still build the debug APK and still keep the artifact, and a release is only ever made from a tag.
 
 ## Project layout
 

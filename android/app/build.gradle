@@ -1,5 +1,27 @@
 apply plugin: 'com.android.application'
 
+// The version an installed app carries, and the key a release is signed with.
+// Neither is decided here. The version is read from version.properties, which
+// scripts/android-version.mjs rewrites from the version tag that started the
+// build, and the key arrives in the environment from repository secrets. A
+// build by hand therefore carries the committed version and signs nothing,
+// which is what a debug build is.
+def versionFile = rootProject.file('version.properties')
+def version = new Properties()
+if (versionFile.exists()) {
+    versionFile.withInputStream { stream -> version.load(stream) }
+}
+
+// Named for what the build reads rather than for what they hold, and empty when
+// the environment has none: half a signing configuration is a build that fails
+// on a missing password, and one without its store file is no key at all.
+def fromEnvironment = { name -> System.getenv(name)?.trim() ?: '' }
+def keystore = fromEnvironment('ANDROID_KEYSTORE')
+def signing = keystore && file(keystore).exists() &&
+        fromEnvironment('ANDROID_KEYSTORE_PASSWORD') &&
+        fromEnvironment('ANDROID_KEY_ALIAS') &&
+        fromEnvironment('ANDROID_KEY_PASSWORD')
+
 android {
     namespace "com.africaquest.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +29,8 @@ android {
         applicationId "com.africaquest.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode (version.getProperty('versionCode') ?: '1') as Integer
+        versionName version.getProperty('versionName') ?: '1.0'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +38,28 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            // Left empty when the environment holds no key: an unsigned release
+            // build is then what `./gradlew assembleRelease` produces, and the
+            // workflow only builds one when it has a key to sign it with.
+            if (signing) {
+                storeFile file(keystore)
+                storePassword fromEnvironment('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias fromEnvironment('ANDROID_KEY_ALIAS')
+                keyPassword fromEnvironment('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // An unsigned release is a file a device refuses to install, so the
+            // build type is only told to sign when there is a key to sign with.
+            if (signing) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

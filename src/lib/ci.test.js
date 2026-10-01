@@ -361,9 +361,84 @@ test("the APK is attached to a release, so a version tag outlives the artifact t
   // attached under the name somebody is told to look for.
   assert.match(source, /gh release view[^\n]*>/, "an existing release is not asked about first");
   assert.match(source, /gh release create "\$TAG"/, "the release is not named after the tag that made it");
-  assert.match(source, /gh release upload "\$TAG" apk\/app-debug\.apk --clobber/, "the APK is not attached, or a second run fails on the copy already there");
+  assert.match(source, /gh release upload "\$TAG" "apk\/app-release\.apk#/, "the APK is not attached, or a second run fails on the copy already there");
+  assert.match(source, /--clobber/, "a second run on the same tag fails on the file already there");
   assert.match(source, /GH_TOKEN: \$\{\{ github\.token \}\}/, "the release is made without the token the run is given");
-  assert.match(source, /debug APK/, "the release does not say which build it carries");
+  assert.match(source, /name: africa-history-quest-apk-release/, "the release does not take the signed APK the build kept");
+  assert.match(source, /Signed, so a device installs it/, "the release does not say what was built");
+});
+
+test("a version tag decides the version, and the key it is signed with is one the repository never holds", () => {
+  // A device refuses an APK that is not signed, and the debug key a laptop build
+  // uses is a key every debug build anywhere shares: anybody who has it can sign
+  // an update for this application. So the release is signed with a key that
+  // lives in repository secrets, arrives as base64 because a secret is text, and
+  // is written into the runner's temporary directory rather than the checkout.
+  const file = path.join(ROOT, ".github", "workflows", "android.yml");
+  const source = readFileSync(file, "utf8");
+
+  // The version is worked out from the tag rather than typed beside it, and only
+  // a version tag writes one: a hand-held run carries the committed version.
+  assert.match(
+    source,
+    /if: startsWith\(github\.ref, 'refs\/tags\/v'\)\n {8}run: node scripts\/android-version\.mjs "\$GITHUB_REF_NAME"/,
+    "the version an installed app reports does not come from the tag"
+  );
+
+  assert.match(source, /KEYSTORE_BASE64: \$\{\{ secrets\.ANDROID_KEYSTORE_BASE64 \}\}/, "the run never reads the key");
+  assert.match(
+    source,
+    /base64 --decode > "\$RUNNER_TEMP\/release\.keystore"/,
+    "the key is not decoded into the runner's temporary directory"
+  );
+  assert.match(
+    source,
+    /ANDROID_KEYSTORE: \$\{\{ runner\.temp \}\}\/release\.keystore/,
+    "the build is not given the key that was decoded"
+  );
+
+  // Every line that names the key file names the runner's temporary directory in
+  // the same breath, so a copy of a signing key cannot end up in the checkout
+  // where the artifact of the run would carry it off.
+  const keyLines = source.split("\n").filter((line) => line.includes("release.keystore"));
+  assert.equal(
+    keyLines.length,
+    3,
+    "the key file is named somewhere other than where it is decoded, checked and read"
+  );
+  for (const line of keyLines) {
+    assert.match(line, /RUNNER_TEMP|runner\.temp/, `the key is written outside the runner's temporary directory: ${line.trim()}`);
+  }
+
+  // The three values that go with it, each read from the secret of its own name,
+  // which is what android/app/build.gradle expects to find in the environment.
+  assert.match(source, /ANDROID_KEYSTORE_PASSWORD: \$\{\{ secrets\.ANDROID_KEYSTORE_PASSWORD \}\}/, "the run never reads the store password");
+  assert.match(source, /ANDROID_KEY_ALIAS: \$\{\{ secrets\.ANDROID_KEY_ALIAS \}\}/, "the run never reads the key alias");
+  assert.match(source, /ANDROID_KEY_PASSWORD: \$\{\{ secrets\.ANDROID_KEY_PASSWORD \}\}/, "the run never reads the key password");
+
+  // Nothing prints what it read: a password echoed once is a password in the log
+  // of every run anyone can see, and the log outlives the key.
+  assert.doesNotMatch(source, /echo[^\n]*\$\{\{ secrets\./, "a signing secret is printed into the run's log");
+  assert.doesNotMatch(source, /echo[^\n]*\$\{?KEYSTORE_BASE64/, "the key itself is printed into the run's log");
+
+  // A tag with no key fails before the build rather than after it, since the
+  // release it would publish is one nobody can install, and the same condition
+  // is what tells a run with a key apart from one without.
+  const refused = source.indexOf("Refuse a version tag there is no signing key for");
+  const signed = source.indexOf("Build the signed release APK");
+  assert.ok(refused > 0, "a tag with no key is not refused at all");
+  assert.ok(signed > refused, "a tag with no key is refused only after the build it would waste");
+  assert.match(
+    source,
+    /if: startsWith\(github\.ref, 'refs\/tags\/v'\) && env\.KEYSTORE_BASE64 == ''/,
+    "a tag with no key is not told apart from one with one"
+  );
+
+  // And the key is never a file of this repository: the Android template ships
+  // those two rules commented out, which is a rule somebody has to remember.
+  const ignore = readFileSync(path.join(ROOT, "android", ".gitignore"), "utf8");
+  assert.match(ignore, /^\*\.keystore$/m, "a keystore put in android/ would be committed");
+  assert.match(ignore, /^\*\.jks$/m, "a .jks keystore put in android/ would be committed");
 });
 
 test("the workflow installs the image library the photograph check reads with", () => {
