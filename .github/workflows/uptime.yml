@@ -57,6 +57,19 @@ jobs:
       - name: Read the published site
         run: node scripts/check-site.mjs
 
+      # The other half of what is published, and the half that can fall behind
+      # without anybody noticing: the site goes out on every push to main, while
+      # the APK only goes out on a version tag. This reads the latest release and
+      # the commits after its tag, and fails when any of them touched a file the
+      # application is built from, so a divergence reaches the publisher as a
+      # failing run instead of as two downloads that quietly disagree. The token
+      # is the run's own, read only so the daily check is not counted against the
+      # anonymous rate limit; a repository that is private needs it for anything.
+      - name: Ask whether the downloadable Android app is older than the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/check-release.mjs
+
       # The backend is a Neon function with the database behind it, and it is
       # asleep most of the day on purpose: the compute scales to zero after a few
       # idle minutes, and a suspended database still answers the next request,

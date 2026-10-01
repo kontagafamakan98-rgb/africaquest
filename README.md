@@ -98,6 +98,9 @@ file that travels with the work.
   network.
 - `npm run check:references:record` writes down what a person read on a page no script can read,
   with their name and the day, so that a refusal stops being the last word about it.
+- `npm run check:release` reads the latest release and the commits the branch has made after its
+  tag, and fails when any of them touched a file the installed app is built from, on demand and
+  outside the verification, since it needs the network and a release that exists.
 - `npm run weights:record` records this build as the pass the next one is compared with.
 - `npm run stress` walks the newest and the heaviest progress record the application accepts
   and holds every path that has to read one to a budget, outside the verification.
@@ -541,6 +544,17 @@ the wrong content. The Uptime workflow runs it once a day, and a failing run is
 what tells the publisher, since GitHub notifies the owner of a scheduled workflow
 that failed. That is why no third party watches this site and no secret is kept
 for one.
+
+The same run asks the other half of that question, because the two published
+things do not move together: the site goes out on every push to `main`, and the
+APK only on a version tag, since it has to be signed and attached to a release.
+So the site can carry changes no installed application has, and nothing used to
+say so. `npm run check:release` reads the latest release and the commits after
+its tag, and fails when any of them touched a file the application is built from
+- which is decided in `src/lib/release-drift.js` and tested, so a paragraph of
+documentation is not a reason to cut a version and a screen is. A release that
+carries no APK under the name the workflow writes fails too, since that is the
+download the Android screen offers.
 
 Two screens hold long lists: the credits (seventy-eight rows of photographs) and the
 bibliography (every reference of the game with its questions). Both are reference
