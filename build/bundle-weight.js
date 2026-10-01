@@ -168,7 +168,12 @@ export const BUNDLE_BUDGETS = {
   "/assets/localize-level.js": 15 * 1024,
   "/assets/index.es.js": 200 * 1024,
   "/assets/jspdf.es.min.js": 450 * 1024,
-  "/assets/html2canvas.esm.js": 240 * 1024,
+  // The stand-in for html2canvas, which jsPDF's html() path imports and Rollup
+  // has to resolve. This app writes its PDFs by hand and never calls html(), so
+  // the import is pointed at a module of its own (src/lib/no-html2canvas.js)
+  // rather than shipped with the library: what was two hundred kilobytes for a
+  // path nobody takes is a file of a few hundred bytes.
+  "/assets/no-html2canvas.js": 4 * 1024,
   "/assets/purify.es.js": 35 * 1024,
   "/assets/report-pdf.js": 15 * 1024,
   "/assets/progress-report.js": 15 * 1024,

@@ -56,6 +56,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(projectRoot, './src'),
+      // jsPDF's html() path imports html2canvas the moment it runs, and Rollup
+      // has to resolve that import when it cuts the bundle, so the package was
+      // kept as a dependency nothing loaded. The app writes its PDFs by hand and
+      // never calls html(), so the import is pointed at a module of a few hundred
+      // bytes instead: a path nobody takes no longer costs a reader two hundred
+      // kilobytes, and the manifest no longer claims a library nothing imports.
+      html2canvas: path.resolve(projectRoot, './src/lib/no-html2canvas.js'),
     },
   },
   build: {

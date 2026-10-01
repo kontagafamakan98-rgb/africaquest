@@ -435,12 +435,11 @@ test("every package the app depends on is a package the app loads", () => {
   // takes no payments, a 3D engine for a screen that draws none, and a carousel
   // for a list that is a list.
   //
-  // One package is a real exception and is named here rather than hidden: jsPDF
-  // resolves `html2canvas` when it is bundled, because its own html() path
-  // imports it, so Rollup fails the build without it even though this app never
-  // draws HTML.
-  const ALONGSIDE = new Set(["html2canvas"]);
-
+  // jsPDF's html() path imports html2canvas, which the build has to resolve even
+  // though this app never calls it: that import is pointed at a module of this
+  // app's own in vite.config.js, so the package is no longer a dependency and the
+  // manifest holds only what the application really loads. Anything left here is
+  // a package that has to earn its line.
   const roots = ["src", "build", "scripts"];
   const extra = ["tailwind.config.js", "postcss.config.js", "vite.config.js", "eslint.config.js", "components.json"]
     .map((name) => path.join(ROOT, name))
@@ -465,7 +464,7 @@ test("every package the app depends on is a package the app loads", () => {
   const imported = new Set([...specifiers].map(packageOf).filter(Boolean));
 
   const { dependencies } = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
-  const unloaded = Object.keys(dependencies).filter((name) => !imported.has(name) && !ALONGSIDE.has(name));
+  const unloaded = Object.keys(dependencies).filter((name) => !imported.has(name));
   assert.deepEqual(unloaded, [], "runtime dependencies the application never loads");
 });
 

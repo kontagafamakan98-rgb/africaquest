@@ -14,12 +14,11 @@
   "/assets/StatsScreen.js": 17877,
   "/assets/TeacherPage.js": 18327,
   "/assets/gameData.js": 471565,
-  "/assets/html2canvas.esm.js": 202379,
   "/assets/icons.js": 40859,
   "/assets/index.css": 54281,
   "/assets/index.es.js": 159566,
   "/assets/index.js": 184350,
-  "/assets/jspdf.es.min.js": 390714,
+  "/assets/jspdf.es.min.js": 390713,
   "/assets/level-01.js": 24482,
   "/assets/level-02.js": 23864,
   "/assets/level-03.js": 26495,
@@ -48,6 +47,7 @@
   "/assets/level-26.js": 22515,
   "/assets/localize-level.js": 527,
   "/assets/motion.js": 114453,
+  "/assets/no-html2canvas.js": 119,
   "/assets/progress-report.js": 3289,
   "/assets/publishers.js": 1610,
   "/assets/purify.es.js": 29400,
@@ -356,5 +356,5 @@
   "/robots.txt": 96,
   "/sitemap.xml": 1129,
   "/social-preview.png": 13380,
-  "/sw.js": 14634
+  "/sw.js": 14633
 }
