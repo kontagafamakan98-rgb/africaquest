@@ -23,7 +23,9 @@ browser:
 - Progress (levels, XP, stars, badges, per-level scores, play time, streak) is stored in
   `localStorage` under the key `aq_progress_v1`.
 - Hints are computed on the device, so they work offline.
-- Language preference is stored in `localStorage` under the key `aq_lang`.
+- Language preference is stored in `localStorage` under the key `aq_lang`. A device that has
+  never chosen one opens on the language screen rather than the map, so the first thing drawn is
+  in the language the reader picked, and the choice is asked once rather than on every opening.
 
 The application makes no network request after loading its own assets: the level photographs
 are files of its own, downloaded once from their free licence source and shipped with the

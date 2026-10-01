@@ -763,6 +763,19 @@ export function getLang() {
   return localStorage.getItem("aq_lang") || "en";
 }
 
+/**
+ * Whether a language was ever chosen on this device.
+ *
+ * The key is the same one the language is kept under, and its absence is the
+ * whole answer: an application that has never stored one has never been told
+ * which language to speak, so the first screen is the place to ask. Once a
+ * choice is made the key is there, and every later visit goes straight to the
+ * game, which is what keeps a question asked once from being asked forever.
+ */
+export function hasChosenLang() {
+  return localStorage.getItem("aq_lang") !== null;
+}
+
 // Components subscribe to the language so switching it re-renders everything at
 // once, without a page reload and without any manual forceUpdate somewhere.
 const langListeners = new Set();

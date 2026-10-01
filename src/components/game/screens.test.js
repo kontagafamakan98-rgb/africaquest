@@ -55,6 +55,7 @@ export { default as KnowledgeMap } from "@/components/game/KnowledgeMap.jsx";
 export { default as Bibliography } from "@/pages/Bibliography.jsx";
 export { default as PhotoCredits } from "@/pages/PhotoCredits.jsx";
 export { default as Android } from "@/pages/Android.jsx";
+export { default as StartupLanguage } from "@/components/StartupLanguage.jsx";
 export { default as About } from "@/pages/About.jsx";
 export { default as PrivacyPolicy } from "@/pages/PrivacyPolicy.jsx";
 export { default as TermsOfService } from "@/pages/TermsOfService.jsx";
@@ -985,6 +986,7 @@ test("the other screens a reader opens are drawn and audited too", async () => {
     Bibliography,
     PhotoCredits,
     Android,
+    StartupLanguage,
     About,
     PrivacyPolicy,
     TermsOfService,
@@ -1024,6 +1026,7 @@ test("the other screens a reader opens are drawn and audited too", async () => {
     ["the bibliography", h(Bibliography)],
     ["the photo credits", h(PhotoCredits)],
     ["the Android app", h(Android)],
+    ["the language screen", h(StartupLanguage, { onChoose() {} })],
     ["the about page", h(About)],
     ["the privacy notice", h(PrivacyPolicy)],
     ["the terms of use", h(TermsOfService)],

@@ -1,7 +1,9 @@
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { pagesConfig } from './pages.config'
+import StartupLanguage from '@/components/StartupLanguage.jsx';
+import { hasChosenLang, setLang } from '@/components/i18n';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { basePath } from '@/lib/base-path.js';
@@ -18,6 +20,19 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 function App() {
+  // Whether this device has ever been told which language to speak. Absent
+  // answer means nobody has chosen yet, and the application draws the language
+  // screen instead of itself: the game is bilingual, so it has to be told which
+  // of the two to be before it can draw anything true. The choice is kept in the
+  // one key the rest of the application already reads, and every later visit
+  // finds it there and goes straight to the game.
+  const [languageChosen, setLanguageChosen] = useState(hasChosenLang);
+
+  const chooseLanguage = (code) => {
+    setLang(code);
+    setLanguageChosen(true);
+  };
+
   return (
     <QueryClientProvider client={queryClientInstance}>
       {/* The app can be served under a path, the way a project site on GitHub
@@ -28,6 +43,7 @@ function App() {
           lands here as a message with a reload and a trace, instead of a white
           page with nothing on it. */}
       <AppCrash>
+        {languageChosen ? (
         <Router basename={basePath()}>
           <Routes>
             <Route path="/" element={
@@ -54,6 +70,9 @@ function App() {
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
+        ) : (
+          <StartupLanguage onChoose={chooseLanguage} />
+        )}
       </AppCrash>
       {/* Says whether the device still has a network, and offers a reload when
           a new version of the app has taken over. */}
