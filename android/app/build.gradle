@@ -6,21 +6,33 @@ apply plugin: 'com.android.application'
 // build, and the key arrives in the environment from repository secrets. A
 // build by hand therefore carries the committed version and signs nothing,
 // which is what a debug build is.
-def versionFile = rootProject.file('version.properties')
-def version = new Properties()
-if (versionFile.exists()) {
-    versionFile.withInputStream { stream -> version.load(stream) }
+def versionProperties = new Properties()
+def versionPropertiesFile = rootProject.file('version.properties')
+if (versionPropertiesFile.exists()) {
+    versionPropertiesFile.withInputStream { stream -> versionProperties.load(stream) }
 }
+
+// Both are handed to the block below through the root project's extension rather
+// than through variables of this script. Inside a Gradle DSL closure a name the
+// plugin also knows is answered by the plugin: `version` is one of those, and it
+// is null on the Android configuration, so a plain `def version` above is not
+// the `version` that gets read. `rootProject.ext.*` is unambiguous and is how
+// this file already reads the SDK versions.
+rootProject.ext.appVersionCode = (versionProperties.getProperty('versionCode') ?: '1') as Integer
+rootProject.ext.appVersionName = versionProperties.getProperty('versionName') ?: '1.0'
 
 // Named for what the build reads rather than for what they hold, and empty when
 // the environment has none: half a signing configuration is a build that fails
 // on a missing password, and one without its store file is no key at all.
 def fromEnvironment = { name -> System.getenv(name)?.trim() ?: '' }
-def keystore = fromEnvironment('ANDROID_KEYSTORE')
-def signing = keystore && file(keystore).exists() &&
-        fromEnvironment('ANDROID_KEYSTORE_PASSWORD') &&
-        fromEnvironment('ANDROID_KEY_ALIAS') &&
-        fromEnvironment('ANDROID_KEY_PASSWORD')
+rootProject.ext.appKeystore = fromEnvironment('ANDROID_KEYSTORE')
+rootProject.ext.appKeystorePassword = fromEnvironment('ANDROID_KEYSTORE_PASSWORD')
+rootProject.ext.appKeyAlias = fromEnvironment('ANDROID_KEY_ALIAS')
+rootProject.ext.appKeyPassword = fromEnvironment('ANDROID_KEY_PASSWORD')
+rootProject.ext.appSigned = rootProject.ext.appKeystore && file(rootProject.ext.appKeystore).exists() &&
+        rootProject.ext.appKeystorePassword &&
+        rootProject.ext.appKeyAlias &&
+        rootProject.ext.appKeyPassword
 
 android {
     namespace "com.africaquest.app"
@@ -29,8 +41,8 @@ android {
         applicationId "com.africaquest.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (version.getProperty('versionCode') ?: '1') as Integer
-        versionName version.getProperty('versionName') ?: '1.0'
+        versionCode rootProject.ext.appVersionCode
+        versionName rootProject.ext.appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -43,11 +55,11 @@ android {
             // Left empty when the environment holds no key: an unsigned release
             // build is then what `./gradlew assembleRelease` produces, and the
             // workflow only builds one when it has a key to sign it with.
-            if (signing) {
-                storeFile file(keystore)
-                storePassword fromEnvironment('ANDROID_KEYSTORE_PASSWORD')
-                keyAlias fromEnvironment('ANDROID_KEY_ALIAS')
-                keyPassword fromEnvironment('ANDROID_KEY_PASSWORD')
+            if (rootProject.ext.appSigned) {
+                storeFile file(rootProject.ext.appKeystore)
+                storePassword rootProject.ext.appKeystorePassword
+                keyAlias rootProject.ext.appKeyAlias
+                keyPassword rootProject.ext.appKeyPassword
             }
         }
     }
@@ -57,7 +69,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             // An unsigned release is a file a device refuses to install, so the
             // build type is only told to sign when there is a key to sign with.
-            if (signing) {
+            if (rootProject.ext.appSigned) {
                 signingConfig signingConfigs.release
             }
         }

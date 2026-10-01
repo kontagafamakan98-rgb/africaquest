@@ -120,16 +120,35 @@ test("the Android build reads the version and the key from where the workflow pu
   const gradle = readFileSync(APP_GRADLE, "utf8");
 
   assert.match(gradle, /rootProject\.file\('version\.properties'\)/, "the build does not read the version file");
-  assert.match(gradle, /versionFile\.withInputStream/, "the version file is not loaded as properties");
-  assert.match(gradle, /versionCode \(version\.getProperty\('versionCode'\) \?: '1'\) as Integer/, "the build does not take its integer from the file");
-  assert.match(gradle, /versionName version\.getProperty\('versionName'\) \?: '1\.0'/, "the build does not take its name from the file");
+  assert.match(gradle, /versionPropertiesFile\.withInputStream/, "the version file is not loaded as properties");
+
+  // Through the root project's extension, not through variables of the script.
+  // A Gradle DSL closure answers a name the plugin also knows with the plugin's
+  // own, and `version` is one of those: a plain `def version` is not the version
+  // the Android block reads, which is a build that fails on a null instead of a
+  // build that signs nothing.
+  assert.match(
+    gradle,
+    /rootProject\.ext\.appVersionCode = \(versionProperties\.getProperty\('versionCode'\) \?: '1'\) as Integer/,
+    "the build does not take its integer from the file"
+  );
+  assert.match(gradle, /versionCode rootProject\.ext\.appVersionCode/, "the Android block does not read that integer");
+  assert.match(gradle, /versionName rootProject\.ext\.appVersionName/, "the Android block does not read that name");
 
   // The four names the workflow hands over, and the file name the version file
   // and the script agree on without either of them importing the other.
   for (const name of ["ANDROID_KEYSTORE", "ANDROID_KEYSTORE_PASSWORD", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD"]) {
     assert.match(gradle, new RegExp(`fromEnvironment\\('${name}'\\)`), `the build never reads ${name}`);
   }
-  assert.match(gradle, /storeFile file\(keystore\)/, "the key file is not the one the environment names");
-  assert.match(gradle, /if \(signing\) \{\n\s+signingConfig signingConfigs\.release/, "the release build type is not signed when there is a key");
-  assert.match(gradle, /file\(keystore\)\.exists\(\)/, "a key that is not there is signed with anyway");
+  assert.match(gradle, /storeFile file\(rootProject\.ext\.appKeystore\)/, "the key file is not the one the environment names");
+  assert.match(
+    gradle,
+    /if \(rootProject\.ext\.appSigned\) \{\n\s+signingConfig signingConfigs\.release/,
+    "the release build type is not signed when there is a key"
+  );
+  assert.match(
+    gradle,
+    /file\(rootProject\.ext\.appKeystore\)\.exists\(\)/,
+    "a key that is not there is signed with anyway"
+  );
 });
