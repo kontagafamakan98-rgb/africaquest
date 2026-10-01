@@ -15,6 +15,15 @@
 # It is deliberately not part of the Verify workflow: the gate decides whether a
 # change belongs on main, and this says whether what was published is reachable,
 # which depends on a host rather than on the code.
+#
+# A second step asks the same question of the backend, which is a Neon function
+# with the branch's database behind it and is not part of the game at all. That
+# one is asleep most of the day on purpose - a Neon compute scales to zero after
+# a few idle minutes - so the check is written to tell a service that is really
+# gone from one that is merely suspended, and to say which it found rather than
+# to fail on the sleep (see scripts/check-backend.mjs). Its address is a public
+# invocation URL, carried as a repository variable and not a secret: a
+# repository that has not set it gets a line saying the check was skipped.
 name: Uptime
 
 on:
@@ -47,3 +56,19 @@ jobs:
       # nothing outside the repository.
       - name: Read the published site
         run: node scripts/check-site.mjs
+
+      # The backend is a Neon function with the database behind it, and it is
+      # asleep most of the day on purpose: the compute scales to zero after a few
+      # idle minutes, and a suspended database still answers the next request,
+      # after waking. So this asks whether the function and the base are really
+      # gone, and reports a slow answer after a sleep as a sleep rather than as
+      # an outage (see scripts/check-backend.mjs). The address is the function's
+      # invocation URL, kept in a repository variable rather than in this file so
+      # that a project whose function has moved runs the check and says it is
+      # unconfigured instead of failing on somebody else's name. It needs no
+      # install for the same reason the site check does not: nothing outside the
+      # repository is imported.
+      - name: Ask the backend whether it is awake, rather than whether it is up
+        env:
+          NEON_FUNCTION_API_BASE_URL: ${{ vars.NEON_FUNCTION_API_BASE_URL }}
+        run: node scripts/check-backend.mjs
