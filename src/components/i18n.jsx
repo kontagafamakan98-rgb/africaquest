@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 export const translations = {
   en: {
     appTitle: "Africa History Quest",
-    appSubtitle: "Twenty levels of African history, from Ancient Egypt to today.",
+    appSubtitle: "Twenty-six levels of African history, from Ancient Egypt to today.",
     loadingScreen: "Loading the screen",
     stars: "Stars",
     levels: "Levels",
@@ -371,7 +371,7 @@ export const translations = {
   },
   fr: {
     appTitle: "Quête Historique Africaine",
-    appSubtitle: "Vingt niveaux d'histoire africaine, de l'Égypte ancienne à aujourd'hui.",
+    appSubtitle: "Vingt-six niveaux d'histoire africaine, de l'Égypte ancienne à aujourd'hui.",
     loadingScreen: "Chargement de l'écran",
     stars: "Étoiles",
     levels: "Niveaux",

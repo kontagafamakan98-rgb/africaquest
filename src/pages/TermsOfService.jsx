@@ -29,7 +29,7 @@ const CONTENT = {
       {
         heading: "2. Description of the service",
         paragraphs: [
-          "Africa History Quest is an educational quiz game about African history. It offers twenty thematic levels, three difficulty modes and a progress system with stars, XP and badges. The content is provided for educational purposes.",
+          "Africa History Quest is an educational quiz game about African history. It offers twenty-six thematic levels, three difficulty modes and a progress system with stars, XP and badges. The content is provided for educational purposes.",
         ],
       },
       {
@@ -162,7 +162,7 @@ const CONTENT = {
       {
         heading: "2. Description du service",
         paragraphs: [
-          "Quête Historique Africaine est un jeu de quiz éducatif sur l'histoire de l'Afrique. Il propose vingt niveaux thématiques, trois modes de difficulté et un système de progression avec étoiles, XP et badges. Les contenus sont fournis à des fins pédagogiques.",
+          "Quête Historique Africaine est un jeu de quiz éducatif sur l'histoire de l'Afrique. Il propose vingt-six niveaux thématiques, trois modes de difficulté et un système de progression avec étoiles, XP et badges. Les contenus sont fournis à des fins pédagogiques.",
         ],
       },
       {
