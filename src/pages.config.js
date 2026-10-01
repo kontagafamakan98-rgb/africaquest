@@ -63,6 +63,10 @@ const QuizPage = lazy(() => import('./pages/QuizPage'));
 const TeacherPage = lazy(() => import('./pages/TeacherPage'));
 const PhotoCredits = lazy(() => import('./pages/PhotoCredits'));
 const Bibliography = lazy(() => import('./pages/Bibliography'));
+// The Android screen is read once, by a reader who came to install the game: it
+// asks GitHub for the newest release when it is opened, so it is opened on
+// purpose rather than carried by the map everyone loads.
+const Android = lazy(() => import('./pages/Android'));
 
 
 export const PAGES = {
@@ -73,6 +77,7 @@ export const PAGES = {
     "TermsOfService": TermsOfService,
     "PhotoCredits": PhotoCredits,
     "Bibliography": Bibliography,
+    "Android": Android,
     "TeacherPage": TeacherPage,
 }
 

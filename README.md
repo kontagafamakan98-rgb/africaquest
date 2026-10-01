@@ -27,7 +27,9 @@ browser:
 
 The application makes no network request after loading its own assets: the level photographs
 are files of its own, downloaded once from their free licence source and shipped with the
-rest of the game.
+rest of the game. The one exception is the Android screen ("The Android application", below),
+which asks GitHub for the newest release when a reader opens it and falls back to the release
+page when it cannot; nothing is asked on the way in.
 
 Nothing else is kept. The failure log ("When something breaks", below) is the one other name,
 and it is the tab's own: session storage under `aq_failures_v1`, holding the last dozen
@@ -310,6 +312,14 @@ version is worked out from the tag by `npm run android:version -- v1.2.3`, which
 workflow runs, so the number an installed app reports and the tag cannot drift apart. Hand-held runs
 still build the debug APK and still keep the artifact, and a release is only ever made from a tag.
 
+The site offers the same download, at `/Android`, opened from the settings sheet and from the About
+page. The button goes to `/releases/latest`, so it answers even when nothing else does, and the
+version above it is read from the GitHub API when that screen is opened: the one request the
+application makes of its own, kept to that screen and named in `src/lib/android-release.js`. The
+page also carries the steps a phone needs to install an APK, since such a file is installed by
+allowing one source to install applications rather than from a store, and by removing an earlier
+copy signed with another key before this one is installed.
+
 ## Project layout
 
 ```
@@ -533,9 +543,10 @@ screens, opened to settle one question, so each draws a few groups and offers th
 rest, while the counts in the header stay the whole thing: what is not drawn yet
 never reads as absent. And what nothing here needs is a rate limit, an API budget
 or a cap on spending: the application makes no request at all after it has loaded
-its own files - which the house rules check - and the only things that talk to
-another machine are the on-demand checks and this one, four at a time, a quarter of
-a second apart, with a timeout on every request.
+its own files, with one named exception - the Android screen asking GitHub for the
+newest release when a reader opens it - and the only things that talk to another
+machine are the on-demand checks and this one, four at a time, a quarter of a
+second apart, with a timeout on every request.
 
 ## What a hundred thousand readers cost
 

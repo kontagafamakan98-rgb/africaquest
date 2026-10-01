@@ -205,6 +205,11 @@ export const BUNDLE_BUDGETS = {
   "/assets/QuizPage.js": 20 * 1024,
   "/assets/PhotoCredits.js": 20 * 1024,
   "/assets/Bibliography.js": 20 * 1024,
+  // The Android screen: the wording of the install steps in both languages, and
+  // one request to GitHub made when the screen is opened. It carries no library
+  // of its own, and the room left is for the instructions a second store or a
+  // second platform would add.
+  "/assets/Android.js": 15 * 1024,
   "/assets/LearnScreen.js": 15 * 1024,
   "/assets/ReviewSession.js": 10 * 1024,
   "/assets/SourceReference.js": 10 * 1024,

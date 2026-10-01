@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, Info, Smartphone } from "lucide-react";
 import { useLang } from "../components/i18n";
 import { PUBLISHER } from "../lib/publisher";
 
@@ -37,6 +37,10 @@ const CONTENT = {
     registrationLabel: "Registration",
     formLabel: "Legal form",
     addressLabel: "Registered office",
+    androidHeading: "The Android app",
+    androidBody:
+      "The same game is also published as an Android application, installed from a signed release rather than opened in a browser.",
+    androidLink: "Download the Android app",
   },
   fr: {
     title: "À propos",
@@ -59,6 +63,10 @@ const CONTENT = {
     registrationLabel: "Immatriculation",
     formLabel: "Forme juridique",
     addressLabel: "Siège",
+    androidHeading: "L'application Android",
+    androidBody:
+      "Le même jeu est aussi publié comme application Android, installée depuis une version signée plutôt qu'ouverte dans un navigateur.",
+    androidLink: "Télécharger l'application Android",
   },
 };
 
@@ -143,6 +151,18 @@ export default function About() {
         <section>
           <h2 className="text-base font-extrabold text-slate-800 mb-1">{t.supportHeading}</h2>
           <p className="text-sm text-slate-600 leading-relaxed">{t.supportBody}</p>
+        </section>
+
+        <section>
+          <h2 className="text-base font-extrabold text-slate-800 mb-1">{t.androidHeading}</h2>
+          <p className="text-sm text-slate-600 leading-relaxed">{t.androidBody}</p>
+          <Link
+            to="/Android"
+            className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-4 py-3 text-sm font-bold text-[#1C150C] transition-colors hover:bg-amber-400 active:scale-[0.99]"
+          >
+            <Smartphone className="w-4 h-4" aria-hidden="true" />
+            {t.androidLink}
+          </Link>
         </section>
       </main>
     </div>

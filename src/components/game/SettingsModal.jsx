@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { X, Trash2, Info, AlertTriangle, Globe, ShieldCheck, FileText, GraduationCap, ChevronRight, Download, Upload, Camera, BookOpen, Bell, BellOff, BellRing } from "lucide-react";
+import { X, Trash2, Info, AlertTriangle, Globe, ShieldCheck, FileText, GraduationCap, ChevronRight, Download, Upload, Camera, BookOpen, Bell, BellOff, BellRing, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { progressStore } from "@/api/progress-store";
@@ -178,6 +178,30 @@ export default function SettingsModal({ open, onClose, reminder }) {
                   <p className="font-bold text-sm text-slate-800">{t.about}</p>
                   <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{t.aboutDesc}</p>
                 </div>
+              </div>
+
+              {/* The Android app: the same game, installed rather than opened
+                  in a tab. The screen it opens says which version is the newest
+                  and how a phone installs it. */}
+              <div className="mb-3">
+                <div className="flex items-center gap-2 px-1 mb-2">
+                  <Smartphone className="w-4 h-4 text-amber-600" aria-hidden="true" />
+                  <p className="text-sm font-semibold text-slate-700">{t.androidApp}</p>
+                </div>
+                <Link
+                  to="/Android"
+                  onClick={onClose}
+                  className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:border-amber-400 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <Smartphone className="w-4 h-4 text-amber-700" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-slate-800 text-sm">{t.androidApp}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{t.androidAppDesc}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
+                </Link>
               </div>
 
               {/* Language picker */}
