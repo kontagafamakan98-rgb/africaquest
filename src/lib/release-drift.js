@@ -256,6 +256,148 @@ export function driftOf({ version = "", tag = "", aheadBy = 0, files = [], appFi
 }
 
 /**
+ * What the check concluded, as the JSON it leaves for the announcing step.
+ *
+ * @typedef {object} DriftReport
+ * @property {string} [repo]     The repository it asked about.
+ * @property {string} [branch]   The branch it compared the release with.
+ * @property {string} [outcome]  What it found: `in-sync`, `ahead-quiet`, `behind`, `no-download`, `no-release`, `unreadable` or `bad-tag`.
+ * @property {string} [release]  The tag of the release it read.
+ * @property {string} [version]  The version that tag names.
+ * @property {string} [asset]    The APK the release should carry.
+ * @property {number} [aheadBy]  How many commits the branch carries after the tag.
+ * @property {string[]} [files]  The files that ship and the release does not have.
+ * @property {string[]} [listed] The assets the release carries, when the APK is missing.
+ * @property {string} [detail]   Why a check that could not answer could not.
+ */
+
+/**
+ * The title of the issue the daily check opens, and how it is found again.
+ *
+ * A repository gives an issue no field of its own to mark it with, so the title
+ * is the mark, written once here and looked for exactly. An issue whose title is
+ * not this one is never touched, whoever opened it and for whatever reason.
+ */
+export const DRIFT_ISSUE_TITLE = "The downloadable Android app is older than the site";
+
+/** How many files of a long list are written into the issue before it is cut. */
+const FILES_IN_THE_ISSUE = 50;
+
+/**
+ * What an open issue should say, written for the person who has to act on it.
+ *
+ * It names the release, the branch, and the files the installed application is
+ * built from that the release does not have, and then says what to do about
+ * them. It is a body rather than a log because it is read once, by somebody who
+ * wants to know whether the thing is really behind and by how much: the list is
+ * cut after a point, since a wall of paths is an issue nobody finishes, and the
+ * count stays whole even then.
+ *
+ * @param {DriftReport} [report] What the check concluded.
+ * @returns {string} The body of the issue, or of the comment that keeps it level.
+ */
+export function issueBody(report = {}) {
+  const release = String(report.release ?? "").trim() || "the last release";
+  const branch = String(report.branch ?? "").trim() || "main";
+  const files = Array.isArray(report.files) ? report.files : [];
+
+  const lines = [
+    `The site is published on every push to \`${branch}\`, and the Android app only when a`,
+    "version tag is pushed, because it has to be signed and attached to a release. So the site",
+    "can carry changes the downloadable app does not have.",
+    "",
+  ];
+
+  if (report.outcome === "no-download") {
+    const asset = String(report.asset ?? "").trim() || "the APK";
+    lines.push(
+      `The release \`${release}\` does not carry \`${asset}\`, which is the file the Android`,
+      "screen offers as the download, so there is nothing to install from it at all.",
+      "",
+      "Publish the release again with its APK attached, and the next daily run closes this issue."
+    );
+    return `${lines.join("\n")}\n`;
+  }
+
+  const shown = files.slice(0, FILES_IN_THE_ISSUE).map((file) => `- \`${file}\``);
+  if (files.length > FILES_IN_THE_ISSUE) {
+    shown.push(`- and ${files.length - FILES_IN_THE_ISSUE} more`);
+  }
+
+  lines.push(
+    `The daily check found ${files.length} file(s) the installed application is built from that`,
+    `\`${branch}\` carries and the release \`${release}\` does not:`,
+    "",
+    ...shown,
+    "",
+    "Whoever installs the Android app from the site gets the older game. Push a version tag to",
+    "publish what the site already has, and the next daily run closes this issue by itself."
+  );
+  return `${lines.join("\n")}\n`;
+}
+
+/**
+ * The line left on the issue when the daily check no longer sees a difference.
+ *
+ * The two quiet verdicts are told apart, because a reader of the closed issue
+ * should be able to tell a version that caught up from a branch that never
+ * needed one.
+ *
+ * @param {DriftReport} [report] What the check concluded.
+ * @returns {string} The line left on the issue as it is closed.
+ */
+export function closeComment(report = {}) {
+  const release = String(report.release ?? "").trim();
+  const named = release ? `\`${release}\`` : "The release";
+  const said =
+    report.outcome === "in-sync"
+      ? `${named} is the commit the site is published from.`
+      : `${named} is behind the branch, but only over files the app is not built from.`;
+
+  return (
+    `${said}\n\n` +
+    "The daily check no longer sees anything the downloadable app is missing, so this\n" +
+    "closes by itself.\n"
+  );
+}
+
+/**
+ * What to do with the issue, from the report and the issues already open.
+ *
+ * The two alarming verdicts open the issue, or keep the one already open in step
+ * with the check. The two quiet ones close it, since there is nothing left to
+ * act on. Everything else leaves it alone: a report that could not be read, or a
+ * repository with no release at all, is not an answer, and a question that was
+ * never answered is no reason to take down the alarm that is already up.
+ *
+ * @param {{ report?: DriftReport, issues?: Array<{ number?: number, title?: string }> }} [options]
+ *   What the check concluded, and the issues already open.
+ * @returns {{ action: string, number: number, title: string, body: string }} What to do about it.
+ */
+export function issueDecision({ report = {}, issues = [] } = {}) {
+  const open = (Array.isArray(issues) ? issues : []).find(
+    (issue) => issue !== null && typeof issue === "object" && issue.title === DRIFT_ISSUE_TITLE
+  );
+  const number = open ? Number(open.number) : 0;
+  const outcome = String(report.outcome ?? "");
+
+  if (outcome === "behind" || outcome === "no-download") {
+    return {
+      action: open ? "update" : "open",
+      number,
+      title: DRIFT_ISSUE_TITLE,
+      body: issueBody(report),
+    };
+  }
+
+  if ((outcome === "in-sync" || outcome === "ahead-quiet") && open) {
+    return { action: "close", number, title: DRIFT_ISSUE_TITLE, body: closeComment(report) };
+  }
+
+  return { action: "nothing", number: 0, title: DRIFT_ISSUE_TITLE, body: "" };
+}
+
+/**
  * The name of the APK a release of this version carries.
  *
  * The workflow renames the file Gradle writes before uploading it, and the

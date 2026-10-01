@@ -556,6 +556,13 @@ documentation is not a reason to cut a version and a screen is. A release that
 carries no APK under the name the workflow writes fails too, since that is the
 download the Android screen offers.
 
+The failure is left as an issue as well, because a run is easy to lose among
+hundreds and says nothing at all once it is green again. The same step opens an
+issue naming the files the release is missing, keeps its body level with what the
+check now finds while the drift lasts, and closes it by itself once a version
+carries them. It is the only thing in the daily run that writes to the
+repository, which is why that workflow asks for `issues: write` and nothing more.
+
 Two screens hold long lists: the credits (seventy-eight rows of photographs) and the
 bibliography (every reference of the game with its questions). Both are reference
 screens, opened to settle one question, so each draws a few groups and offers the

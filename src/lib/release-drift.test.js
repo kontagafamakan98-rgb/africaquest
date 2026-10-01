@@ -4,11 +4,15 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import {
   APP_ENTRY,
+  DRIFT_ISSUE_TITLE,
   appModules,
   apkNameFor,
   candidatePaths,
+  closeComment,
   driftOf,
   importedFrom,
+  issueBody,
+  issueDecision,
   resolvedPath,
   shippingChanges,
   shipsInTheApp,
@@ -308,6 +312,101 @@ test("the name of the file a release carries is the one the workflow writes", ()
   assert.throws(() => versionFromTag("1.0.0-rc.1"), /not a version tag/);
 });
 
+test("the issue says what is missing and what to do about it", () => {
+  const behind = issueBody({
+    outcome: "behind",
+    branch: "main",
+    release: "v1.0.1",
+    files: ["src/pages/Home.jsx", "android/app/build.gradle"],
+  });
+  assert.match(behind, /`v1\.0\.1`/);
+  assert.match(behind, /`main`/);
+  assert.match(behind, /2 file\(s\)/);
+  assert.match(behind, /- `src\/pages\/Home\.jsx`/);
+  assert.match(behind, /- `android\/app\/build\.gradle`/);
+  assert.match(behind, /version tag/, "the body says what to do about it");
+
+  // A long list is cut so the issue stays readable, and the count stays whole
+  // rather than being cut with it.
+  const many = Array.from({ length: 60 }, (_, at) => `src/file-${at}.js`);
+  const cut = issueBody({ outcome: "behind", release: "v1.0.0", files: many });
+  assert.match(cut, /60 file\(s\)/);
+  assert.match(cut, /- and 10 more/);
+  assert.ok(!cut.includes("src/file-59.js"), "the list stops before the end of it");
+
+  // And the other alarm, which has no files to name and is about the download
+  // being absent rather than merely old.
+  const missing = issueBody({
+    outcome: "no-download",
+    release: "v1.0.2",
+    asset: "africa-history-quest-1.0.2.apk",
+  });
+  assert.match(missing, /does not carry `africa-history-quest-1\.0\.2\.apk`/);
+  assert.ok(!missing.includes("- `src/"), "a missing asset is not a list of files");
+});
+
+test("the closing line says which of the two quiet verdicts it was", () => {
+  // The version caught up, or the branch moved on over things the app is not
+  // built from: a reader of the closed issue should be able to tell them apart.
+  assert.match(
+    closeComment({ outcome: "in-sync", release: "v1.0.2" }),
+    /`v1\.0\.2` is the commit the site is published from/
+  );
+  assert.match(
+    closeComment({ outcome: "ahead-quiet", release: "v1.0.2" }),
+    /`v1\.0\.2` is behind the branch, but only over files the app is not built from/
+  );
+  assert.match(closeComment({}), /The release/);
+});
+
+test("the issue is opened, kept, and closed by the state of the release", () => {
+  const openIssue = { number: 7, title: DRIFT_ISSUE_TITLE };
+  const otherIssue = { number: 3, title: "Something else entirely" };
+  const behind = { outcome: "behind", release: "v1.0.1", files: ["src/pages/Home.jsx"] };
+
+  // Behind, and nothing open: it is opened, with the body that names the files.
+  const opened = issueDecision({ report: behind, issues: [otherIssue] });
+  assert.equal(opened.action, "open");
+  assert.equal(opened.number, 0);
+  assert.equal(opened.title, DRIFT_ISSUE_TITLE);
+  assert.match(opened.body, /src\/pages\/Home\.jsx/);
+
+  // Behind, and one already open: the same issue is brought level, rather than a
+  // second one being opened every day the drift lasts.
+  const kept = issueDecision({ report: behind, issues: [otherIssue, openIssue] });
+  assert.equal(kept.action, "update");
+  assert.equal(kept.number, 7);
+
+  // A release with no APK attached is the same alarm, and is closed the same way.
+  assert.equal(issueDecision({ report: { outcome: "no-download" }, issues: [] }).action, "open");
+
+  // In step: an open issue is closed, and nothing is opened where there is none.
+  for (const outcome of ["in-sync", "ahead-quiet"]) {
+    const settled = issueDecision({ report: { outcome, release: "v1.0.2" }, issues: [openIssue] });
+    assert.equal(settled.action, "close", `${outcome} closes the issue`);
+    assert.equal(settled.number, 7);
+    assert.match(settled.body, /`v1\.0\.2`/);
+    assert.equal(issueDecision({ report: { outcome }, issues: [] }).action, "nothing");
+  }
+
+  // And when the check could not answer, the alarm that is up stays up: a
+  // repository with no release, a tag that is not a version, or a request that
+  // never arrived is not the news that the drift is over.
+  for (const outcome of ["no-release", "unreadable", "bad-tag", "", undefined]) {
+    const quiet = issueDecision({ report: { outcome }, issues: [openIssue] });
+    assert.equal(quiet.action, "nothing", `${outcome} does not close the issue`);
+    assert.equal(quiet.number, 0);
+    assert.equal(quiet.body, "");
+  }
+
+  // The title is the whole mark, so an issue that merely contains it is somebody
+  // else's and is never touched.
+  const nearly = { number: 9, title: `${DRIFT_ISSUE_TITLE} (again)` };
+  assert.equal(issueDecision({ report: { outcome: "in-sync" }, issues: [nearly] }).action, "nothing");
+  assert.equal(issueDecision().action, "nothing");
+  assert.equal(issueDecision({ report: behind, issues: [null, {}] }).action, "open");
+});
+
 test("the check is asked for by the daily run, and stays out of the verification", () => {
   // It is a check of what is published, and what is published is different every
   // day: it needs a network and a release that exists, so it cannot be a gate on
@@ -335,6 +434,18 @@ test("the check is asked for by the daily run, and stays out of the verification
   const script = read("scripts/check-release.mjs");
   assert.match(script, /appModules\(\{ sources:/, "the check no longer walks the application's imports");
   assert.match(script, /appFiles,/, "the check no longer hands the reachable set to the verdict");
+
+  // And the verdict is left behind, where a second step turns it into something
+  // that can be read a week later, and takes it down again once it is stale.
+  assert.match(uptime, /--report drift-report\.json/, "the check no longer leaves its verdict for the issue");
+  assert.match(uptime, /node scripts\/announce-drift\.mjs/, "the daily run no longer leaves an issue");
+  assert.match(uptime, /if: always\(\)/, "the issue would be skipped exactly when it matters");
+  assert.match(uptime, /issues: write/, "the run is not allowed to open the issue it is asked to open");
+  assert.match(
+    read("scripts/announce-drift.mjs"),
+    /issueDecision\(/,
+    "the announcing step no longer decides from the report and the issues open"
+  );
 
   // It is registered where a person can run it by hand, with the same shape as
   // the other on-demand checks.

@@ -5,6 +5,7 @@
  *   node scripts/check-release.mjs owner/name               # another one, to try it
  *   node scripts/check-release.mjs owner/name --branch dev  # another branch than main
  *   node scripts/check-release.mjs owner/name --release v1.0.0  # another release than the latest
+ *   node scripts/check-release.mjs --report drift.json      # leave the verdict for another step
  *
  * The site is published on every push to `main`; the APK only when a version tag
  * is pushed, because it is signed and attached to a release. So the site can be
@@ -26,11 +27,18 @@
  * beside the site check, so a divergence reaches the publisher as a failing run
  * rather than as a silent gap between two downloads.
  *
+ * `--report` writes what the check concluded as JSON, for a step that acts on it
+ * rather than only failing: the Uptime workflow hands it to
+ * scripts/announce-drift.mjs, which opens an issue naming the files the release
+ * is missing and closes it again once a version carries them. The verdict is
+ * written before the exit code is decided, so a run that ends red still leaves
+ * the list behind for the issue to name.
+ *
  * Exit code 0 when the release covers everything that ships, 1 when it does not
  * or when the release itself is not shaped the way the workflow publishes it,
  * and 2 when there was nothing to compare at all.
  */
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ANDROID_REPO } from "../src/lib/android-release.js";
@@ -39,6 +47,9 @@ import { versionFromTag } from "./android-version.mjs";
 
 const ARGUMENTS = process.argv.slice(2);
 
+/** The options that carry a value, so that the value is not mistaken for the repository. */
+const VALUED_OPTIONS = new Set(["--branch", "--release", "--report"]);
+
 /** The value of `--name value`, or the fallback when it was not given. */
 function option(name, fallback) {
   const at = ARGUMENTS.indexOf(`--${name}`);
@@ -46,12 +57,30 @@ function option(name, fallback) {
   return value.startsWith("--") || value === "" ? fallback : value;
 }
 
-const REPO = ARGUMENTS.find((argument) => !argument.startsWith("--")) || ANDROID_REPO;
+/**
+ * The first argument that is not an option and not the value of one.
+ *
+ * The repository is the only thing here written without a `--name`, so it must
+ * not be read out of the value of the option in front of it: `--report drift.json`
+ * names a file, not a repository to check.
+ */
+function positional() {
+  for (let at = 0; at < ARGUMENTS.length; at += 1) {
+    if (!ARGUMENTS[at].startsWith("--")) return ARGUMENTS[at];
+    if (VALUED_OPTIONS.has(ARGUMENTS[at])) at += 1;
+  }
+  return "";
+}
+
+const REPO = positional() || ANDROID_REPO;
 const BRANCH = option("branch", "main");
 // Which release to compare with, when it is not the latest one: checking a past
 // release is how the drift this script exists for is looked at again, after it
 // has been dealt with or before it has.
 const RELEASE = option("release", "");
+// Where to leave the machine-readable verdict, when a caller wants to act on it
+// rather than only read the exit code. Nothing is written unless it is asked for.
+const REPORT = option("report", "");
 
 const TOKEN = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || "";
 const AGENT = "AfricaHistoryQuest/1.0 (release check; kojoapp98@gmail.com)";
@@ -81,6 +110,16 @@ function appSources() {
 if (!/^[\w.-]+\/[\w.-]+$/.test(REPO)) {
   console.error(`release: "${REPO}" is not a repository to check`);
   process.exit(2);
+}
+
+/**
+ * Leave the verdict where an announcing step can read it, when one was asked
+ * for. The repository and the branch travel with it, since the step that acts on
+ * it needs both and should not have to be told them a second time.
+ */
+function emitReport(verdict) {
+  if (REPORT.length === 0) return;
+  writeFileSync(REPORT, `${JSON.stringify({ repo: REPO, branch: BRANCH, ...verdict }, null, 2)}\n`, "utf8");
 }
 
 /**
@@ -117,10 +156,12 @@ const release = await ask(
   RELEASE ? `/repos/${REPO}/releases/tags/${encodeURIComponent(RELEASE)}` : `/repos/${REPO}/releases/latest`
 );
 if (release.failed) {
+  emitReport({ outcome: "unreadable", release: RELEASE, detail: `status ${release.status}` });
   console.error(`release: the latest release could not be read (status ${release.status}${release.message ? `, ${release.message}` : ""})`);
   process.exit(2);
 }
 if (release.missing) {
+  emitReport({ outcome: "no-release", release: RELEASE, detail: "no such release" });
   console.error(
     RELEASE
       ? `release: ${REPO} has no release named ${RELEASE}, so there is nothing to compare`
@@ -134,6 +175,7 @@ let version = "";
 try {
   version = versionFromTag(tag).versionName;
 } catch (error) {
+  emitReport({ outcome: "bad-tag", release: tag, detail: error.message });
   console.error(`release: ${error.message}`);
   process.exit(1);
 }
@@ -144,6 +186,13 @@ const asset = apkNameFor(version);
 const assets = Array.isArray(release.body?.assets) ? release.body.assets : [];
 const carried = assets.some((entry) => entry?.name === asset);
 if (!carried) {
+  emitReport({
+    outcome: "no-download",
+    release: tag,
+    version,
+    asset,
+    listed: assets.map((entry) => entry?.name).filter(Boolean),
+  });
   console.error(
     `release: ${tag} carries no ${asset}, so the download the Android screen offers is not there\n` +
       `  the release lists: ${assets.map((entry) => entry?.name).filter(Boolean).join(", ") || "nothing"}`
@@ -153,6 +202,7 @@ if (!carried) {
 
 const comparison = await ask(`/repos/${REPO}/compare/${encodeURIComponent(tag)}...${encodeURIComponent(BRANCH)}`);
 if (comparison.failed) {
+  emitReport({ outcome: "unreadable", release: tag, version, asset, detail: `status ${comparison.status}` });
   console.error(`release: the commits after ${tag} could not be read (status ${comparison.status}${comparison.message ? `, ${comparison.message}` : ""})`);
   process.exit(2);
 }
@@ -184,6 +234,14 @@ console.log(`  the release ${tag} (${version}), carrying ${asset}`);
 console.log(`  ${BRANCH} is ${drift.aheadBy} commit(s) past it, and the app is built from ${appFiles.size} file(s) here\n`);
 
 if (!drift.drifting) {
+  emitReport({
+    outcome: drift.aheadBy === 0 ? "in-sync" : "ahead-quiet",
+    release: tag,
+    version,
+    asset,
+    aheadBy: drift.aheadBy,
+    files: [],
+  });
   console.log(
     drift.aheadBy === 0
       ? `release: ${tag} is the site, so the download and the site are the same application`
@@ -191,6 +249,15 @@ if (!drift.drifting) {
   );
   process.exit(0);
 }
+
+emitReport({
+  outcome: "behind",
+  release: tag,
+  version,
+  asset,
+  aheadBy: drift.aheadBy,
+  files: drift.files,
+});
 
 console.error(`release: the APK people download is older than the site, by ${drift.files.length} file(s) the application is built from:`);
 for (const file of drift.files.slice(0, 20)) console.error(`  ${file}`);

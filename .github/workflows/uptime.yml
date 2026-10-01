@@ -12,6 +12,14 @@
 # third party watching the site and no secret in this file. A run that succeeds
 # says nothing to anybody, which is the point.
 #
+# The half of it that can last is left as an issue as well, because a run is easy
+# to lose among hundreds and says nothing once it is green again. When the
+# released app is behind the site, the same run opens an issue naming the files
+# the release is missing, keeps it in step while the drift lasts, and closes it
+# by itself once a version carries them (see scripts/announce-drift.mjs). That is
+# the only thing in this file that writes anything, which is why it asks for
+# `issues: write` and nothing else.
+#
 # It is deliberately not part of the Verify workflow: the gate decides whether a
 # change belongs on main, and this says whether what was published is reachable,
 # which depends on a host rather than on the code.
@@ -35,6 +43,8 @@ on:
 
 permissions:
   contents: read
+  # Only for the step that opens and closes the issue about a release that is
+  # behind the site. Everything else here reads.
 
 jobs:
   check:
@@ -68,7 +78,21 @@ jobs:
       - name: Ask whether the downloadable Android app is older than the site
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/check-release.mjs
+        run: node scripts/check-release.mjs --report drift-report.json
+
+      # The alarm above is a failing run, and a run is easy to lose: it is one of
+      # hundreds, and once it is green again there is nothing left to read. So the
+      # verdict the check just left is put where somebody will find it. An issue is
+      # opened while the released app is behind the site, its body is kept level
+      # with what the check now finds, and it is closed by itself when a version
+      # carries those files. It runs whatever the steps before it did, so a check
+      # that never reached its verdict is a run that says nothing rather than one
+      # that takes down an alarm it cannot answer.
+      - name: Leave the verdict as an issue, where it can be read
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/announce-drift.mjs --report drift-report.json
 
       # The backend is a Neon function with the database behind it, and it is
       # asleep most of the day on purpose: the compute scales to zero after a few
