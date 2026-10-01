@@ -16,7 +16,16 @@
     </style>
 
 
+    <!-- The window the launcher shows before the WebView has drawn anything.
+
+         It is the screen the application opens on, so it is drawn as that screen
+         rather than as the template's white flash: the application's own dark
+         colour, with the mark in the middle of it. The two Android 12 attributes
+         are the same window seen by the system splash, which is what a device on
+         Android 12 or later paints before the activity starts. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="android:background">@drawable/splash_screen</item>
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
     </style>
 </resources>

@@ -287,10 +287,13 @@ so the game is opened from a home screen rather than a browser tab and runs with
 all. Nothing about the wrapper changes the site, and nothing in the site changes for the wrapper:
 it is the same build, copied into the native project by `npm run android:sync`.
 
-The launcher icon and the colour the app opens on are drawn from `public/favicon.svg` like every
+The launcher icon and the window the app opens on are drawn from `public/favicon.svg` like every
 other piece of artwork here, by `npm run android:icons`, so the mark on a home screen cannot drift
-from the mark in a tab. The Android backup service is off, because the progress the game keeps is
-promised to stay on the device rather than in a Google account.
+from the mark in a tab. That window is the language screen seen before the WebView has drawn it:
+the application's own dark colour, with the mark in the middle of it, so the launch reads as one
+movement rather than two screens. The flat white splash the template ships is gone, and with it the
+flash of a colour the game never shows. The Android backup service is off, because the progress the
+game keeps is promised to stay on the device rather than in a Google account.
 
 The APK is assembled by `.github/workflows/android.yml`, started by hand and on a version tag,
 because Gradle needs a JDK and the Android SDK and the runner brings both. To build one locally,
