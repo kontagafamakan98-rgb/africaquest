@@ -361,7 +361,20 @@ test("the APK is attached to a release, so a version tag outlives the artifact t
   // attached under the name somebody is told to look for.
   assert.match(source, /gh release view[^\n]*>/, "an existing release is not asked about first");
   assert.match(source, /gh release create "\$TAG"/, "the release is not named after the tag that made it");
-  assert.match(source, /gh release upload "\$TAG" "apk\/app-release\.apk#/, "the APK is not attached, or a second run fails on the copy already there");
+  // Named for the version rather than for what Gradle called it: the name of an
+  // asset is the name of the file, so a label alone would leave every release
+  // arriving on a disk as app-release.apk.
+  assert.match(source, /VERSION="\$\{TAG#v\}"/, "the file is not named for the version the tag names");
+  assert.match(
+    source,
+    /mv apk\/app-release\.apk "apk\/africa-history-quest-\$VERSION\.apk"/,
+    "the file is uploaded under the name Gradle gave it"
+  );
+  assert.match(
+    source,
+    /gh release upload "\$TAG" "apk\/africa-history-quest-\$VERSION\.apk"/,
+    "the APK the build produced is not the file attached"
+  );
   assert.match(source, /--clobber/, "a second run on the same tag fails on the file already there");
   assert.match(source, /GH_TOKEN: \$\{\{ github\.token \}\}/, "the release is made without the token the run is given");
   assert.match(source, /name: africa-history-quest-apk-release/, "the release does not take the signed APK the build kept");

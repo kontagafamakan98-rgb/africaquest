@@ -175,16 +175,20 @@ jobs:
 
       # `gh` rather than an action of its own: the runner carries the command,
       # and the release is created here so that pushing a tag twice, or pushing a
-      # tag whose build failed once, leaves one release rather than an error. The
-      # file is uploaded under the version rather than under the name Gradle gave
-      # it, so two releases do not arrive on a disk as two files called
-      # app-release.apk.
+      # tag whose build failed once, leaves one release rather than an error.
       - name: Publish the release this tag names
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
+          # The name of an asset is the name of the file, and the label gh can be
+          # given changes only what a browser shows: so the file is renamed to the
+          # version the tag names, rather than uploaded under the name Gradle gave
+          # it, and two releases do not arrive on a disk as two files called
+          # app-release.apk.
+          VERSION="${TAG#v}"
+          mv apk/app-release.apk "apk/africa-history-quest-$VERSION.apk"
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" \
               --notes "Africa History Quest $TAG. It opens from a home screen and runs with no network at all, and the progress it saves stays on the device. Signed, so a device installs it the way it installs any other application."
-          gh release upload "$TAG" "apk/app-release.apk#africa-history-quest-${TAG#v}.apk" --clobber --repo "$GITHUB_REPOSITORY"
+          gh release upload "$TAG" "apk/africa-history-quest-$VERSION.apk" --clobber --repo "$GITHUB_REPOSITORY"
