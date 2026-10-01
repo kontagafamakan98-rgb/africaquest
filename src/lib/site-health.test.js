@@ -9,9 +9,7 @@ import {
   SPACING_MS,
   TIMEOUT_MS,
   addressOf,
-  chosenScripts,
   looksLike,
-  precachedFrom,
   verdictIsAlarming,
   verdictLine,
   verdictOf,
@@ -119,45 +117,22 @@ test("a deep link is answered by the page, and the absence of it is not", () => 
   assert.equal(verdictOf({ kind: "photo", status: 404, body: "" }), "missing");
 });
 
-test("the scripts that matter are named by the worker, not written down here", () => {
-  const worker = read("dist/sw.js");
-  const urls = precachedFrom(worker);
-  assert.ok(urls.length > 0, "the built worker names nothing it installs");
-  assert.ok(urls.includes("404.html") || urls.includes("/404.html"), "the deep link page is not among them");
-  // What is installed is the thumbnails, not the photographs: a lesson draws its
-  // pictures at full size when it is opened, and a worker that pulled a hundred
-  // and forty of them on install would install a slow site. The check asks for
-  // the photograph itself, which is the one the map draws.
-  assert.ok(urls.some((url) => /photos\/level-1-1-thumb\.webp$/.test(url)), "no thumbnail is installed");
-  assert.ok(!urls.some((url) => /photos\/level-1-1\.webp$/.test(url)), "the full photographs are installed after all");
+test("the built worker is read after the build, not during the unit tests", () => {
+  // This test used to read dist/sw.js itself, and it failed on every fresh
+  // checkout: the unit tests run before the bundle, so a machine that had never
+  // built had nothing to read, while a machine that had built once passed - the
+  // worst kind of check, since it hides on the machine that wrote it. The built
+  // worker is a step of its own now, after the build, and this holds the two ends
+  // of that: the script is there, and the verification runs it after the bundle
+  // that writes what it reads.
+  const source = read("scripts/check-worker.mjs");
+  assert.match(source, /dist[\s\S]{0,40}sw\.js/, "the check does not read the built worker");
 
-  const chosen = chosenScripts(urls);
-  const paths = chosen.map((entry) => entry.path);
-  assert.equal(chosen.length, 3, "the entry and the two ends of the game are enough");
-  // Each one says what it is, and says that its address is written from the root
-  // of the host: without the kind the verdict recognises nothing and calls every
-  // healthy asset wrong, and without the mark the site's path is added to a path
-  // that already carries it.
-  for (const entry of chosen) {
-    assert.equal(entry.kind, "script", "an asset asked for without saying what it is");
-    assert.equal(entry.absolute, true, "an asset is joined to the site's path a second time");
-    assert.ok(entry.what, "an asset with nothing to say about itself");
-  }
-  assert.match(paths[0], /\/assets\/index-[^/]+\.js$/, "the entry chunk is not the first thing asked for");
-  const levels = paths.filter((path) => /\/level-\d+/.test(path));
-  assert.equal(levels.length, 2, "the two ends of the game, and nothing between");
-  const names = levels.map((path) => path.split("/").pop());
-  // A thumbnail of the ninth level is also called `level-9-...`, which is why
-  // the chooser reads the scripts first and the photographs never.
-  const all = urls.filter((url) => /\.js$/.test(url) && /\/level-\d+/.test(url)).sort();
-  assert.deepEqual(names, [all[0].split("/").pop(), all[all.length - 1].split("/").pop()]);
-
-  // A worker that answered with something else, or with no list, chooses
-  // nothing: the file itself has already been judged, and asking for the
-  // contents of a page that is not the worker is asking for a guess.
-  assert.deepEqual(chosenScripts([]), []);
-  assert.deepEqual(precachedFrom("<html>nothing here</html>"), []);
-  assert.deepEqual(precachedFrom(worker.replace("const SHELL = [", "const SHELL = [broken")), []);
+  const verify = read("scripts/verify.mjs");
+  const worker = verify.indexOf("scripts/check-worker.mjs");
+  const build = verify.indexOf("vite.js");
+  assert.ok(worker > 0, "the verification no longer reads the built worker");
+  assert.ok(build > 0 && worker > build, "the worker is read before the build that writes it");
 });
 
 test("the bytes of a picture are read with the decoder that keeps them", () => {

@@ -85,9 +85,18 @@ const STEPS = [
     command: process.execPath,
     args: ["./node_modules/vite/bin/vite.js", "build"],
   },
-  // Last, because it is the only step that weighs the output of another one: it
-  // reads dist, and what it says is what this build cost, bundle by bundle,
-  // against the pass it is compared with and the budget each one is allowed.
+  // It reads dist/sw.js, which the bundle above writes, so it is here rather than
+  // among the unit tests: a test that read an artifact of another step would fail
+  // on a fresh checkout, where the tests run before there is anything in dist.
+  {
+    id: "worker",
+    name: "Service worker (l'installation et les scripts qu'il nomme)",
+    command: process.execPath,
+    args: ["scripts/check-worker.mjs"],
+  },
+  // Last, because it weighs the output of another one too: it reads dist, and what
+  // it says is what this build cost, bundle by bundle, against the pass it is
+  // compared with and the budget each one is allowed.
   {
     id: "weights",
     name: "Poids des ballots (seuil, budget et table complète)",
@@ -160,6 +169,12 @@ for (let i = 0; i < STEPS.length; i++) {
       if (offlineLine) {
         const clean = offlineLine.replace(/^.*\[plugin africa-quest-offline\]\s*/, "");
         console.log(`    ↳ ${clean}`);
+      }
+    } else if (step.id === "worker" && res.stdout) {
+      // The check says what the build named, in two lines, and a step that prints
+      // nothing on success reads as a step that did nothing.
+      for (const line of res.stdout.trim().split("\n")) {
+        if (line.trim().length > 0) console.log(`    ↳ ${line.trim()}`);
       }
     } else if (step.id === "types" || step.id === "tooling-types") {
       // tsc says nothing at all when it is happy, which is exactly why it needs a
