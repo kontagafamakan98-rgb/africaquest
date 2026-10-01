@@ -39,13 +39,16 @@ jobs:
       # than the one Gradle stopped supporting: 21 is the line the Android tools
       # are on today.
       - name: Install the JDK Gradle runs on
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
 
+      # v4 rather than v3: the older release still installed the `tools` package,
+      # which Google stopped serving, and the run failed on a package that no
+      # longer exists rather than on the build.
       - name: Install the Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       # The platform and the build tools the native project names, installed
       # rather than assumed: a runner that carries a different one fails on a
