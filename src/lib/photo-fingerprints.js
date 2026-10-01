@@ -38,7 +38,7 @@ export function fingerprint(buffer) {
 
 /** A row of the table, as it is written. */
 const FILE_LINE = /^ {4}file: "(\/photos\/[^"]+)",$/;
-const FINGERPRINT_LINE = /^ {4}(?:sha256|webpSha256|avifSha256|thumbSha256): "[^"]*",$/;
+const FINGERPRINT_LINE = /^ {4}(?:sha256|webpSha256|avifSha256|thumbSha256|cardSha256): "[^"]*",$/;
 
 /**
  * The table, with the fingerprint of each photograph written under its file.
@@ -46,8 +46,9 @@ const FINGERPRINT_LINE = /^ {4}(?:sha256|webpSha256|avifSha256|thumbSha256): "[^
  * `fingerprints` maps a served path, as the table writes it, to the sha256 of
  * the JPEG that ships. `light` maps the same paths to the sha256 of the WebP
  * drawn beside it, `avif` to the sha256 of the AVIF in front of that one for
- * the photographs that have one, and `thumb` to the sha256 of the small copy
- * the list of credits draws. Each is written as the next line.
+ * the photographs that have one, `thumb` to the sha256 of the small copy the
+ * list of credits draws, and `card` to the sha256 of the copy the cards of the
+ * map are drawn from. Each is written as the next line.
  *
  * They are pinned because the player is shown the lightest of them: pinning
  * only the file it was made from would tie a credit line to bytes nobody
@@ -61,7 +62,7 @@ const FINGERPRINT_LINE = /^ {4}(?:sha256|webpSha256|avifSha256|thumbSha256): "[^
  * fingerprints hands it back unchanged, so a stale one shows up as a diff
  * instead of being rewritten in place on every run.
  */
-export function stampFingerprints(source, fingerprints = {}, light = {}, avif = {}, thumb = {}) {
+export function stampFingerprints(source, fingerprints = {}, light = {}, avif = {}, thumb = {}, card = {}) {
   const lines = String(source).split("\n");
   const stamped = [];
   const written = new Set();
@@ -95,6 +96,12 @@ export function stampFingerprints(source, fingerprints = {}, light = {}, avif = 
     // draws it, so it stands beside them rather than in front of one of them.
     const thumbHash = thumb[file];
     if (thumbHash) stamped.push(`    thumbSha256: "${thumbHash}",`);
+
+    // And the card copy stands beside the thumbnail for the same reason: it is
+    // the same picture again, at the size one screen draws it, so it is pinned
+    // where a reader can see which file their credit belongs to.
+    const cardHash = card[file];
+    if (cardHash) stamped.push(`    cardSha256: "${cardHash}",`);
   }
 
   const unknown = Object.keys(fingerprints).filter((file) => !written.has(file));

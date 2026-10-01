@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import { ChevronLeft, Clock, Zap, Star, ClipboardList } from "lucide-react";
+import { ChevronLeft, Clock, Zap, Star, ClipboardList, GraduationCap } from "lucide-react";
 import { DIFFICULTIES } from "./difficulties";
-import { questionCount } from "./question-bank.js";
+import { quizQuestions } from "./question-bank.js";
 import { LEVEL_IMAGES } from "./level-summary";
 import { useT, DIFFICULTY_LABEL_KEYS } from "../i18n";
 import AudioNarrator from "./AudioNarrator";
@@ -11,6 +11,10 @@ export default function DifficultyPicker({ level, levelScores, onSelect, onBack 
   const t = useT();
   const img = LEVEL_IMAGES[level.id];
   const LevelIcon = level.icon;
+  // How many questions the exam asks, read from the run itself for the reason
+  // the three rows above are: a number written here as well would be a second
+  // promise to keep.
+  const examCount = quizQuestions(level, "exam").length;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -49,10 +53,11 @@ export default function DifficultyPicker({ level, levelScores, onSelect, onBack 
           {Object.values(DIFFICULTIES).map((diff) => {
             const best = levelScores?.[diff.id];
             const DiffIcon = diff.icon;
-            // How many questions this setting really asks. The count comes from
-            // the same selection the quiz runs on, so the row cannot promise a
-            // shorter run than the player gets.
-            const count = questionCount(level.questions, diff.id);
+            // How many questions this setting really asks. The run is built
+            // here by the same function the quiz builds it with - chronology
+            // question included - so the row cannot promise a shorter run than
+            // the player gets.
+            const count = quizQuestions(level, diff.id).length;
             return (
               <button
                 key={diff.id}
@@ -95,6 +100,28 @@ export default function DifficultyPicker({ level, levelScores, onSelect, onBack 
               </button>
             );
           })}
+
+          {/* The exam, beside the three difficulties rather than among them: it
+              is the whole level and it is not paid, so it is not a rung on the
+              same ladder. It is offered here because this is the screen where
+              a player decides how to sit the level, and it is the setting a
+              teacher asks for first. */}
+          <button
+            onClick={() => onSelect("exam")}
+            className="w-full text-left rounded-2xl border-2 p-5 shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.99] border-slate-300 bg-slate-100"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <GraduationCap className="w-6 h-6 text-slate-700" aria-hidden="true" />
+              <p className="font-extrabold text-lg text-slate-700">{t.examMode}</p>
+            </div>
+            <p className="text-xs font-semibold text-slate-600 leading-relaxed mb-2">{t.examModeDesc}</p>
+            <div className="flex gap-4 text-xs font-semibold text-slate-600">
+              <span className="flex items-center gap-1">
+                <ClipboardList className="w-3.5 h-3.5" aria-hidden="true" />
+                {examCount} {t.difficultyQuestions}
+              </span>
+            </div>
+          </button>
         </div>
       </div>
     </div>

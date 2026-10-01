@@ -1,4 +1,4 @@
-import { Flame, Sprout, Zap } from "lucide-react";
+import { Flame, GraduationCap, Sprout, Zap } from "lucide-react";
 
 /**
  * The three ways a level can be played.
@@ -44,3 +44,38 @@ export const DIFFICULTIES = {
     textColor: "text-red-700",
   },
 };
+
+/**
+ * The fourth way to sit a level, and the one that is not a difficulty.
+ *
+ * It is kept out of DIFFICULTIES on purpose. A difficulty is a promise about
+ * pace - the clock and the multiplier - and the statistics screen compares a
+ * player's success rate across the three of them, which is a comparison between
+ * beaten paths. An exam is not a pace, it is a test: the whole level, no clock,
+ * no hints, no verdict until the last question, and nothing awarded at the end.
+ * Written into the difficulty table it would arrive on that comparison with an
+ * unbeaten score and quietly change what the screen is comparing.
+ *
+ * So it carries the three things a screen needs to draw it - a label, an icon
+ * and a colour - and the two numbers a run reads: no clock at all, and nothing
+ * to multiply, because an exam is marked and not paid.
+ */
+export const EXAM = {
+  id: "exam",
+  label: "Exam",
+  icon: GraduationCap,
+  timeLimit: 0,
+  xpMultiplier: 0,
+  bgColor: "bg-slate-50",
+  borderColor: "border-slate-300",
+  textColor: "text-slate-700",
+};
+
+/**
+ * The settings a quiz screen can be opened with, in one list.
+ *
+ * The picker draws the three difficulties and the exam beside them, and the
+ * quiz reads the setting back by id, so the two agree about what an id means
+ * rather than each holding half of it.
+ */
+export const GAME_MODES = { ...DIFFICULTIES, [EXAM.id]: EXAM };

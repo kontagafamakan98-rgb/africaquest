@@ -217,7 +217,17 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
     );
   }
 
-  const handleComplete = ({ score, total, stars, xp, timeSeconds }) => {
+  // An exam changes nothing: it is marked, not recorded, so it leaves no score,
+  // no stars and no XP behind, and it does not feed the review rotation either.
+  // That is the whole difference between sitting a test and playing a level, and
+  // it is why the exam path below never touches the profile.
+  const isExam = difficulty === "exam";
+
+  const handleComplete = ({ score, total, stars, xp, timeSeconds, exam }) => {
+    if (exam) {
+      handleBack();
+      return;
+    }
     const newData = buildNewProgress(progress, levels, { level, difficulty, score, total, stars, xp, timeSeconds });
     updateProgress.mutate({ id: progress.id, data: newData });
     handleBack();
@@ -230,12 +240,17 @@ export default function QuizPage({ levelId: levelIdProp, onBack }) {
       onComplete={handleComplete}
       onBack={() => setDifficulty(null)}
       // The results screen compares this game with the ones already recorded.
-      history={progress.history || []}
-      onAnswer={(index, isCorrect) => {
-        progressStore
-          .recordAnswer(questionKey(level.id, index), isCorrect)
-          .then(() => queryClient.invalidateQueries({ queryKey: ["progress"] }));
-      }}
+      // An exam records nothing, so it is handed nothing to compare with.
+      history={isExam ? null : progress.history || []}
+      onAnswer={
+        isExam
+          ? undefined
+          : (index, isCorrect) => {
+              progressStore
+                .recordAnswer(questionKey(level.id, index), isCorrect)
+                .then(() => queryClient.invalidateQueries({ queryKey: ["progress"] }));
+            }
+      }
     />
   );
 }

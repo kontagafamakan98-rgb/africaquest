@@ -10,6 +10,7 @@ import {
   listBuiltFiles,
   offlineEntries,
   offlineShell,
+  thumbnailOf,
 } from "../../build/offline-plugin.js";
 import { FALLBACK_FILE } from "../../build/pages-fallback.js";
 import {
@@ -447,6 +448,7 @@ test("only the thumbnail of a photograph is installed, the picture itself waits"
     "/photos/level-1-1.webp",
     "/photos/level-1-1.avif",
     "/photos/level-1-1-thumb.webp",
+    "/photos/level-1-1-card.webp",
     "/photos/level-2-1.jpg",
   ];
   assert.deepEqual(offlineShell(files), [
@@ -455,6 +457,13 @@ test("only the thumbnail of a photograph is installed, the picture itself waits"
     "/manifest.json",
     "/photos/level-1-1-thumb.webp",
   ]);
+
+  // The card-sized copy is the same photograph again, drawn smaller by the map:
+  // it is fetched when a card is drawn, like the rest of the picture, and the
+  // thumbnail that stands for it is already installed.
+  assert.deepEqual(offlineShell(["/photos/level-1-1-card.webp"]), []);
+  assert.equal(thumbnailOf("/photos/level-1-1-card.webp"), "/photos/level-1-1-thumb.webp");
+  assert.equal(thumbnailOf("/photos/level-1-1.avif"), "/photos/level-1-1-thumb.webp");
 
   // A picture with no thumbnail is left to the network whole: installing a full
   // photograph nobody asked for is the cost this rule exists to avoid.
@@ -513,7 +522,7 @@ test("a built application ships the worker the configuration asks for", (t) => {
       `${file} is not a photograph format that could be left to the network`
     );
     assert.ok(
-      shell.includes(`${file.replace(/\.(avif|jpe?g|webp)$/i, "")}-thumb.webp`),
+      shell.includes(thumbnailOf(file)),
       `${file} is left out and its thumbnail is not installed`
     );
     assert.ok(

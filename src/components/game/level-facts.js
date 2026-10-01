@@ -335,3 +335,40 @@ export const AVIF_FILES = [
   "/photos/level-18-3.jpg",
   "/photos/level-20-2.jpg",
 ];
+
+/**
+ * The photographs a copy was written for at the width of a card.
+ *
+ * The map draws twenty cards, one picture each, three hundred and fifty eight
+ * pixels wide on a phone, and the light version of those pictures is six hundred
+ * and forty across. These are the files written for that width, and a picture
+ * that has one is offered to the browser in two widths rather than one, so the
+ * sharper screen keeps the sharper file and the smaller screen stops paying for
+ * pixels it never shows.
+ *
+ * Read from the fingerprints the same way the AVIF list is: a file that is not
+ * there is a file nobody may ask for, since a source pointing at it would show
+ * no picture at all rather than the one behind it.
+ */
+export const CARD_FILES = [
+  "/photos/level-1-1.jpg",
+  "/photos/level-2-1.jpg",
+  "/photos/level-3-1.jpg",
+  "/photos/level-4-1.jpg",
+  "/photos/level-5-1.jpg",
+  "/photos/level-6-1.jpg",
+  "/photos/level-7-1.jpg",
+  "/photos/level-8-1.jpg",
+  "/photos/level-9-1.jpg",
+  "/photos/level-10-1.jpg",
+  "/photos/level-11-1.jpg",
+  "/photos/level-12-1.jpg",
+  "/photos/level-13-1.jpg",
+  "/photos/level-14-1.jpg",
+  "/photos/level-15-1.jpg",
+  "/photos/level-16-1.jpg",
+  "/photos/level-17-1.jpg",
+  "/photos/level-18-1.jpg",
+  "/photos/level-19-1.jpg",
+  "/photos/level-20-1.jpg",
+];

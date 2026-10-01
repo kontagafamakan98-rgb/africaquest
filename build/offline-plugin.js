@@ -90,6 +90,30 @@ const PICTURE_FORMATS = ["avif", "webp", "jpg", "jpeg"];
 /** The suffix a thumbnail carries, which is how it is told apart from a picture. */
 export const THUMBNAIL_SUFFIX = "-thumb";
 
+/** The suffix the card-sized copy of a picture carries. */
+export const CARD_SUFFIX = "-card";
+
+/**
+ * The thumbnail that stands for a picture, whichever version of it is named.
+ *
+ * One photograph ships as several files - the JPEG, the light WebP, sometimes
+ * an AVIF, and the small copy the cards of the map draw - and all of them are
+ * the same picture, so all of them are represented by the one thumbnail the
+ * credits list draws. Naming it here rather than in each caller is what keeps a
+ * new version of a picture from quietly falling outside the rule: a file is a
+ * photograph's copy if this function says some other file stands for it.
+ *
+ * Named on the thumbnail itself, it answers the thumbnail: the file is the
+ * thing that stands for the picture rather than one of its copies.
+ */
+export function thumbnailOf(file) {
+  const format = extensionOf(file);
+  const stem = file.slice(0, file.length - format.length - 1);
+  if (stem.endsWith(THUMBNAIL_SUFFIX)) return file;
+  const picture = stem.endsWith(CARD_SUFFIX) ? stem.slice(0, -CARD_SUFFIX.length) : stem;
+  return `${picture}${THUMBNAIL_SUFFIX}.webp`;
+}
+
 /**
  * What the install really needs, and what can wait until a level is opened.
  *
@@ -106,15 +130,16 @@ export const THUMBNAIL_SUFFIX = "-thumb";
  * for every level that has really been played rather than for levels nobody
  * opened. The rule reads the files themselves, so a photograph added to the game
  * is covered the day it is added.
+ *
+ * A file is kept when it is the thumbnail itself - that is, when the thumbnail
+ * standing for it is the file - so every other copy of the same picture, the
+ * card-sized one included, is left to the network without being named here.
  */
 export function offlineShell(files) {
   return files.filter((file) => {
     const format = extensionOf(file);
     if (!PICTURE_FORMATS.includes(format)) return true;
-    // Only the thumbnail of a picture is installed; the picture itself is
-    // fetched when its level is opened and cached from then on.
-    const stem = file.slice(0, file.length - format.length - 1);
-    return stem.endsWith(THUMBNAIL_SUFFIX);
+    return thumbnailOf(file) === file;
   });
 }
 

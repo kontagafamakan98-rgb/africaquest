@@ -8,7 +8,7 @@ import { servedPath } from "../../lib/base-path.js";
 // them into what a screen can draw, and is the only door the first screen uses:
 // the questions, the lesson stories and the rest of the gallery live in
 // gameData.js and level-images.js, which are fetched right after the map.
-import { AVIF_FILES, LEVEL_FACTS } from "./level-facts.js";
+import { AVIF_FILES, CARD_FILES, LEVEL_FACTS } from "./level-facts.js";
 
 /**
  * The brief of the game, ready for the screen that is shown first.
@@ -60,6 +60,21 @@ export const LEVEL_IMAGES = Object.fromEntries(
  * one is offered as WebP alone.
  */
 export const AVIF_PHOTOS = new Set(AVIF_FILES.map((file) => servedPath(file)));
+
+/**
+ * The photographs that also ship a copy at the width of a card.
+ *
+ * The map draws twenty cards and they are the first screen a reader downloads:
+ * five hundred kilobytes of pictures for a hundred and seventy of application.
+ * Those cards are three hundred and fifty eight pixels wide on a phone, and the
+ * light version of the same picture is six hundred and forty across, so a copy
+ * is written at four hundred and eighty for the screens that ask for no more.
+ * Whether a given picture has one is recorded as a fingerprint by the script
+ * that writes the files, exactly as the AVIF is, and a browser cannot ask for a
+ * file and fall back when it is not there: a picture without a copy is drawn
+ * from the light version alone.
+ */
+export const CARD_PHOTOS = new Set(CARD_FILES.map((file) => servedPath(file)));
 
 /** How many questions the game asks in total, from the brief alone. */
 export const TOTAL_QUESTIONS = LEVEL_SUMMARIES.reduce(

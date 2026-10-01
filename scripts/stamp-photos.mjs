@@ -38,7 +38,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { LEVEL_PHOTOS } from "../src/lib/level-images.js";
-import { avifPath, thumbPath, webpPath } from "../src/lib/photo-formats.js";
+import { avifPath, cardPath, thumbPath, webpPath } from "../src/lib/photo-formats.js";
 import { fingerprint, stampFingerprints } from "../src/lib/photo-fingerprints.js";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -51,12 +51,14 @@ const fingerprints = {};
 const light = {};
 const third = {};
 const thumbs = {};
+const cards = {};
 const dropped = [];
 for (const photo of LEVEL_PHOTOS) {
   const file = path.join(ROOT, "public", photo.file.replace(/^\//, ""));
   const lightFile = path.join(ROOT, "public", webpPath(photo.file).replace(/^\//, ""));
   const avifFile = path.join(ROOT, "public", avifPath(photo.file).replace(/^\//, ""));
   const thumbFile = path.join(ROOT, "public", thumbPath(photo.file).replace(/^\//, ""));
+  const cardFile = path.join(ROOT, "public", cardPath(photo.file).replace(/^\//, ""));
   if (!existsSync(file)) {
     console.error(`stamp: ${photo.file} is missing. Run scripts/fetch-photos.mjs first.`);
     process.exit(1);
@@ -78,6 +80,10 @@ for (const photo of LEVEL_PHOTOS) {
   fingerprints[photo.file] = fingerprint(readFileSync(file));
   light[photo.file] = fingerprint(readFileSync(lightFile));
   thumbs[photo.file] = fingerprint(readFileSync(thumbFile));
+  // Only the first photograph of a level is drawn as a card, and only those have
+  // a copy for it: a fingerprint is recorded for the files that are there, which
+  // is what tells the map which pictures it can offer in two widths.
+  if (existsSync(cardFile)) cards[photo.file] = fingerprint(readFileSync(cardFile));
   if (existsSync(avifFile)) {
     third[photo.file] = fingerprint(readFileSync(avifFile));
   } else if (photo.avifSha256) {
@@ -86,7 +92,7 @@ for (const photo of LEVEL_PHOTOS) {
 }
 
 const source = readFileSync(TABLE, "utf8");
-const stamped = stampFingerprints(source, fingerprints, light, third, thumbs);
+const stamped = stampFingerprints(source, fingerprints, light, third, thumbs, cards);
 
 if (stamped === source) {
   console.log(`stamp: ${LEVEL_PHOTOS.length} photographs already carry the fingerprints of the files served`);
@@ -105,7 +111,8 @@ const stale = LEVEL_PHOTOS.filter(
     photo.sha256 !== fingerprints[photo.file] ||
     photo.webpSha256 !== light[photo.file] ||
     photo.avifSha256 !== third[photo.file] ||
-    photo.thumbSha256 !== thumbs[photo.file]
+    photo.thumbSha256 !== thumbs[photo.file] ||
+    photo.cardSha256 !== cards[photo.file]
 );
 console.log(`stamp: ${stale.length} of ${LEVEL_PHOTOS.length} photographs in src/lib/level-images.js`);
 for (const photo of stale.slice(0, 8)) {

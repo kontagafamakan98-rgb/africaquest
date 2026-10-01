@@ -82,6 +82,9 @@ function factsOf(level) {
 
 const facts = LEVELS.map(factsOf);
 const avif = LEVEL_PHOTOS.filter((photo) => photo.avifSha256).map((photo) => photo.file);
+// The pictures a card copy was written for, read from the same fingerprints: the
+// map offers two widths for those and one for the others.
+const cards = LEVEL_PHOTOS.filter((photo) => photo.cardSha256).map((photo) => photo.file);
 
 const row = (fact) =>
   [
@@ -132,6 +135,24 @@ ${facts.map(row).join("\n")}
 export const AVIF_FILES = [
 ${avif.map((file) => `  ${quoted(file)},`).join("\n")}
 ];
+
+/**
+ * The photographs a copy was written for at the width of a card.
+ *
+ * The map draws twenty cards, one picture each, three hundred and fifty eight
+ * pixels wide on a phone, and the light version of those pictures is six hundred
+ * and forty across. These are the files written for that width, and a picture
+ * that has one is offered to the browser in two widths rather than one, so the
+ * sharper screen keeps the sharper file and the smaller screen stops paying for
+ * pixels it never shows.
+ *
+ * Read from the fingerprints the same way the AVIF list is: a file that is not
+ * there is a file nobody may ask for, since a source pointing at it would show
+ * no picture at all rather than the one behind it.
+ */
+export const CARD_FILES = [
+${cards.map((file) => `  ${quoted(file)},`).join("\n")}
+];
 `;
 
 if (check) {
@@ -141,10 +162,14 @@ if (check) {
     console.error("  run: npm run level:facts");
     process.exit(1);
   }
-  console.log(`facts (check): ${facts.length} levels and ${avif.length} AVIF of ${LEVEL_PHOTOS.length} photographs, all up to date`);
+  console.log(
+    `facts (check): ${facts.length} levels, ${avif.length} AVIF and ${cards.length} card copies of ` +
+      `${LEVEL_PHOTOS.length} photographs, all up to date`
+  );
   process.exit(0);
 }
 
 writeFileSync(TARGET, text);
 console.log(`facts: ${facts.length} levels written to src/components/game/level-facts.js`);
 console.log(`  ${avif.length} of ${LEVEL_PHOTOS.length} photographs offered as AVIF beside the WebP, from their fingerprints`);
+console.log(`  ${cards.length} offered at the width of a card as well, for the map`);

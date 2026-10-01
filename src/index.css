@@ -151,3 +151,24 @@ select:focus {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Print ──────────────────────────────────────────── */
+/* A teacher's sheet, which is the one thing in this application that leaves the
+   screen. On paper a control leads nowhere, the narration player plays nothing
+   and the gallery is a page of ink, so each of those is marked `print:hidden`
+   where it is drawn rather than listed here, where the list would drift from
+   the screens. What is set here is the page itself: a white ground, since a
+   browser prints a background only when asked to, and a margin a photocopier
+   does not eat. The exercises and their answer key are drawn in print alone - a
+   worksheet that was also on screen would hand the answers to the reader it is
+   meant to test. */
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+
+  @page {
+    margin: 14mm 12mm;
+  }
+}

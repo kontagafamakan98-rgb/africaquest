@@ -170,7 +170,14 @@ export const BUNDLE_BUDGETS = {
   "/assets/AudioNarrator.js": 55 * 1024,
   "/assets/TeacherPage.js": 35 * 1024,
   "/assets/StatsScreen.js": 35 * 1024,
-  "/assets/QuizScreen.js": 30 * 1024,
+  // The quiz is no longer one screen: it draws four shapes of question - four
+  // answers to choose between, a chronology to put in order, three names to
+  // match to their descriptions, and an exam that is marked rather than fed
+  // back - and it carries the screen that ends a run, with the recap and the
+  // corrigé an exam hands back. It stood at 30 KB when a run was one shape.
+  // The room left is for a question type and not for a library: a screen that
+  // needs twice this is a screen that has become two.
+  "/assets/QuizScreen.js": 36 * 1024,
   "/assets/ReviewScreen.js": 25 * 1024,
   // The lesson screen is a screen again: the study pack of every level used to
   // travel inside this chunk, which made it a library of lessons a player

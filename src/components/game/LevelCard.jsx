@@ -31,9 +31,17 @@ export default function LevelCard({ level, isUnlocked, isCompleted, levelScores,
       {/* Coloured fallback is always present, the photo renders on top of it */}
       <div className={`absolute inset-0 bg-gradient-to-br ${level.color}`} />
       {img && (
+        /* The map draws twenty of these, and they are the first screen a reader
+           downloads: five hundred kilobytes of pictures, against a hundred and
+           seventy for the application itself. `card` offers the copy written at
+           the width a card is drawn, and `sizes` says how wide that is, so a
+           screen of one pixel density stops downloading the light version it
+           cannot show. */
         <LevelPicture
           src={img}
           alt=""
+          card
+          sizes="(min-width: 512px) 480px, 92vw"
           loading="lazy"
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
         />

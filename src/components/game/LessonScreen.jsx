@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ChevronLeft, Lightbulb, CheckCircle2, ArrowRight, BookOpen,
-  CalendarClock, Users, MapPin, BookMarked,
+  CalendarClock, Users, MapPin, BookMarked, Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LEVEL_IMAGES } from "./level-summary";
@@ -80,7 +80,10 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <div className="relative h-44 overflow-hidden">
+      {/* No photograph and no controls on paper: the sheet opens on the name of
+          the lesson instead, written just below, and a photograph prints as a
+          page of ink. */}
+      <div className="relative h-44 overflow-hidden print:hidden">
         <div className={`absolute inset-0 bg-gradient-to-br ${level.color}`} />
         {img && (
           <LevelPicture src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -105,7 +108,16 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
       </div>
 
       <main className="max-w-lg mx-auto px-4 py-5 space-y-6">
-        <AudioNarrator levelId={level.id} />
+        {/* The name of the lesson, drawn for the sheet alone: on screen it is
+            carried by the photograph above, and the photograph is not printed. */}
+        <header className="hidden print:block">
+          <h1 className="text-2xl font-extrabold text-slate-900">{level.title}</h1>
+          <p className="text-sm font-semibold text-slate-700">{level.region}</p>
+        </header>
+
+        <div className="print:hidden">
+          <AudioNarrator levelId={level.id} />
+        </div>
 
         {history.length > 0 && (
           <section>
@@ -172,7 +184,9 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
           </section>
         )}
 
-        <LevelGallery photos={level.gallery} />
+        <div className="print:hidden">
+          <LevelGallery photos={level.gallery} />
+        </div>
 
         {study?.glossary?.length > 0 && (
           <section>
@@ -213,15 +227,90 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
           </ul>
         </section>
 
-        <FlashQuiz items={flashQuizQuestions} onAnswer={onFlashQuizAnswer} />
+        <div className="print:hidden">
+          <FlashQuiz items={flashQuizQuestions} onAnswer={onFlashQuizAnswer} />
+        </div>
 
-        <Button
-          onClick={onStartQuiz}
-          className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-700 to-orange-800 hover:from-amber-800 hover:to-orange-900 text-white font-bold text-base shadow-lg shadow-amber-900/20"
-        >
-          {t.startQuiz} <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
+        {/* What a teacher takes to the photocopier. On screen this is two
+            buttons; on paper the buttons are gone and the sheet carries the
+            lesson, the exercises and their answer key. */}
+        <div className="print:hidden space-y-3">
+          <Button
+            onClick={onStartQuiz}
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-700 to-orange-800 hover:from-amber-800 hover:to-orange-900 text-white font-bold text-base shadow-lg shadow-amber-900/20"
+          >
+            {t.startQuiz} <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+          <button
+            onClick={() => window.print()}
+            className="w-full h-12 rounded-xl border-2 border-slate-300 bg-white text-slate-700 font-bold text-base hover:bg-slate-50 active:scale-[0.99] transition-colors flex items-center justify-center gap-2"
+          >
+            <Printer className="w-4 h-4" aria-hidden="true" />
+            {t.printSheet}
+          </button>
+        </div>
+
+        <Worksheet level={level} />
       </main>
     </div>
+  );
+}
+
+/**
+ * The exercises of a lesson, drawn in print alone.
+ *
+ * A sheet is the thing teachers asked for before anything else: the lesson on
+ * one page, the questions on the next, and the answers at the end. It is never
+ * on screen, and that is the point rather than a way of saving space: the same
+ * questions are the quiz, so a worksheet on the screen would hand the answers
+ * to the reader it is meant to test. The key is printed because the sheet is
+ * meant to be marked by somebody, and whoever marks twenty of them reads the
+ * key rather than the lesson.
+ */
+function Worksheet({ level }) {
+  const t = useT();
+  const questions = level.questions || [];
+
+  return (
+    <section className="hidden print:block">
+      <h2 className="text-lg font-extrabold text-slate-900 border-t-2 border-slate-300 pt-4">
+        {t.worksheetTitle}
+      </h2>
+      <p className="text-sm text-slate-700 mt-2">{t.worksheetIntro}</p>
+      <p className="text-sm text-slate-700 mt-2">
+        {t.worksheetName} ____________________ {t.worksheetDateLabel} ____________
+      </p>
+
+      <ol className="mt-4 space-y-4">
+        {questions.map((question, index) => (
+          <li key={index}>
+            <p className="text-sm font-bold text-slate-900">
+              {index + 1}. {question.question}
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {question.options.map((option, at) => (
+                <li key={at} className="text-sm text-slate-800">
+                  {String.fromCharCode(65 + at)}. {option}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-slate-600 mt-1">{t.worksheetAnswer} ____________________</p>
+          </li>
+        ))}
+      </ol>
+
+      <section className="break-before-page">
+        <h2 className="text-lg font-extrabold text-slate-900 border-t-2 border-slate-300 pt-4">
+          {t.worksheetAnswerKey}
+        </h2>
+        <ol className="mt-3 columns-2 text-sm text-slate-800">
+          {questions.map((question, index) => (
+            <li key={index}>
+              {index + 1}. {String.fromCharCode(65 + question.correct)}
+            </li>
+          ))}
+        </ol>
+      </section>
+    </section>
   );
 }

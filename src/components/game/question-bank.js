@@ -26,6 +26,12 @@
  * discovered on the first question.
  */
 
+// The two questions of a lesson that are assembled from the lesson itself rather
+// than written as positions in the bank - its chronology and its matching - live
+// in modules of their own and are opened here, where the run is built.
+import { chronologyQuestion } from "./chronology.js";
+import { matchingQuestion } from "./matching.js";
+
 /** The band of one question, 1 (opening) to 3 (closing), from its place alone. */
 export function questionBand(index, total) {
   if (!(total > 0)) return 1;
@@ -42,6 +48,12 @@ export const DIFFICULTY_BANDS = {
   easy: { bands: [1], min: 5, fill: [2] },
   medium: { bands: [1, 2], min: 7, fill: [3] },
   hard: { bands: [2, 3], min: 5, fill: [1] },
+  // The exam is the one setting that draws on every band: the whole level, in
+  // the order the level teaches it, because a test covers what the lesson
+  // covered rather than a third of it. The floor is the length a run has to
+  // reach to be worth marking, and a level shorter than that is asked whole
+  // rather than padded from a band that does not exist.
+  exam: { bands: [1, 2, 3], min: 8, fill: [] },
 };
 
 /**
@@ -86,4 +98,34 @@ export function selectQuestions(questions, difficulty) {
  */
 export function questionCount(questions, difficulty) {
   return selectQuestions(questions, difficulty).length;
+}
+
+/**
+ * The questions one run really asks, in the order it asks them.
+ *
+ * The whole run is built here rather than in the screen, for the reason the
+ * count above is read from the selection: the picker promises a number before
+ * the level is opened, and a number written in two places is a promise the
+ * second place can break. A lesson whose timeline can carry one opens on its
+ * chronology - the shape of the period before its details - and then on its
+ * matching, the who of the lesson after its when, and the run then asks the
+ * band the difficulty draws on. Everything downstream, the score and the stars
+ * included, counts the list this returns.
+ *
+ * A review session is not a run: its questions were chosen one by one by the
+ * player, so it is asked exactly as it was handed over.
+ *
+ * @param {object} level the level being played, study pack included
+ * @param {string} difficulty one of the keys of DIFFICULTY_BANDS
+ * @param {{ review?: boolean }} [options]
+ * @returns {Array<object>} the questions of this run
+ */
+export function quizQuestions(level, difficulty, { review = false } = {}) {
+  if (review) return level.questions || [];
+  const chosen = selectQuestions(level.questions, difficulty);
+  // The two assembled questions open the run, in that order, and each is left
+  // out rather than drawn empty when its lesson cannot carry one.
+  return [chronologyQuestion(level.study, level.id), matchingQuestion(level.study, level.id), ...chosen].filter(
+    Boolean
+  );
 }

@@ -151,6 +151,26 @@ const LIGHT_BANNER_LONG_EDGE = 640;
  */
 const THUMB_LONG_EDGE = 160;
 
+/**
+ * The small copy of a banner, for the cards of the map.
+ *
+ * The map draws twenty cards, each one a picture of a level, and those twenty
+ * pictures are the first screen a reader downloads: five hundred kilobytes on a
+ * cold visit, against a hundred and seventy for the whole application. They are
+ * drawn three hundred and fifty eight pixels wide on a phone, and the light
+ * version of the same picture is six hundred and forty across, so most of those
+ * bytes are pixels nobody sees.
+ *
+ * Four hundred and eighty is what a screen of one pixel density asks for at
+ * that width, and it is offered as a candidate rather than as a replacement: the
+ * browser is given both widths and takes the one its screen calls for, so a
+ * phone with doubled pixels still receives the size it was receiving before. On
+ * the map as measured, that is about half the weight of the first screen, and
+ * nothing looks softer on any screen that was not already being served a
+ * smaller file than it asked for.
+ */
+const CARD_LONG_EDGE = 480;
+
 const check = process.argv.includes("--check");
 const lightOnly = process.argv.includes("--light");
 const avifOnly = process.argv.includes("--avif");
@@ -190,9 +210,11 @@ for item in payload["files"]:
     target = os.path.splitext(source)[0] + ".webp"
     third = os.path.splitext(source)[0] + ".avif"
     small = os.path.splitext(source)[0] + "-thumb.webp"
+    card = os.path.splitext(source)[0] + "-card.webp"
     before = os.path.getsize(source)
     light_before = os.path.getsize(target) if os.path.exists(target) else 0
     thumb_before = os.path.getsize(small) if os.path.exists(small) else 0
+    card_before = os.path.getsize(card) if os.path.exists(card) else 0
     with Image.open(source) as opened:
         image = opened.convert("RGB")
         width, height = image.size
@@ -230,6 +252,18 @@ for item in payload["files"]:
         thumb_size = thumb.size
         thumb_data = thumb_buffer.getvalue()
 
+        # A card copy is written for the pictures a card is drawn from, which is
+        # the first photograph of each level: the same crop and the same
+        # encoder as the light version, only narrower.
+        card_size = None
+        card_data = None
+        if item["card"]:
+            picture = fit(image, payload["card_edge"])
+            card_buffer = io.BytesIO()
+            picture.save(card_buffer, "WEBP", quality=light_quality, method=webp_method)
+            card_size = picture.size
+            card_data = card_buffer.getvalue()
+
     if payload["write_jpeg"]:
         temporary = source + ".optimized"
         with open(temporary, "wb") as handle:
@@ -244,6 +278,11 @@ for item in payload["files"]:
         with open(thumb_temporary, "wb") as handle:
             handle.write(thumb_data)
         os.replace(thumb_temporary, small)
+        if card_data is not None:
+            card_temporary = card + ".optimized"
+            with open(card_temporary, "wb") as handle:
+                handle.write(card_data)
+            os.replace(card_temporary, card)
 
     # What the AVIF has to beat is the WebP that will be on disk once this run is
     # over: the one it just produced when it is writing that file, and the one
@@ -285,6 +324,12 @@ for item in payload["files"]:
         "thumb_after": len(thumb_data),
         "thumb_width": thumb_size[0],
         "thumb_height": thumb_size[1],
+        "card_path": card,
+        "card_before": card_before,
+        "card_after": len(card_data) if card_data is not None else 0,
+        "card_width": card_size[0] if card_size else 0,
+        "card_height": card_size[1] if card_size else 0,
+        "card_asked": item["card"],
         "width": size[0],
         "height": size[1],
         "light_width": light_size[0],
@@ -326,6 +371,9 @@ for (const photo of LEVEL_PHOTOS) {
   files.push({
     path: full.replace(/\\/g, "/"),
     banner,
+    // A card copy is for the pictures the map draws as cards: the first
+    // photograph of each level, and no other.
+    card: banner,
     // A gallery picture keeps every pixel it has: zero means no cap at all.
     cap: banner ? BANNER_LONG_EDGE : 0,
     // The light version is drawn on a phone rather than on a desktop screen, so
@@ -348,6 +396,7 @@ const run = spawnSync(python, ["-c", PYTHON_PROGRAM], {
     avif_speed: AVIF_SPEED,
     avif_worth_it: AVIF_WORTH_IT,
     thumb_edge: THUMB_LONG_EDGE,
+    card_edge: CARD_LONG_EDGE,
     // What gets written where: nothing at all in --check, only the file named on
     // the command line in --light or --avif, everything otherwise.
     write_jpeg: !check && !lightOnly && !avifOnly,
@@ -394,10 +443,13 @@ const drawn = results.map((file) => {
   const webpBytes = existsSync(file.webp_path) ? statSync(file.webp_path).size : 0;
   return {
     file: file.file,
+    banner: file.banner,
+    card: file.card_asked,
     avifBytes,
     webpBytes,
     bytes: avifBytes > 0 ? avifBytes : webpBytes,
     thumbBytes: existsSync(file.thumb_path) ? statSync(file.thumb_path).size : 0,
+    cardBytes: existsSync(file.card_path) ? statSync(file.card_path).size : 0,
     jpegBytes: statSync(file.path).size,
   };
 });
@@ -460,6 +512,20 @@ if (!check && withAvif.length < drawn.length) {
   );
 }
 
+// The card copies are the weight of the first screen: twenty pictures, one per
+// level, drawn three hundred and fifty eight pixels wide on a phone. They are
+// what the map costs a reader who has just arrived, which is the one download
+// worth counting apart from the rest.
+const cards = drawn.filter((entry) => entry.card);
+if (cards.length > 0) {
+  console.log(
+    `  ${cards.length} cards for the map (WebP, ${CARD_LONG_EDGE} px on the long edge): ` +
+      `${megabytes(total(cards, (entry) => entry.cardBytes))} against ` +
+      `${megabytes(total(cards, (entry) => entry.webpBytes))} of light versions, heaviest ` +
+      `${Math.round(Math.max(...cards.map((entry) => entry.cardBytes)) / 1024)} KB`
+  );
+}
+
 // The light version is the file the application draws, so it is required rather
 // than reported: one left out is a picture that never arrives, and one no
 // lighter than its JPEG is a second download that saves nothing.
@@ -494,6 +560,36 @@ if (missingLight.length > 0) {
       (check
         ? "Run node scripts/optimize-photos.mjs to write them."
         : "The WebP encoder did not write them; check what Pillow reported above.")
+  );
+  process.exit(1);
+}
+
+// A card copy is written for every picture a card is drawn from, and it is only
+// worth its place if it is lighter than the light version it stands in front of:
+// two files of the same weight are one download too many.
+const missingCard = cards.filter((entry) => entry.cardBytes === 0).map((entry) => entry.file);
+if (missingCard.length > 0) {
+  console.error(
+    `optimize: ${missingCard.length} cards of the map have no small copy: ` +
+      `${missingCard.slice(0, 5).join(", ")}${missingCard.length > 5 ? ` and ${missingCard.length - 5} more` : ""}.\n` +
+      (check
+        ? "Run node scripts/optimize-photos.mjs --light to write them."
+        : "The WebP encoder did not write them; check what Pillow reported above.")
+  );
+  process.exit(1);
+}
+
+const heavyCard = cards
+  .filter((entry) => entry.cardBytes > 0 && entry.cardBytes >= entry.webpBytes)
+  .map(
+    (entry) =>
+      `${entry.file} (${Math.round(entry.cardBytes / 1024)} KB against ${Math.round(entry.webpBytes / 1024)} KB)`
+  );
+if (heavyCard.length > 0) {
+  console.error(
+    `optimize: ${heavyCard.length} cards are not lighter than the light version they stand for: ` +
+      `${heavyCard.slice(0, 5).join(", ")}.\n` +
+      "Lower CARD_LONG_EDGE, or drop the card copy rather than ship a second download that saves nothing."
   );
   process.exit(1);
 }

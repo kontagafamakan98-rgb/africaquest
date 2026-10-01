@@ -107,10 +107,12 @@ first it can read; the JPEG is only there for a browser that reads neither.
 The service worker installs none of the full pictures. It carries the code and the sixty
 thumbnails, about a sixth of a megabyte of photographs, and every full picture is fetched the
 first time its level is opened and kept from then on. Installing the whole gallery up front
-was two and a third megabytes most players never look at, on the very first load; now the
-install is under two megabytes, and the offline copy stays complete for every level that has
-really been played rather than for the ones nobody opened. `src/lib/offline.test.js` holds it:
-each photograph's full files are left out of the install, and its thumbnail is in.
+was two and a fifth megabytes most players never look at, on the very first load; now the
+install carries two and a half megabytes, nearly all of it code, and the one hundred and
+sixty-eight full pictures it leaves out weigh seven and a half. The offline copy stays
+complete for every level that has really been played rather than for the ones nobody opened.
+`src/lib/offline.test.js` holds it: each photograph's full files are left out of the install,
+and the one thumbnail that stands for the picture is in.
 
 The third format is not written for every picture. At the size these are drawn, five hundred
 to six hundred and forty pixels across, AV1 pays for its headers more than it saves, and on
@@ -138,6 +140,20 @@ to fill sixty eighty-pixel squares; it now downloads about a hundred and seventy
 in total. No AVIF is written at that size, and that is a measurement rather than a shortcut:
 at a hundred and sixty pixels it came out heavier than the WebP every time the two were
 weighed, which is the same rule that leaves part of the gallery without a third format.
+
+A fourth file exists for the pictures the map draws, and it is the one that changed the first
+screen. The home screen shows twenty cards, one photograph each, three hundred and fifty-eight
+pixels wide on a phone, and those twenty pictures were being drawn from the light version:
+six hundred and forty across, which is what a screen of doubled pixel density asks for and a
+third more than an ordinary one needs. `scripts/optimize-photos.mjs` now writes a fourth
+hundred-and-eighty-pixel copy for those twenty pictures, and `LevelPicture.jsx` offers it as
+one candidate beside the light version rather than in place of it, so a sharper screen still
+receives the sharper file and a school laptop receives two hundred kilobytes fewer. The twenty
+copies weigh about three hundred kilobytes together against five hundred and fifteen for the
+light versions, and `src/lib/photo-weight.test.js` holds the budget of one copy and of the
+twenty. It is a WebP and nothing else, for the reason a thumbnail is: at that size an AVIF's
+header costs more than its pixels save. No lesson ships one - a lesson draws its pictures at
+six hundred and forty pixels, where the light version is already the right file.
 
 A thumbnail tells two pictures apart and shows neither of them, so each one is a button: it
 opens the photograph at the size it was made, in `src/components/game/PhotoViewer.jsx`, with
@@ -283,6 +299,34 @@ The starter kit's toast was rendered on every screen and raised by nobody, and d
 43 kB off the stylesheet and six off the entry file, which is the same house rule seen from the
 other side: a thing nobody chose does not get to be in the app.
 
+## What a screen reader gets, and what is left to check
+
+Some of the accessibility of this application is a check and some of it is still a promise. The
+check runs on every `npm run verify`, and it is read back from the screens rather than from their
+source: `src/components/game/screens.test.js` draws every screen for real, in a browser it builds
+inside the test, and hands the markup it produced to axe. A fault axe rates serious or critical
+fails the run, and the test ends by drawing two deliberate faults to prove the audit still refuses
+them, because a check nobody has seen fail is a check nobody knows is running.
+
+What an audit can never read is the part of a screen a reader hears rather than sees, so the
+gestures that matter are drawn and then asserted one by one. An answer is announced in words
+rather than as a flag, because a boolean drawn as a child says nothing at all. A question
+assembled from the lesson says what it asks for, a moved moment says which moment moved and where
+it landed, a match says which term was paired with which description, and an exam says which answer
+was chosen, since in an exam a change of colour is the only confirmation the screen gives. The
+chronology is reordered with two named buttons rather than by dragging, and each of them names the
+moment it moves, so neither is ever "the second one". The matching question is a group of choices
+that answers the arrow keys and carries the focus with it. Every dialog holds the keyboard while it
+is open and gives it back afterwards, every picture is described or marked as decoration, and every
+field says what the browser may remember.
+
+One thing is deliberately not done here, and it is not a detail of the code: nobody has yet sat
+down with a real screen reader, NVDA on Windows or VoiceOver on a Mac or an iPhone, and gone
+through a lesson and then a quiz. That session is the only way to hear the order the parts arrive
+in, whether the announcements land often enough and not too often, and whether a heading a sighted
+reader walks past is one a screen reader trips over. Until it happens, the automated audit is what
+is covered here, and it is worth saying which of the two it is.
+
 ## The weight of a build
 
 A build is the one thing in this project whose size nobody decides: every change that adds a few
@@ -416,13 +460,17 @@ to worry about is the device in somebody's hand, and that is what `npm run stres
 measures.
 
 What a hundred thousand readers can exhaust is the transfer, and it is arithmetic
-rather than a guess: a first visit is the 60 KB of entry files the weights report
-prints plus the 515 KB of card photographs the map draws, so a hundred thousand first
-visits is about 56 GB, against the soft 100 GB a month GitHub Pages allows. Repeat
-visits are answered from the browser's cache instead, since every file is
-content-hashed and installed by the service worker. That threshold is worth knowing
-for the month a link travels, and it is the only one there is: nothing behind these
-files counts the readers for us.
+rather than a guess. A first visit is the code the page loads with - the entry bundle,
+the five chunks it declares beside itself and the stylesheet, one hundred and seventy-five
+kilobytes compressed, which `npm run weights` prints line by line - plus the photographs of
+the map: three hundred kilobytes of card copies on an ordinary screen, five hundred and
+fifteen of light versions on a screen of doubled pixel density. A hundred thousand first
+visits is therefore between forty-six and sixty-six gigabytes, against the soft hundred
+gigabytes a month GitHub Pages allows, and the range is the honest way to write it: which
+end a month lands on is decided by the screens of the readers, not by us. Repeat visits are
+answered from the browser's cache instead, since every file is content-hashed and installed
+by the service worker. That threshold is worth knowing for the month a link travels, and it
+is the only one there is: nothing behind these files counts the readers for us.
 
 Two shapes are built and walked: a player who finished the game (twenty levels, two
 hundred questions answered once, some 24 KB of record) and the heaviest record the

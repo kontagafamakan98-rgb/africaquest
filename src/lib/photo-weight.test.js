@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-import { LEVEL_PHOTOS } from "./level-images.js";
-import { avifPath, thumbPath, webpPath } from "./photo-formats.js";
+import { LEVEL_GALLERIES, LEVEL_PHOTOS } from "./level-images.js";
+import { CARD_WIDTH, avifPath, cardPath, thumbPath, webpPath } from "./photo-formats.js";
 
 // What each photograph of the game is allowed to weigh, and what the app draws.
 //
@@ -37,6 +37,33 @@ const sum = (list, pick) => list.reduce((total, entry) => total + pick(entry), 0
 /** The size of a file, or zero when it is not there at all. */
 const weigh = (file) => (existsSync(file) ? statSync(file).size : 0);
 
+/**
+ * The size a WebP file really carries, read from its own header.
+ *
+ * A picture offered as a candidate with a width descriptor is chosen by a
+ * browser on the strength of that number, so a file written at another size is
+ * quietly fetched for the wrong box. Reading the number back from the file is
+ * what holds the width the application declares to the width the encoder wrote:
+ * the two are a constant in src/lib/photo-formats.js and an argument in
+ * scripts/optimize-photos.mjs, and nothing else makes them agree.
+ *
+ * Only the compact lossy header is read, which is what the encoder writes for
+ * these files; anything else answers null rather than a guess. The dimensions
+ * sit after the frame tag and the start code, fourteen bits each and the low
+ * byte first, which is the whole of the format this needs.
+ */
+function webpSize(file) {
+  const bytes = readFileSync(file).subarray(0, 30);
+  const container = bytes.subarray(0, 4).toString("latin1");
+  const format = bytes.subarray(8, 12).toString("latin1");
+  if (container !== "RIFF" || format !== "WEBP") return null;
+  if (bytes.subarray(12, 16).toString("latin1") !== "VP8 ") return null;
+  return {
+    width: (bytes[26] | (bytes[27] << 8)) & 0x3fff,
+    height: (bytes[28] | (bytes[29] << 8)) & 0x3fff,
+  };
+}
+
 const BUDGET = {
   /** One JPEG: the heaviest is 140 KB, so this leaves room without being a wall. */
   jpeg: 160 * SIZE,
@@ -58,6 +85,17 @@ const BUDGET = {
   thumb: 12 * SIZE,
   /** The whole list of credits, which is what that screen downloads. */
   thumbGallery: 256 * SIZE,
+  /**
+   * One card copy: the heaviest is 28 KB, and it is drawn 358 pixels across.
+   *
+   * It is the file a map of one pixel density downloads, so it is also the one
+   * that decides what the first screen costs. A budget of thirty two kilobytes
+   * is what the twenty of them come to at fourteen kilobytes each, which is the
+   * weight measured when they were written.
+   */
+  card: 32 * SIZE,
+  /** The whole map of cards, which is what a reader arriving downloads first. */
+  cardMap: 400 * SIZE,
   /** The whole light gallery, which is what a device downloads to install. */
   lightGallery: 3 * 1024 * 1024,
   /** How much lighter the light gallery has to be than the JPEGs it replaces. */
@@ -78,10 +116,15 @@ const weighed = LEVEL_PHOTOS.map((photo) => {
     webp,
     avif,
     thumb: weigh(onDisk(thumbPath(photo.file))),
+    cardFile: cardPath(photo.file),
+    card: weigh(onDisk(cardPath(photo.file))),
     // What a browser draws: the AVIF where one was written, the WebP otherwise.
     drawn: avif > 0 ? avif : webp,
   };
 });
+
+/** The first photograph of each level: the one the map draws as a card. */
+const BANNERS = new Set(Object.values(LEVEL_GALLERIES).map((photos) => photos[0].file));
 
 test("the light version of a photograph is the file beside it, in the other format", () => {
   // The name is derived rather than written a second time in the table, so the
@@ -171,6 +214,76 @@ test("every photograph ships a thumbnail, and it really is the small copy", () =
   assert.ok(
     total < BUDGET.thumbGallery,
     `the list of credits weighs ${kilobytes(total)} KB, over the ${kilobytes(BUDGET.thumbGallery)} KB budget`
+  );
+});
+
+test("the card copy of a banner is the file the map draws, and it is the smaller one", () => {
+  // The name is derived like the other three, so a card cannot end up belonging
+  // to another picture, and a stale file under a name nothing asks for is caught
+  // by the orphan check at the end of this file.
+  assert.equal(cardPath("/photos/level-1-1.jpg"), "/photos/level-1-1-card.webp");
+  assert.equal(cardPath("/photos/level-20-1.jpeg"), "/photos/level-20-1-card.webp", "either spelling of the extension");
+  assert.equal(
+    cardPath("/repository/photos/level-4-1.jpg"),
+    "/repository/photos/level-4-1-card.webp",
+    "a picture already prepared for the address it is served from"
+  );
+  assert.equal(
+    cardPath("https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=800&q=80"),
+    "https://images.unsplash.com/photo-1568322445389-f64ac2515020?w=800&q=80"
+  );
+  assert.equal(cardPath("/photos/level-1-1.webp"), "/photos/level-1-1.webp", "a light version is not renamed again");
+});
+
+test("every banner ships a card copy, and the other pictures do not", () => {
+  // The map draws twenty cards, one picture each, and those twenty pictures are
+  // what a reader arriving downloads before anything else. A hole here is the
+  // card falling back to the light version, which is the download these files
+  // exist to avoid; an extra one is a file nobody draws.
+  let map = 0;
+  for (const { photo, card, cardFile, webp } of weighed) {
+    const banner = BANNERS.has(photo.file);
+    if (!banner) {
+      assert.equal(card, 0, `${cardFile} is drawn by no card: only the first picture of a level is`);
+      continue;
+    }
+
+    assert.ok(card > 0, `${photo.file} has no card copy: run scripts/optimize-photos.mjs --light`);
+    assert.ok(
+      card <= BUDGET.card,
+      `the card copy of ${photo.file} weighs ${kilobytes(card)} KB, over the ${kilobytes(BUDGET.card)} KB budget`
+    );
+    assert.ok(
+      card < webp,
+      `the card copy of ${photo.file} weighs ${kilobytes(card)} KB against ${kilobytes(webp)} KB of light version: ` +
+        "a second download that saves nothing"
+    );
+
+    // A file that is not a WebP would be sent to the browser as one and never
+    // fall back, and one written at another width is a candidate a browser picks
+    // for a box it was not made for: the map offers the two candidates as four
+    // hundred and eighty and six hundred and forty pixels, and a browser of one
+    // pixel density takes the first on the strength of that number alone.
+    const written = webpSize(onDisk(cardFile));
+    assert.ok(written, `${cardFile} is not the WebP container the map asks for`);
+    assert.equal(
+      written.width,
+      CARD_WIDTH,
+      `${cardFile} is written ${written.width} pixels wide, and the map offers it as ${CARD_WIDTH}`
+    );
+    map += card;
+  }
+
+  // Twenty cards are one screen: the first a reader sees. Each file is small,
+  // and together they are still the heaviest thing on the way in.
+  assert.ok(
+    map < BUDGET.cardMap,
+    `the cards of the map weigh ${kilobytes(map)} KB, over the ${kilobytes(BUDGET.cardMap)} KB budget`
+  );
+  assert.equal(
+    weighed.filter((entry) => entry.card > 0).length,
+    BANNERS.size,
+    "a level whose card copy is missing would draw the light version instead"
   );
 });
 
@@ -395,6 +508,7 @@ test("no light version is left in the repository that no level is credited for",
       path.basename(webpPath(photo.file)),
       path.basename(avifPath(photo.file)),
       path.basename(thumbPath(photo.file)),
+      path.basename(cardPath(photo.file)),
     ])
   );
   const orphans = readdirSync(PHOTO_DIR)

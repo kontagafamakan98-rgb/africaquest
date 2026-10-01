@@ -1,9 +1,9 @@
-import { avifPath, thumbPath, webpPath } from "@/lib/photo-formats.js";
+import { CARD_WIDTH, LIGHT_WIDTH, avifPath, cardPath, thumbPath, webpPath } from "@/lib/photo-formats.js";
 import { hideBrokenImage } from "@/lib/utils";
 // Where the third format is decided. It comes from the brief of the game and
 // not from the photograph table, so drawing a picture never drags the whole
 // gallery onto the first screen.
-import { AVIF_PHOTOS } from "./level-summary";
+import { AVIF_PHOTOS, CARD_PHOTOS } from "./level-summary";
 
 /**
  * A level photograph, offered in the lightest format the browser can read.
@@ -34,12 +34,29 @@ import { AVIF_PHOTOS } from "./level-summary";
  * same width, and only the caller knows which of the two the reader is looking
  * at.
  *
+ * `card` draws a picture at the size a card of the map shows it. The map draws
+ * twenty of them and they are the first screen a reader downloads, so for those
+ * the small copy written at four hundred and eighty pixels is offered as a
+ * candidate beside the light version at six hundred and forty, with `sizes`
+ * saying how wide the card is: a browser of one pixel density takes the smaller
+ * file and one of two takes the larger, so the screen that was already being
+ * served a sharp picture still is and the other one stops paying for pixels it
+ * never shows. `sizes` is the caller's to give, because only the caller knows
+ * how wide its card is drawn; without it the browser assumes the full width of
+ * the window, which is the safe answer rather than the cheap one.
+ *
  * The wrapper is given no classes of its own, on purpose. A photograph that
  * fills a band is positioned against the band rather than against this element,
  * and one laid out inline keeps the width it is given either way, so wrapping
  * changes no layout; giving the wrapper a class is the one way to break that.
  */
-export default function LevelPicture({ src, className, thumb = false, ...rest }) {
+// The width is given a default of null rather than being left out, which is
+// what makes it an optional prop: a caller that draws a band or a thumbnail says
+// nothing about a width, and the default is the answer "nothing was said",
+// which React turns into an attribute that is not there at all.
+export default function LevelPicture({ src, className, thumb = false, card = false, sizes = null, ...rest }) {
+  const hasCard = card && CARD_PHOTOS.has(src);
+
   return (
     <picture>
       {thumb ? (
@@ -47,7 +64,15 @@ export default function LevelPicture({ src, className, thumb = false, ...rest })
       ) : (
         <>
           {AVIF_PHOTOS.has(src) && <source srcSet={avifPath(src)} type="image/avif" />}
-          <source srcSet={webpPath(src)} type="image/webp" />
+          {hasCard ? (
+            <source
+              srcSet={`${cardPath(src)} ${CARD_WIDTH}w, ${webpPath(src)} ${LIGHT_WIDTH}w`}
+              sizes={sizes}
+              type="image/webp"
+            />
+          ) : (
+            <source srcSet={webpPath(src)} type="image/webp" />
+          )}
         </>
       )}
       <img src={src} className={className} decoding="async" onError={hideBrokenImage} {...rest} />

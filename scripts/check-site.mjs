@@ -8,11 +8,19 @@
  * from the same place (`build/site-files.js`), so there is one address in this
  * repository rather than three that can disagree.
  *
- * It reads four files and decides what each answer means (see
- * src/lib/site-health.js). Reading them rather than asking for their headers is
- * the point: a static host answers an unknown path with the application's own
- * page, so a file that is not there comes back with a success status and the
- * wrong content, and only what arrived tells the two apart.
+ * It reads the site in two passes and decides what each answer means (see
+ * src/lib/site-health.js). Reading the files rather than asking for their
+ * headers is the point: a static host answers an unknown path with the
+ * application's own page, so a file that is not there comes back with a success
+ * status and the wrong content, and only what arrived tells the two apart.
+ *
+ * The second pass is the one that would have caught the gallery of photographs
+ * being empty on the published site. A built asset is named with a content hash
+ * (`level-09-DY2Tac4I.js`), so no checker can write its address down; the
+ * service worker can, because it installs it. The worker is read, the addresses
+ * of the three scripts that matter are taken out of it (the entry, the first
+ * level, the last), and they are fetched: assets published under a path they are
+ * not served from fail all three at once, which is what happened.
  *
  * It is deliberately not part of `npm run verify`: the verification says whether
  * the project can be built, and this says whether the site that was built can be
@@ -23,7 +31,7 @@
  * Exit code 0 when every address answers with what it should be, 1 when any of
  * them does not, and 2 when there was nothing to check at all.
  */
-import { addressOf, CONCURRENCY, SITE_FILES, SPACING_MS, TIMEOUT_MS, verdictIsAlarming, verdictLine, verdictOf } from "../src/lib/site-health.js";
+import { addressOf, chosenScripts, CONCURRENCY, hostAddressOf, precachedFrom, SITE_FILES, SPACING_MS, TIMEOUT_MS, verdictIsAlarming, verdictLine, verdictOf } from "../src/lib/site-health.js";
 import { siteOrigin } from "../build/site-files.js";
 
 const AGENT = "AfricaHistoryQuest/1.0 (site check; kojoapp98@gmail.com)";
@@ -42,7 +50,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * decided by verdictOf, not here.
  */
 async function ask(entry) {
-  const address = addressOf(origin, entry.path);
+  // A path of the site is joined to the path the site is served at; a path the
+  // worker gave is already written from the root of the host, and is asked for
+  // as it is.
+  const address = entry.absolute ? hostAddressOf(origin, entry.path) : addressOf(origin, entry.path);
   try {
     const response = await fetch(address, {
       redirect: "follow",
@@ -65,21 +76,36 @@ async function ask(entry) {
     // recognised by nothing, which is how a healthy site comes back as four
     // wrong files. It read `entry` alone and did exactly that until the site was
     // first published and answered with the right content.
-    return { entry, kind: entry.kind, status: response.status, contentType: response.headers.get("content-type") || "", body };
+    return { entry, address, kind: entry.kind, status: response.status, contentType: response.headers.get("content-type") || "", body };
   } catch (error) {
-    return { entry, kind: entry.kind, status: 0, contentType: "", body: "", error };
+    return { entry, address, kind: entry.kind, status: 0, contentType: "", body: "", error };
   }
 }
 
 console.log(`site: ${origin}`);
 console.log(`  ${SITE_FILES.length} addresses, ${CONCURRENCY} at a time, ${TIMEOUT_MS / 1000}s each\n`);
 
-const results = [];
-for (let start = 0; start < SITE_FILES.length; start += CONCURRENCY) {
-  const slice = SITE_FILES.slice(start, start + CONCURRENCY);
-  const answers = await Promise.all(slice.map(ask));
-  for (const answer of answers) results.push(answer);
-  if (start + CONCURRENCY < SITE_FILES.length) await sleep(SPACING_MS);
+/** Ask for a list of addresses, a few at a time, and keep every answer. */
+async function askAll(entries) {
+  const answers = [];
+  for (let start = 0; start < entries.length; start += CONCURRENCY) {
+    const slice = entries.slice(start, start + CONCURRENCY);
+    for (const answer of await Promise.all(slice.map(ask))) answers.push(answer);
+    if (start + CONCURRENCY < entries.length) await sleep(SPACING_MS);
+  }
+  return answers;
+}
+
+const results = await askAll(SITE_FILES);
+
+// What the worker installs, asked for by the names only the worker knows. A
+// worker that did not answer is already a fault of its own above; there is
+// nothing to learn from the list inside a file that is not there.
+const worker = results.find((answer) => answer.entry.kind === "worker");
+if (worker && verdictOf(worker) === "healthy") {
+  const scripts = chosenScripts(precachedFrom(worker.body));
+  console.log(`\n  ${scripts.length} script(s) named by the worker, asked for in turn\n`);
+  results.push(...(await askAll(scripts)));
 }
 
 const alarming = [];
@@ -101,7 +127,7 @@ if (alarming.length === 0) {
 
 console.error(`\nsite: ${alarming.length} of ${results.length} addresses are not what they should be:`);
 for (const answer of alarming) {
-  console.error(`  ${addressOf(origin, answer.entry.path)} ${answer.error ? `(${answer.error.message})` : `(status ${answer.status}${answer.contentType ? `, ${answer.contentType}` : ""})`}`);
+  console.error(`  ${answer.address} ${answer.error ? `(${answer.error.message})` : `(status ${answer.status}${answer.contentType ? `, ${answer.contentType}` : ""})`}`);
 }
 console.error(
   "  A refusal or an unreachable host can be a deployment still in flight, or Pages turned off in the repository settings;\n" +

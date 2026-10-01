@@ -334,6 +334,467 @@ test("the quiz screen draws a level, its first question and its answers", async 
   assert.match(html, /First/, "and so are its answers");
 });
 
+test("the quiz opens on the chronology of the lesson", async () => {
+  // The first question of a run is no longer four answers to choose between: it
+  // is the lesson's own timeline, handed over in the wrong order, to be put back
+  // in the order the lesson tells. What is read back here is that the screen
+  // really found it, that the moments are drawn in the order the question was
+  // handed over in, and that the player has a way to move them - the two things
+  // a question assembled rather than written can get wrong.
+  const { QuizScreen, translations } = await loadScreens();
+  const { chronologyQuestion } = await import("./chronology.js");
+  const { LEVEL_STUDY } = await import("./level-study.js");
+
+  globalThis.localStorage.setItem("aq_lang", "en");
+  const study = LEVEL_STUDY[1].en;
+  const level = { ...LEVEL, id: 7, study };
+  const html = await draw(h(QuizScreen, { level, difficulty: "easy", onBack() {}, onComplete() {} }));
+  globalThis.localStorage.removeItem("aq_lang");
+
+  const question = chronologyQuestion(study, level.id);
+  assert.ok(question, "the lesson carries a chronology question");
+  assert.ok(
+    html.includes(escaped(translations.en.chronologyQuestion)),
+    "the question says what it asks for"
+  );
+  assert.ok(html.includes(escaped(translations.en.chronologyCheck)), "and offers to check the answer");
+  // Nothing to cross out and nothing to spell: a hint that eliminates one of
+  // four wrong moments would be a hint about nothing.
+  assert.ok(!html.includes('aria-label="Hint"'), "and offers no hint it cannot give");
+
+  const list = document.createElement("div");
+  list.innerHTML = html;
+  const rows = [...list.querySelectorAll("ol > li")];
+  assert.equal(rows.length, question.steps.length, "every moment has a row of its own");
+  const drawn = rows.map((row) => row.querySelector("p").textContent);
+  assert.deepEqual(
+    drawn,
+    question.order.map((moment) => question.steps[moment]),
+    "the moments are drawn in the order the question was handed over in"
+  );
+  assert.notDeepEqual(drawn, question.steps, "which is not the order the lesson tells");
+
+  // Each row carries both moves, and the two ends can only go one way: a list
+  // whose first moment silently becomes its last is a list a player loses.
+  rows.forEach((row, position) => {
+    const [up, down] = [...row.querySelectorAll("button")];
+    assert.ok(up && down, `moment ${position + 1} can be moved both ways`);
+    assert.match(up.getAttribute("aria-label"), /Move up one place/, `moment ${position + 1}`);
+    assert.match(down.getAttribute("aria-label"), /Move down one place/, `moment ${position + 1}`);
+    assert.equal(up.disabled, position === 0, `moment ${position + 1} cannot move above the first`);
+    assert.equal(
+      down.disabled,
+      position === rows.length - 1,
+      `moment ${position + 1} cannot move below the last`
+    );
+    // The name of a move names the moment it moves, so that neither button is
+    // ever "the second one" to a screen reader.
+    assert.ok(up.getAttribute("aria-label").includes(question.steps[question.order[position]]));
+  });
+});
+
+test("a chronology answer is checked, and the screen says what happened", async () => {
+  // The one part of the question a render cannot reach: what the screen does
+  // once the player has answered. It is drawn for real and clicked, because the
+  // two mistakes found here by hand - a verdict drawn as a flag, which a screen
+  // reader never hears, and an explanation taken from a field this kind of
+  // question does not have - were both invisible to every other test in this
+  // file.
+  const { QuizScreen, translations } = await loadScreens();
+  const { chronologyQuestion } = await import("./chronology.js");
+  const { LEVEL_STUDY } = await import("./level-study.js");
+
+  globalThis.localStorage.setItem("aq_lang", "en");
+  const study = LEVEL_STUDY[1].en;
+  const level = { ...LEVEL, id: 7, study };
+  const question = chronologyQuestion(study, level.id);
+
+  const mounted = [];
+  /** A quiz opened from scratch, the way a player opens one. */
+  const open = async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    mounted.push({ container, root });
+    await act(async () => {
+      root.render(h(QuizScreen, { level, difficulty: "easy", onBack() {}, onComplete() {} }));
+    });
+    return container;
+  };
+  const closeAll = async () => {
+    for (const { container, root } of mounted.splice(0)) {
+      await act(async () => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  };
+  /** The one button that checks the order, on the screen it is drawn on. */
+  const checkButton = (container) =>
+    [...container.querySelectorAll("button")].find(
+      (button) => button.textContent.trim() === translations.en.chronologyCheck
+    );
+  const moments = (container) =>
+    [...container.querySelectorAll("ol > li")].map((row) => row.querySelector("p").textContent);
+
+  try {
+    // The right order, reached the way a player reaches it: one move at a time,
+    // each its own click. A batch of clicks in one turn of the event loop would
+    // all read the same arrangement, which is a property of the test and not of
+    // the screen.
+    const arranged = await open();
+    for (let place = 0; place < question.steps.length; place += 1) {
+      for (let guard = 0; guard < question.steps.length; guard += 1) {
+        const rows = [...arranged.querySelectorAll("ol > li")];
+        const from = rows.findIndex((row) => row.textContent.includes(question.steps[place]));
+        if (from === place) break;
+        const up = rows[from].querySelectorAll("button")[0];
+        if (!up || up.disabled) break;
+        await act(async () => up.click());
+      }
+    }
+    assert.deepEqual(
+      moments(arranged),
+      question.steps,
+      "the moments can be put in the order the lesson tells"
+    );
+
+    assert.ok(checkButton(arranged), "the question offers to be checked");
+    await act(async () => checkButton(arranged).click());
+    assert.ok(
+      arranged.innerHTML.includes(translations.en.correct),
+      "and the right order is announced as right"
+    );
+    assert.ok(
+      arranged.innerHTML.includes(translations.en.chronologyFact),
+      "with an explanation of what is on the screen"
+    );
+    for (const year of question.years) {
+      assert.ok(arranged.innerHTML.includes(year), `the date ${year} is shown`);
+    }
+    await closeAll();
+
+    // And the other way: the question is never handed over already in order, so
+    // checking it as it stands is a wrong answer, and the screen has to say so.
+    const asHandedOver = await open();
+    await act(async () => checkButton(asHandedOver).click());
+    assert.ok(
+      asHandedOver.innerHTML.includes(translations.en.incorrect),
+      "a wrong order is announced, in words"
+    );
+    assert.ok(
+      asHandedOver.innerHTML.includes(translations.en.chronologyFact),
+      "and it is explained rather than only refused"
+    );
+  } finally {
+    await closeAll();
+    globalThis.localStorage.removeItem("aq_lang");
+  }
+});
+
+test("the picker offers the exam beside the three difficulties, and says how long it is", async () => {
+  // The exam is a fourth way to sit a level, and it is not a difficulty: it is
+  // the whole level, no clock, no hints, and nothing awarded. What is read here
+  // is that it is offered where a player decides how to sit the level, and that
+  // the number on it is the number the run really asks - the same number the
+  // quiz builds its run from, chronology question included.
+  const { DifficultyPicker, getLevels, translations } = await loadScreens();
+  const { getLevelStudy } = await import("./level-study.js");
+  const { quizQuestions } = await import("./question-bank.js");
+
+  globalThis.localStorage.setItem("aq_lang", "en");
+  const summary = getLevels("en").find((level) => level.id === 7);
+  const level = { ...summary, study: getLevelStudy(7, "en") };
+  const run = quizQuestions(level, "exam");
+  const html = await draw(
+    h(DifficultyPicker, { level, levelScores: {}, onSelect() {}, onBack() {} })
+  );
+  globalThis.localStorage.removeItem("aq_lang");
+
+  const list = document.createElement("div");
+  list.innerHTML = html;
+  const exam = [...list.querySelectorAll("button")].find((button) =>
+    button.textContent.includes(translations.en.examMode)
+  );
+  assert.ok(exam, "the difficulty picker offers the exam");
+  assert.ok(
+    exam.textContent.includes(translations.en.examModeDesc),
+    "and says what makes it different"
+  );
+  assert.ok(
+    exam.textContent.includes(String(run.length)),
+    `the exam announces ${run.length} questions, the number the run asks`
+  );
+  // The exam is a superset of every difficulty rather than a fourth band: it
+  // asks the whole level, so it can never be shorter than a practice run.
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    assert.ok(
+      run.length >= quizQuestions(level, difficulty).length,
+      `the exam leaves out a question ${difficulty} asks`
+    );
+  }
+});
+
+test("the matching question asks who is who, and is checked as one question", async () => {
+  // The second shape a run can take, after the chronology. What is read here is
+  // that it is drawn from the lesson's own people, that a term is never shown
+  // beside the description that belongs to it without being chosen, and that a
+  // nearly right answer is a wrong one - the whole question is worth one point.
+  const { QuizScreen, translations } = await loadScreens();
+  const { getLevelStudy } = await import("./level-study.js");
+  const { MATCHING_PAIRS, matchingQuestion } = await import("./matching.js");
+
+  globalThis.localStorage.setItem("aq_lang", "en");
+  const level = { ...LEVEL, id: 3, study: getLevelStudy(3, "en") };
+  const question = matchingQuestion(level.study, level.id);
+
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const buttons = () => [...container.querySelectorAll("button")];
+  const byText = (text) => buttons().find((button) => button.textContent.trim() === text);
+
+  try {
+    await act(async () => {
+      root.render(h(QuizScreen, { level, difficulty: "easy", onBack() {}, onComplete() {} }));
+    });
+
+    // The run opens on the chronology; the matching question is the one after
+    // it, reached the way a player reaches it: answer, then go on.
+    await act(async () => byText(translations.en.chronologyCheck).click());
+    await act(async () => byText(translations.en.continue).click());
+
+    assert.ok(
+      container.innerHTML.includes(translations.en.matchingQuestion),
+      "the matching question says what it asks for"
+    );
+    assert.ok(!buttons().some((button) => button.getAttribute("aria-label") === translations.en.hint));
+
+    // The descriptions are listed once, and each term is answered by choosing
+    // one of their numbers. Every choice names the term it belongs to, so no
+    // button is ever just "2" to a reader who cannot see the row it sits in.
+    const groups = [...container.querySelectorAll('[role="radiogroup"]')];
+    assert.equal(groups.length, MATCHING_PAIRS, "one row of choices per term");
+    groups.forEach((group, index) => {
+      const label = group.getAttribute("aria-label");
+      assert.ok(label.includes(question.terms[index]), `row ${index + 1} is named after its term`);
+      const choices = [...group.querySelectorAll('button[role="radio"]')];
+      assert.equal(choices.length, MATCHING_PAIRS, `row ${index + 1}: one choice per description`);
+      choices.forEach((choice) => assert.equal(choice.getAttribute("aria-checked"), "false"));
+    });
+
+    // Nothing chosen: the question cannot be checked, and nothing has been
+    // marked on the screen.
+    assert.ok(
+      byText(translations.en.matchingCheck).disabled,
+      "a blank answer is not checkable"
+    );
+    assert.ok(!container.innerHTML.includes(translations.en.incorrect));
+
+    // Every term answered with the same description: a wrong answer to the
+    // question, and the screen says so in words.
+    for (const group of groups) {
+      await act(async () => group.querySelector('button[role="radio"]').click());
+    }
+    assert.ok(!byText(translations.en.matchingCheck).disabled, "an answered question is checkable");
+    await act(async () => byText(translations.en.matchingCheck).click());
+
+    assert.ok(
+      container.innerHTML.includes(translations.en.incorrect),
+      "a wrong set of matches is announced, in words"
+    );
+    assert.ok(
+      container.innerHTML.includes(translations.en.matchingFact),
+      "and it is explained rather than only refused"
+    );
+    // Every term was given the first description, so exactly the terms whose own
+    // description sits first are marked right - and the rest are marked wrong
+    // rather than passed because two rows out of three were close.
+    const marked = [...container.querySelectorAll("li")].filter((row) =>
+      row.className.includes("border-emerald-400")
+    );
+    const expected = question.terms.filter((_term, index) => question.solution[index] === 0).length;
+    assert.equal(
+      marked.length,
+      expected,
+      "the rows whose first description was the right one are the rows marked right"
+    );
+  } finally {
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+    globalThis.localStorage.removeItem("aq_lang");
+  }
+});
+
+test("an exam says nothing until it is over, then marks the run and names what to work on", async () => {
+  // The one thing that makes an exam an exam is that it says nothing while it
+  // runs. Every other screen of this game marks each answer as it is given, and
+  // a version of the exam that did so would be a practice run with the clock
+  // off. So the run is walked for real here: nothing is judged on the way, the
+  // mark arrives at the end, and the corrigé names the right answers.
+  const { QuizScreen, translations } = await loadScreens();
+  const { getLevelStudy } = await import("./level-study.js");
+
+  globalThis.localStorage.setItem("aq_lang", "en");
+  const level = { ...LEVEL, id: 7, study: getLevelStudy(7, "en") };
+  const completed = [];
+
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const buttons = () => [...container.querySelectorAll("button")];
+  const byText = (text) => buttons().find((button) => button.textContent.trim() === text);
+  const onward = () => byText(translations.en.continue) || byText(translations.en.seeResults);
+  /** The four answers of an ordinary question, told apart by their letter. */
+  const options = () =>
+    buttons().filter((button) => /^[A-D]$/.test((button.querySelector("span")?.textContent ?? "").trim()));
+
+  try {
+    await act(async () => {
+      root.render(
+        h(QuizScreen, {
+          level,
+          difficulty: "exam",
+          onBack() {},
+          onComplete: (result) => completed.push(result),
+        })
+      );
+    });
+
+    assert.ok(container.innerHTML.includes(translations.en.examMode), "the run says it is an exam");
+    assert.ok(
+      !buttons().some((button) => button.getAttribute("aria-label") === translations.en.hint),
+      "and offers no hint an exam should not have"
+    );
+    assert.ok(
+      !byText(translations.en.chronologyCheck),
+      "and does not check the chronology as it goes"
+    );
+
+    // Walk the whole run: take the first answer everywhere and leave the
+    // chronology as it is handed over, going on after each one.
+    for (let step = 0; step < 20 && completed.length === 0; step += 1) {
+      const answers = options();
+      if (answers.length > 0) {
+        assert.ok(onward().disabled, "an unanswered question cannot be left behind");
+        await act(async () => answers[0].click());
+        assert.ok(
+          !container.innerHTML.includes(translations.en.incorrect),
+          "and picking an answer is not judged on the way"
+        );
+        // A chosen answer only changes a colour, which is exactly what a
+        // reader who cannot see the screen does not get, so it is said out
+        // loud as well.
+        assert.ok(
+          (document.querySelector('[role="status"]')?.textContent ?? "").includes(translations.en.examChosen),
+          "and the choice is announced rather than only coloured"
+        );
+      }
+
+      const next = onward();
+      assert.ok(next, "the run always has a way forward");
+      assert.ok(!next.disabled, "and it can be taken once the question is answered");
+      await act(async () => next.click());
+    }
+
+    assert.equal(completed.length, 1, "the run ends and hands back a mark");
+    const result = completed[0];
+    assert.equal(result.exam, true, "and says it was an exam");
+    assert.equal(result.stars, 0, "an exam awards no stars");
+    assert.equal(result.xp, 0, "and no XP");
+    assert.ok(result.total > 0 && result.score <= result.total, "with a mark that can be read");
+
+    // The screen that ends it says so, does not pretend the run was paid, and
+    // names what to work on and what the right answer was.
+    assert.ok(container.innerHTML.includes(translations.en.examResults), "the mark is named");
+    assert.ok(container.innerHTML.includes(translations.en.examNotGraded), "and says nothing was awarded");
+    // The badge names the exam rather than a difficulty: a multiplier printed
+    // beside it would read as a setting somebody chose and lost XP on.
+    assert.ok(container.innerHTML.includes(translations.en.examMode), "and the run is named an exam");
+    assert.ok(!container.innerHTML.includes("0× XP"), "with no multiplier beside it");
+    assert.ok(container.innerHTML.includes(translations.en.examMissed), "and heads the list of what to work on");
+    assert.ok(
+      container.innerHTML.includes(translations.en.examCorrectAnswer),
+      "and names the right answer for each one"
+    );
+    assert.ok(container.innerHTML.includes(translations.en.printSheet), "and can be printed");
+    // The chronology was left in the order it was handed over in, which is never
+    // the order the lesson tells, so it is on that list.
+    assert.ok(
+      container.innerHTML.includes(translations.en.chronologyQuestion),
+      "including the chronology that was left alone"
+    );
+  } finally {
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+    globalThis.localStorage.removeItem("aq_lang");
+  }
+});
+
+test("a description can be chosen with the arrow keys, and the focus follows", async () => {
+  // A group of choices answers the arrow keys, not only Tab: a reader who has
+  // just heard "one of three" reaches for the arrows, and a group that ignores
+  // them reads as three unrelated buttons. What is read back here is the
+  // selection moving and the focus moving with it, because a choice made
+  // somewhere else on the page is a choice the next announcement misses.
+  const { QuizScreen, translations } = await loadScreens();
+  const { getLevelStudy } = await import("./level-study.js");
+  const { matchingQuestion } = await import("./matching.js");
+
+  globalThis.localStorage.setItem("aq_lang", "en");
+  const level = { ...LEVEL, id: 3, study: getLevelStudy(3, "en") };
+  const question = matchingQuestion(level.study, level.id);
+
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const root = createRoot(container);
+  const byText = (text) =>
+    [...container.querySelectorAll("button")].find((button) => button.textContent.trim() === text);
+  const row = () => [...container.querySelectorAll('[role="radiogroup"]')][0];
+  const choices = () => [...row().querySelectorAll('button[role="radio"]')];
+  /** The first key of a row pressed \"on the button that holds the keyboard\". */
+  const press = (key) =>
+    act(async () => {
+      choices()[0].dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    });
+
+  try {
+    await act(async () => {
+      root.render(h(QuizScreen, { level, difficulty: "easy", onBack() {}, onComplete() {} }));
+    });
+    await act(async () => byText(translations.en.chronologyCheck).click());
+    await act(async () => byText(translations.en.continue).click());
+
+    assert.equal(choices().length, question.definitions.length, "the row offers one choice per description");
+
+    // Nothing chosen: the arrow that walks forwards lands on the first
+    // description, and the one that walks backwards on the last.
+    choices()[0].focus();
+    await press("ArrowLeft");
+    assert.equal(choices().at(-1).getAttribute("aria-checked"), "true", "walking back from nothing picks the last");
+    assert.equal(document.activeElement, choices().at(-1), "and the focus went with it");
+
+    await press("ArrowRight");
+    assert.equal(choices()[0].getAttribute("aria-checked"), "true", "the arrow walks on from the last to the first");
+    assert.equal(document.activeElement, choices()[0], "still carrying the focus");
+    assert.equal(
+      choices()[1].getAttribute("aria-checked"),
+      "false",
+      "and only one description of a term is chosen at a time"
+    );
+  } finally {
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+    globalThis.localStorage.removeItem("aq_lang");
+  }
+});
+
 test("the review screen draws its empty state and a waiting question", async () => {
   const { ReviewScreen, getLevels } = await loadScreens();
 
@@ -388,7 +849,7 @@ test("the teacher page draws inside a router and a query client", async () => {
 });
 
 test("the lesson screen draws the whole study pack of a level", async () => {
-  const { LessonScreen, getLevels } = await loadScreens();
+  const { LessonScreen, getLevels, translations } = await loadScreens();
   // Read through the same module the screen reads, so the two cannot drift
   // apart and both be wrong: the test is a copy of nothing.
   const { getLevelStudy } = await import("./level-study.js");
@@ -431,6 +892,40 @@ test("the lesson screen draws the whole study pack of a level", async () => {
   });
   assert.ok(html.includes(escapedText(study.glossary[0].term)), "a word names its term");
   assert.ok(html.includes(escapedText(level.questions[0].fact)), "and the key points are still drawn");
+
+  // And the sheet a teacher prints, which is drawn in print alone. It has to be
+  // in the markup rather than built when the button is pressed, because
+  // `window.print()` prints the page as it already is: a section assembled
+  // afterwards would never reach the paper.
+  const parsed = document.createElement("div");
+  parsed.innerHTML = html;
+  const worksheet = [...parsed.querySelectorAll("section")].find((section) =>
+    section.className.includes("print:block")
+  );
+  assert.ok(worksheet, "the lesson carries a printable sheet");
+  assert.ok(worksheet.className.includes("hidden"), "and it is off the screen, where the quiz is");
+  assert.ok(
+    worksheet.textContent.includes(translations.fr.worksheetTitle),
+    "the sheet names itself"
+  );
+  for (const question of level.questions) {
+    assert.ok(
+      worksheet.textContent.includes(question.question),
+      "every question of the level is on the sheet"
+    );
+  }
+
+  // The key is the level's own answers, question for question: a printed answer
+  // key that disagrees with the game is a sheet a class is marked wrong with.
+  const key = [...worksheet.querySelectorAll("section")].find((section) =>
+    section.textContent.includes(translations.fr.worksheetAnswerKey)
+  );
+  assert.ok(key, "the sheet carries an answer key");
+  assert.deepEqual(
+    [...key.querySelectorAll("ol > li")].map((line) => line.textContent.trim()),
+    level.questions.map((question, index) => `${index + 1}. ${String.fromCharCode(65 + question.correct)}`),
+    "and the key is the level's own answers"
+  );
 });
 
 test("a level is named in full by the screen that lists the lessons", async () => {
