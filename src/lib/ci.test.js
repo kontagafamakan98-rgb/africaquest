@@ -260,6 +260,68 @@ test("the site is built for the address Pages serves it from", () => {
   assert.match(pages, /run: npm ci/, "from the lockfile");
 });
 
+test("the Content workflow compares the two ends, and never writes either", () => {
+  // The Content run is the half of the pair kept by hand that cannot depend on a
+  // person remembering: it compares the six tables and the four generated modules
+  // with the repository, on the push that changed the repository and on the days
+  // nobody pushed anything, which is the only way a change made in the Neon
+  // console alone is ever noticed. What it must never do is write - `content:push`
+  // is a workflow of its own, started by hand and confirmed in a field - so this
+  // holds both halves: the triggers that make it notice, and the one command it is
+  // allowed to run.
+  const file = path.join(ROOT, ".github", "workflows", "content.yml");
+  assert.ok(existsSync(file), "the comparison is not a workflow");
+
+  const source = readFileSync(file, "utf8");
+  assert.match(source, /^name: Content$/m, "the workflow is named Content");
+
+  const triggers = triggerBlock(source);
+  assert.match(triggers, /^ {2}push:/m, "a push that changed the repository is compared");
+  assert.match(triggers, /branches:\s*\[?main\]?/, "the push trigger watches main");
+  assert.match(triggers, /^ {2}schedule:/m, "a change made only in the console is noticed");
+  assert.match(triggers, /cron: "\d+ \d+ \* \* \*"/, "the schedule is a daily one");
+  assert.match(triggers, /^ {2}workflow_dispatch:/m, "the comparison can be asked for by hand");
+
+  assert.match(source, /^permissions:\n {2}contents: read$/m, "the job only reads the repository");
+  assert.match(source, /timeout-minutes:\s*\d+/, "a hung job cannot hold a runner for hours");
+  assert.match(source, /run: npm ci/, "the dependencies are installed from the lockfile");
+  assert.doesNotMatch(source, /continue-on-error/, "a failing comparison is not ignored");
+  assert.doesNotMatch(source, /npm run content:push/, "the comparison does not write the database");
+
+  // The credential arrives under the name the script reads, from the one secret,
+  // and its absence is a skipped check rather than a failed one - which is why the
+  // branch that finds none exits zero. A run without that branch would read a
+  // missing secret as a database that drifted, and be switched off within a week.
+  assert.match(source, /DATABASE_URL: \$\{\{ secrets\.NEON_DATABASE_URL \}\}/, "the connection string comes from the secret");
+  assert.match(source, /if \[ -z "\$DATABASE_URL" \]/, "a run with no secret is told apart from a drifting database");
+  assert.match(source, /Neon credential missing/, "a missing secret is named in an annotation");
+  assert.match(source, /exit 0/, "a run holding no credential passes rather than failing");
+  assert.match(source, /npm run content:check/, "the workflow runs the comparison");
+});
+
+test("the database is only ever written back by a person who meant it", () => {
+  // `content:push` empties the six mirrored tables and writes every row of the
+  // repository again: run by accident, it deletes content. So the one thing worth
+  // holding here is that nothing but a person can start it - a `push:` or a
+  // `schedule:` added to this file tomorrow would turn a deliberate command into
+  // one that fires on its own, which is exactly the failure this test exists to
+  // catch. The confirmation field is held too, because a click alone is not the
+  // same as reading that the database is what gets overwritten.
+  const file = path.join(ROOT, ".github", "workflows", "content-sync.yml");
+  assert.ok(existsSync(file), "the manual sync is not a workflow");
+
+  const source = readFileSync(file, "utf8");
+  const triggers = triggerBlock(source);
+  assert.match(triggers, /workflow_dispatch:/, "a person can start the sync");
+  assert.doesNotMatch(triggers, /push:/, "a push can empty the database");
+  assert.doesNotMatch(triggers, /schedule:/, "a schedule can empty the database");
+
+  assert.match(source, /npm run content:push/, "the sync does not run the command it exists for");
+  assert.match(source, /secrets\.NEON_DATABASE_URL/, "the sync does not read the connection string it needs");
+  assert.doesNotMatch(source, /continue-on-error:\s*true/, "a write that failed is reported as one that worked");
+  assert.match(source, /if \[ \"\$CONFIRM\" != \"push\" \]/, "the database is overwritten without a typed confirmation");
+});
+
 test("the workflow installs the image library the photograph check reads with", () => {
   // Half of `npm run verify` opens every JPEG and reads its pixels through
   // Pillow. A runner that has Python but not Pillow fails on the gallery, which

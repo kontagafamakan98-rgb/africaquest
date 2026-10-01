@@ -134,7 +134,17 @@ mean the same thing there as anywhere else. It has a workflow of its own instead
 connection string in the `NEON_DATABASE_URL` secret. A run without that secret says so in an
 annotation and passes, because a missing credential is not a database that drifted; a run with it
 fails when the database no longer says what the repository holds, or the repository no longer
-says what the database would write.
+says what the database would write. That failure is written into the run's own summary as well as
+its log - the table or module in fault, the rows that differ, and the command that would put the
+two ends back together - so a run that has drifted can be understood from its summary without
+opening the job.
+
+The other direction is a command nobody can start by accident. `.github/workflows/content-sync.yml`
+runs `npm run content:push` from a runner, triggered by hand alone - no push, no pull request, no
+schedule - and only after a confirmation is typed into the run, since it overwrites the database
+with the repository rather than comparing the two. That is how a database that has drifted is put
+back without the production connection string on a laptop. It is a workflow of its own on purpose:
+the Content one compares the two ends and fails, this one writes one end from the other.
 
 ## Photographs
 

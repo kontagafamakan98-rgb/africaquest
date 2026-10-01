@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { contentRows } from "../../scripts/neon-content.mjs";
+import { contentRows, summaryMarkdown } from "../../scripts/neon-content.mjs";
 import { LEVELS } from "../components/game/gameData.js";
 import { LEVEL_PHOTOS } from "./level-images.js";
 
@@ -145,6 +145,55 @@ test("the four modules frame their content with the markers the pull replaces be
     /neon-content\.mjs pull/,
     "the command that writes the modules from the database is not a script"
   );
+});
+
+test("a run that finds drift writes a summary naming the source and the way back", () => {
+  // The summary is the part of a failed Content run that is read: the table or
+  // module in fault, the rows that differ, and the two commands that would put it
+  // right. It is built from a report rather than a database, so the shape it
+  // writes can be held here, and a change that quietly dropped the command - the
+  // one line a reader acts on - would fail this test rather than a real run.
+  const markdown = summaryMarkdown({
+    tables: [
+      {
+        name: "levels",
+        wantCount: 26,
+        gotCount: 27,
+        same: false,
+        onlyInDatabase: ['{"id":27,"era":"modern"}'],
+        onlyInRepository: [],
+      },
+      { name: "questions", wantCount: 546, gotCount: 546, same: true, onlyInDatabase: [], onlyInRepository: [] },
+    ],
+    modules: [{ name: "src/lib/level-images.js" }],
+  });
+
+  assert.match(markdown, /^## Content check: the database has drifted/, "the summary leads with the verdict");
+  assert.match(markdown, /\|\s`levels`\s\|\s26 row\(s\)\s\|\s27 row\(s\)\s\|/, "the drifting table and its counts");
+  assert.match(markdown, /src\/lib\/level-images\.js/, "the module whose generated lines differ");
+  assert.match(markdown, /only in the database/, "the rows that differ");
+  assert.ok(!markdown.includes("questions"), "a table that agrees is not in the table of faults");
+  assert.match(markdown, /npm run content:pull/, "the way back when the database is right");
+  assert.match(markdown, /npm run content:push/, "the way back when the repository is right");
+});
+
+test("a run that finds nothing writes a short confirmation, not a report", () => {
+  const markdown = summaryMarkdown({
+    tables: [
+      { name: "levels", wantCount: 26, gotCount: 26, same: true, onlyInDatabase: [], onlyInRepository: [] },
+    ],
+    modules: [],
+  });
+
+  assert.match(markdown, /matches the repository/);
+  assert.ok(!markdown.includes("drifted"), "a green run does not speak of drift");
+  assert.ok(!markdown.includes("npm run content:pull"), "a green run asks for nothing");
+});
+
+test("the summary is written where a workflow can show it, and nowhere else", () => {
+  const script = readFileSync(path.join(ROOT, "scripts", "neon-content.mjs"), "utf8");
+  assert.match(script, /GITHUB_STEP_SUMMARY/, "the summary is never put where a run would show it");
+  assert.match(script, /summaryMarkdown\(report\)/, "the run summary is never built from the report");
 });
 
 test("every photograph arrives with its licence, its author and its two captions", () => {

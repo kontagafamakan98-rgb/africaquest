@@ -24,8 +24,13 @@
 # so in an annotation instead of failing, because a missing credential is not a
 # database that drifted, and a check that failed on one would be switched off
 # before it ever caught the other. Once the secret is there, a database that no
-# longer matches the repository fails this run, and the failure names the table
-# and the rows that differ.
+# longer matches the repository fails this run, and the failure names the table,
+# the module or the rows that differ - both in the log and, because the script
+# writes one when GitHub names it a summary file, in the run's own summary, which
+# is where a failure is read before the log is opened. The summary ends with the
+# two commands that would put the two ends back together, since which of them is
+# right - the database edited in the console, or the repository edited in code -
+# is the one thing this run cannot know.
 #
 # It runs once a day as well as on a push, and that is the half a push cannot
 # cover: the drift this is written for is not only the change nobody pushed, it is

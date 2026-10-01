@@ -1,0 +1,79 @@
+# Writing the repository's content back into the database, by hand.
+#
+# `content:push` is not a check. It empties the six mirrored tables and writes
+# every row of the repository again, so a level that lives only in the console is
+# a level it deletes. That is what it is for - it is how a database that has
+# drifted is put right when the repository is the right end - and it is exactly
+# why it must never run on its own. A run started by a push, or by a schedule,
+# would be a command people learn to fear; a person who opened the Actions tab,
+# chose the branch and typed the confirmation is a person who decided.
+#
+# So this workflow has one trigger and no others: workflow_dispatch. No push, no
+# pull request, no cron. Its concurrency group holds one run at a time, so two
+# people cannot write the same tables at once. And the write is confirmed in a
+# field rather than by the click alone, because a single click on a button whose
+# name says "sync" is not the same as reading that the database is what is
+# overwritten.
+#
+# It carries the same NEON_DATABASE_URL secret the Content check reads, which is
+# the point of it: the database is resynchronised from a runner, without the
+# production connection string on anybody's laptop. A run that has no secret says
+# so in an annotation and fails, since a sync that wrote nothing is not a sync
+# that succeeded.
+#
+# It is deliberately a workflow of its own rather than a job of the Content
+# workflow. That one compares the two ends and fails when they differ; this one
+# writes one end from the other. A workflow that did both would be one whose
+# failure a reader has to read twice to know which of the two happened.
+name: Content sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      # The string a person has to type. It is compared to "push" below, and the
+      # run stops before the database is touched when it does not match.
+      confirm:
+        description: Type "push" to confirm that the database's content will be overwritten with the repository's.
+        required: true
+
+# One write at a time, and none interrupted halfway through.
+concurrency:
+  group: content-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    name: The repository into the database
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is verified on
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install the dependencies from the lockfile
+        run: npm ci
+
+      - name: Write the repository's content into the database
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "push" ]; then
+            echo "::error title=Not confirmed::This workflow overwrites the database's content with the repository's. Run it again and type \"push\" in the confirmation field."
+            exit 1
+          fi
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error title=Neon credential missing::This run holds no NEON_DATABASE_URL, so nothing could be written. Add the secret under Settings, Secrets and variables, Actions, and run it again."
+            exit 1
+          fi
+          npm run content:push

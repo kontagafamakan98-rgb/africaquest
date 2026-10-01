@@ -41,6 +41,12 @@
  * two-way merge would be the one thing nobody could reason about, so there is
  * none; `check` is what makes the difference visible instead.
  *
+ * When it runs inside a workflow, `check` also writes a Markdown summary of what
+ * it found - the table or module in fault, the rows that differ and the two
+ * commands that would put it right - into the file GitHub names in
+ * GITHUB_STEP_SUMMARY. A failed run then reads at a glance, from wherever it is
+ * looked at, rather than only in the log of a job nobody opened.
+ *
  * It is deliberately not a step of `npm run verify`. The verification runs on
  * every push and every pull request, on a machine holding no database
  * credential: a check that needs one would fail there, or be skipped there, and
@@ -57,7 +63,7 @@
  *   node --env-file-if-exists=.env.local scripts/neon-content.mjs check
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { neon } from "@neondatabase/serverless";
@@ -614,9 +620,108 @@ function asRead(table, values) {
     .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 }
 
+/** How many differing rows a summary shows before it says how many it left out. */
+const SUMMARY_ROWS = 5;
+
+/**
+ * The check, written as the Markdown a run shows above its log.
+ *
+ * A failed check is read from the summary most of the time - a list of what
+ * drifted and what to do about it - and only opened in full when the summary is
+ * not enough. So the summary leads with the sources in fault rather than with the
+ * six that agreed, names the rows that differ, and ends with the two commands
+ * that would put the two ends back together, since which of the two is right is
+ * the one thing the run cannot know.
+ *
+ * Pure on purpose: the shape it reads is built by `check` from a real read, and a
+ * test holds the shape here without a database in the room.
+ *
+ * @param {{tables: {name: string, wantCount: number, gotCount: number, same: boolean, onlyInDatabase: string[], onlyInRepository: string[]}[], modules: {name: string}[]}} report
+ * @returns {string}
+ */
+export function summaryMarkdown(report) {
+  const drifted = report.tables.filter((table) => !table.same);
+  const lines = [];
+
+  if (drifted.length === 0 && report.modules.length === 0) {
+    lines.push("## Content check: the database matches the repository", "");
+    lines.push(
+      `All ${report.tables.length} mirrored tables and the four generated modules agree with the`,
+      "repository. Nothing to do.",
+      ""
+    );
+    return lines.join("\n");
+  }
+
+  lines.push("## Content check: the database has drifted", "");
+  lines.push("The repository and the Neon database no longer hold the same content.", "");
+  lines.push("| Source | In the repository | In the database |", "| --- | --- | --- |");
+  for (const table of drifted) {
+    lines.push(`| \`${table.name}\` | ${table.wantCount} row(s) | ${table.gotCount} row(s) |`);
+  }
+  for (const module of report.modules) {
+    lines.push(`| \`${module.name}\` | the generated lines differ | written from the database |`);
+  }
+  lines.push("");
+
+  const detailed = drifted.filter(
+    (table) => table.onlyInDatabase.length > 0 || table.onlyInRepository.length > 0
+  );
+  if (detailed.length > 0) {
+    lines.push("### Rows that differ", "");
+    for (const table of detailed) {
+      lines.push(`\`${table.name}\`:`, "");
+      for (const row of table.onlyInDatabase.slice(0, SUMMARY_ROWS)) {
+        lines.push(`- only in the database: \`${row.slice(0, 200)}\``);
+      }
+      for (const row of table.onlyInRepository.slice(0, SUMMARY_ROWS)) {
+        lines.push(`- only in the repository: \`${row.slice(0, 200)}\``);
+      }
+      const total = table.onlyInDatabase.length + table.onlyInRepository.length;
+      const shown =
+        Math.min(table.onlyInDatabase.length, SUMMARY_ROWS) +
+        Math.min(table.onlyInRepository.length, SUMMARY_ROWS);
+      if (total > shown) lines.push(`- and ${total - shown} row(s) more`);
+      lines.push("");
+    }
+  }
+
+  lines.push("### To make them agree again", "");
+  lines.push(
+    "- If the database is right, the content was edited in Neon: run `npm run content:pull`,",
+    "  review the diff it writes and the rows above, then commit them.",
+    "- If the repository is right, the content was edited in code: run `npm run content:push` to",
+    "  write it back into the database.",
+    ""
+  );
+  return lines.join("\n");
+}
+
+/**
+ * The summary, put where the run will show it, when there is a run to show it in.
+ *
+ * GitHub names a file in GITHUB_STEP_SUMMARY and a workflow hangs the file's text
+ * under the job. A command run by hand has no such file and no summary to write,
+ * which is why this is keyed on the variable rather than turned on by a flag: the
+ * same command writes the summary when it is in a workflow and stays quiet when
+ * it is not. A summary is a convenience, never a verdict of its own, so a file
+ * that cannot be written is swallowed rather than allowed to fail a check that
+ * already knows its answer.
+ */
+function writeRunSummary(report) {
+  const file = process.env.GITHUB_STEP_SUMMARY;
+  if (!file) return;
+  try {
+    appendFileSync(file, `${summaryMarkdown(report)}\n`, "utf8");
+  } catch {
+    console.log("content: the run summary could not be written, and only the log carries this result");
+  }
+}
+
 async function check(sql) {
   const rows = contentRows();
   const held = await readBack(sql);
+  const report = { tables: [], modules: [] };
   let faults = 0;
 
   for (const table of TABLES) {
@@ -625,20 +730,32 @@ async function check(sql) {
       .map((row) => ({ ...row }))
       .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 
-    if (JSON.stringify(want) === JSON.stringify(got)) {
+    // Compared as text as well as by set, so that a row changed in place is told
+    // apart from one missing: the two are different mistakes with different fixes.
+    const wanted = new Set(want.map((row) => JSON.stringify(row)));
+    const existing = new Set(got.map((row) => JSON.stringify(row)));
+    const entry = {
+      name: table.name,
+      wantCount: want.length,
+      gotCount: got.length,
+      same: JSON.stringify(want) === JSON.stringify(got),
+      onlyInDatabase: [...existing].filter((row) => !wanted.has(row)),
+      onlyInRepository: [...wanted].filter((row) => !existing.has(row)),
+    };
+    report.tables.push(entry);
+
+    if (entry.same) {
       console.log(`content: ${table.name}: ${got.length} row(s), the same as the repository`);
       continue;
     }
 
     faults += 1;
     console.log(`content: ${table.name}: the repository says ${want.length} row(s), the database holds ${got.length}`);
-    const wanted = new Set(want.map((row) => JSON.stringify(row)));
-    const existing = new Set(got.map((row) => JSON.stringify(row)));
-    for (const fingerprint of existing) {
-      if (!wanted.has(fingerprint)) console.log(`  only in the database: ${fingerprint.slice(0, 180)}`);
+    for (const fingerprint of entry.onlyInDatabase) {
+      console.log(`  only in the database: ${fingerprint.slice(0, 180)}`);
     }
-    for (const fingerprint of wanted) {
-      if (!existing.has(fingerprint)) console.log(`  only in the repository: ${fingerprint.slice(0, 180)}`);
+    for (const fingerprint of entry.onlyInRepository) {
+      console.log(`  only in the repository: ${fingerprint.slice(0, 180)}`);
     }
   }
 
@@ -647,6 +764,7 @@ async function check(sql) {
   // hand where it is generated is a file the next `pull` would silently rewrite,
   // so it is named here rather than at the moment somebody loses their edit.
   const stale = await staleModules(sql);
+  report.modules = stale.map((module) => ({ name: module.name }));
   if (stale.length > 0) {
     faults += stale.length;
     for (const module of stale) {
@@ -655,6 +773,8 @@ async function check(sql) {
   } else {
     console.log("content: the four modules hold what the database would write");
   }
+
+  writeRunSummary(report);
 
   if (faults > 0) {
     console.error(
