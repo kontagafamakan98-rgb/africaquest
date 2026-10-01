@@ -1,0 +1,76 @@
+# The one artifact that is not the site.
+#
+# The application is a web application, and Capacitor wraps the same build in a
+# native Android shell, so the game is installed rather than bookmarked and
+# works with no network at all. Nothing here changes what the site publishes: it
+# is the same `dist`, copied into the native project by `npm run android:sync`.
+#
+# The APK is assembled here rather than on a laptop because Gradle needs a JDK
+# and the Android SDK, and the runner brings both. It is started by hand and on a
+# version tag, not on every push to main: a wrapper is not rebuilt for a change
+# that only the site cares about.
+name: Android
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    name: Build the APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is built with
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # The template targets Android 35 and Gradle 8.11, which wants a JDK newer
+      # than the one Gradle stopped supporting: 21 is the line the Android tools
+      # are on today.
+      - name: Install the JDK Gradle runs on
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install the Android SDK
+        uses: android-actions/setup-android@v3
+
+      # The platform and the build tools the native project names, installed
+      # rather than assumed: a runner that carries a different one fails on a
+      # build that would have gone through, which reads as a broken project.
+      - name: Install the SDK platform and build tools the build asks for
+        run: yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      - name: Install the dependencies from the lockfile
+        run: npm ci
+
+      - name: Build the application and copy it into the native project
+        run: npm run android:sync
+
+      # The wrapper is committed from a Windows machine, where the executable bit
+      # is not a thing: the checkout arrives with the file present but not
+      # runnable, and one chmod is the whole difference.
+      - name: Build the debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Keep the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: africa-history-quest-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

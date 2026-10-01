@@ -97,6 +97,10 @@ file that travels with the work.
 - `npm run weights:record` records this build as the pass the next one is compared with.
 - `npm run stress` walks the newest and the heaviest progress record the application accepts
   and holds every path that has to read one to a budget, outside the verification.
+- `npm run android:icons` writes the launcher icons and the colour the installed app opens on
+  into `android/`, from the same favicon every other piece of artwork here is drawn from.
+- `npm run android:sync` builds the web application and copies it into the native Android
+  project, which is the step before Gradle assembles the APK.
 
 ## The content, and the database it is edited in
 
@@ -271,6 +275,31 @@ step whose name says nothing about the reason. The Uptime workflow goes on faili
 site is really there, which is the check that is meant to be alarmed. An owner who would
 rather not click can add a repository secret named `PAGES_TOKEN` holding a token that may
 administer the repository, and the next run turns Pages on with it.
+
+## The Android application
+
+The same build also ships as an installed Android app: Capacitor wraps `dist` in a native shell,
+so the game is opened from a home screen rather than a browser tab and runs with no network at
+all. Nothing about the wrapper changes the site, and nothing in the site changes for the wrapper:
+it is the same build, copied into the native project by `npm run android:sync`.
+
+The launcher icon and the colour the app opens on are drawn from `public/favicon.svg` like every
+other piece of artwork here, by `npm run android:icons`, so the mark on a home screen cannot drift
+from the mark in a tab. The Android backup service is off, because the progress the game keeps is
+promised to stay on the device rather than in a Google account.
+
+The APK is assembled by `.github/workflows/android.yml`, started by hand and on a version tag,
+because Gradle needs a JDK and the Android SDK and the runner brings both. To build one locally,
+with the Android SDK and a JDK 21 on the machine:
+
+```bash
+npm run android:sync
+cd android && ./gradlew assembleDebug
+```
+
+The APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`. It is a debug build,
+installable on a device as it is; a release build is signed with a key of its own, which is a step
+nobody has taken yet.
 
 ## Project layout
 

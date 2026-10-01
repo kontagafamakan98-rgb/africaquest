@@ -1,0 +1,11 @@
+{
+  "appId": "com.africaquest.app",
+  "appName": "Africa History Quest",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
