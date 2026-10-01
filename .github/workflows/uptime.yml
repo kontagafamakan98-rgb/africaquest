@@ -95,8 +95,18 @@ jobs:
           # The release is put on the command line only when one was named by
           # hand: with none, the check asks about the latest release, which is
           # what the daily run wants.
+          #
+          # A release named by hand turns this run into a reproduction: the check
+          # and the issue below do their work as always, but the run itself is
+          # left green. A reproduction is asked for by one person, to see the
+          # check answer or to look at an old drift again, and it would otherwise
+          # reach them as the same outage notification the daily alarm exists to
+          # send. A drift found by the daily run still fails the run, which is
+          # the point of it, so the two are kept apart rather than shared.
           if [ -n "$RELEASE" ]; then
-            node scripts/check-release.mjs --release "$RELEASE" --report drift-report.json
+            if ! node scripts/check-release.mjs --release "$RELEASE" --report drift-report.json; then
+              echo "::warning::reproduction: the app the site offers is older than the release asked about; the issue below now says by which files."
+            fi
           else
             node scripts/check-release.mjs --report drift-report.json
           fi

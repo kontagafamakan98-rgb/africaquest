@@ -458,6 +458,17 @@ test("the check is asked for by the daily run, and stays out of the verification
     /node scripts\/check-release\.mjs --report drift-report\.json/,
     "a run that names no release no longer asks about the latest one"
   );
+  // A release named by hand is a reproduction and not the alarm: the same check
+  // runs and the same issue is left, but the run is allowed to stay green, so
+  // the person who asked for it is not sent the outage notification the daily
+  // run exists to send. Only the branch that names a release is guarded; the
+  // daily branch, asserted bare above, still fails the run on a drift.
+  assert.match(
+    uptime,
+    /if ! node scripts\/check-release\.mjs --release "\$RELEASE" --report drift-report\.json; then/,
+    "a reproduction now fails the run, and reaches its asker as an outage"
+  );
+  assert.match(uptime, /::warning::/, "a reproduction says nothing once it finds a drift");
   assert.match(
     read("scripts/announce-drift.mjs"),
     /issueDecision\(/,
