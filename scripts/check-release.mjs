@@ -30,8 +30,11 @@
  * or when the release itself is not shaped the way the workflow publishes it,
  * and 2 when there was nothing to compare at all.
  */
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { ANDROID_REPO } from "../src/lib/android-release.js";
-import { apkNameFor, driftOf } from "../src/lib/release-drift.js";
+import { appModules, apkNameFor, driftOf } from "../src/lib/release-drift.js";
 import { versionFromTag } from "./android-version.mjs";
 
 const ARGUMENTS = process.argv.slice(2);
@@ -53,6 +56,27 @@ const RELEASE = option("release", "");
 const TOKEN = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || "";
 const AGENT = "AfricaHistoryQuest/1.0 (release check; kojoapp98@gmail.com)";
 const TIMEOUT_MS = 15000;
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * The text of every file under `src/`, keyed by the path the repository writes.
+ *
+ * Which files the application is made of is decided by what its sources import,
+ * and that is a property of the checkout being compared: the branch whose commits
+ * are read here is the code that is on this disk.
+ */
+function appSources() {
+  const sources = {};
+  const dir = path.join(ROOT, "src");
+  for (const entry of readdirSync(dir, { withFileTypes: true, recursive: true })) {
+    if (!entry.isFile()) continue;
+    const full = path.join(entry.parentPath ?? entry.path, entry.name);
+    const file = path.relative(ROOT, full).replace(/\\/g, "/");
+    sources[file] = readFileSync(full, "utf8");
+  }
+  return sources;
+}
 
 if (!/^[\w.-]+\/[\w.-]+$/.test(REPO)) {
   console.error(`release: "${REPO}" is not a repository to check`);
@@ -142,15 +166,22 @@ const files = Array.isArray(body.files)
   ? body.files
   : (body.commits || []).flatMap((commit) => (Array.isArray(commit?.files) ? commit.files : []));
 
+// What the application is built from, walked from its entry in this checkout: a
+// test file and a module only a script imports are both under `src/` and both
+// ship nowhere, so they are left out here rather than counted as a change people
+// install.
+const appFiles = appModules({ sources: appSources() });
+
 const drift = driftOf({
   version,
   tag,
   aheadBy: Number(body.ahead_by ?? body.total_commits ?? 0),
   files,
+  appFiles,
 });
 
 console.log(`  the release ${tag} (${version}), carrying ${asset}`);
-console.log(`  ${BRANCH} is ${drift.aheadBy} commit(s) past it\n`);
+console.log(`  ${BRANCH} is ${drift.aheadBy} commit(s) past it, and the app is built from ${appFiles.size} file(s) here\n`);
 
 if (!drift.drifting) {
   console.log(

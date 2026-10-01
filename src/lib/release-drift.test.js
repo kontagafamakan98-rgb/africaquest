@@ -1,8 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { apkNameFor, driftOf, shippingChanges, shipsInTheApp } from "./release-drift.js";
+import {
+  APP_ENTRY,
+  appModules,
+  apkNameFor,
+  candidatePaths,
+  driftOf,
+  importedFrom,
+  resolvedPath,
+  shippingChanges,
+  shipsInTheApp,
+} from "./release-drift.js";
 import { versionFromTag } from "../../scripts/android-version.mjs";
 
 // Whether the Android app people can download is older than the site.
@@ -10,23 +20,100 @@ import { versionFromTag } from "../../scripts/android-version.mjs";
 // The site goes out on every push to main; the APK only when a version tag is
 // pushed, because it is signed, versioned and attached to a release. Nothing
 // said so before this. What is checked here is the decision and not the request,
-// since fetching the comparison is the script's job: which files count as part
-// of the installed application, what the three states of the repository mean,
-// and where the check is wired in.
+// since fetching the comparison is the script's job: which modules the build
+// really carries, what the three states of the repository mean, and where the
+// check is wired in.
+//
+// The rule is only as good as it is quiet: a check that fires on a commit nobody
+// installs is a check people learn to ignore, and that is what the walk below is
+// here to prevent. The second test walks this very repository, so a change that
+// put a script-only module or a test file back into the count would fail here.
 
 const ROOT = path.resolve(import.meta.dirname, "..", "..");
 const read = (file) => readFileSync(path.join(ROOT, file), "utf8");
 
-test("a file the installed application is built from is one the check counts", () => {
-  // The application itself: its screens, its content, its photographs.
+/** The text of every file under a directory here, keyed as the repository writes it. */
+function sourcesUnder(dir) {
+  const sources = {};
+  for (const entry of readdirSync(path.join(ROOT, dir), { withFileTypes: true, recursive: true })) {
+    if (!entry.isFile()) continue;
+    const full = path.join(entry.parentPath ?? entry.path, entry.name);
+    sources[path.relative(ROOT, full).replace(/\\/g, "/")] = readFileSync(full, "utf8");
+  }
+  return sources;
+}
+
+// A small application of the shape this one has, with the imports it really
+// writes: the `@` alias, a specifier with no extension, a dynamic import, and a
+// stylesheet importing another.
+const SOURCES = {
+  "src/main.jsx": "import App from '@/App.jsx';\nimport '@/index.css';\n",
+  "src/App.jsx":
+    "import { pagesConfig } from './pages.config';\nimport Home from './pages/Home.jsx';\nimport { helper } from '@/lib/helper';\n",
+  "src/pages.config.js": "export const pagesConfig = {};\n",
+  "src/pages/Home.jsx": 'const Quiz = () => import("./QuizPage");\n',
+  "src/pages/QuizPage.js": "import { helper } from '../lib/helper';\nexport default 1;\n",
+  "src/lib/helper.js": "export const helper = 1;\n",
+  "src/index.css": '@import "./tokens.css";\n',
+  "src/tokens.css": ":root { --x: 1; }\n",
+  // Both are under src/ and neither is reached from the entry: the first is a
+  // module only a build script imports, the second a test beside the code.
+  "src/lib/tool.js": "export const tool = 1;\n",
+  "src/lib/tool.test.js": "import { tool } from './tool.js';\n",
+};
+
+test("a module is part of the build only when the application really reaches it", () => {
+  // A specifier is read in each shape the application writes, and a specifier
+  // built from a variable is not followed since the build cannot follow it
+  // either.
+  assert.deepEqual(importedFrom("import x from './a.js';\n"), ["./a.js"]);
+  assert.deepEqual(importedFrom("import './side.css';\n"), ["./side.css"]);
+  assert.deepEqual(importedFrom('export { a } from "./b.js";\n'), ["./b.js"]);
+  assert.deepEqual(importedFrom('const c = await import("./c.js");\n'), ["./c.js"]);
+  assert.deepEqual(importedFrom('@import "./d.css";\n'), ["./d.css"]);
+  assert.deepEqual(importedFrom("const e = await import(name);\n"), [], "a variable is not a path");
+
+  // The alias and the relative forms resolve as Vite resolves them; a package
+  // does not resolve to a file of this repository at all.
+  assert.equal(resolvedPath("@/lib/offline.js", "src/main.jsx"), "src/lib/offline.js");
+  assert.equal(resolvedPath("./pages/Home.jsx", "src/App.jsx"), "src/pages/Home.jsx");
+  assert.equal(resolvedPath("../lib/helper", "src/pages/QuizPage.js"), "src/lib/helper");
+  assert.equal(resolvedPath("react", "src/App.jsx"), null, "a package is not a file here");
+  assert.equal(resolvedPath("node:fs", "src/lib/x.js"), null);
+
+  // An extension is honoured when there is one, and a specifier without one is
+  // tried against the extensions this project uses, with the index last.
+  assert.deepEqual(candidatePaths("src/App.jsx"), ["src/App.jsx"]);
+  assert.equal(candidatePaths("src/lib/helper")[0], "src/lib/helper.js");
+  assert.deepEqual(candidatePaths("src/components/")[0], "src/components/index.js");
+
+  // And the walk: the entry and what it reaches, and nothing beside it.
+  const reached = appModules({ sources: SOURCES });
   for (const file of [
+    APP_ENTRY,
+    "src/App.jsx",
+    "src/index.css",
+    "src/tokens.css",
+    "src/pages.config.js",
     "src/pages/Home.jsx",
-    "src/components/game/QuizScreen.jsx",
-    "src/components/StartupLanguage.jsx",
-    "public/favicon.svg",
-    "public/photos/level-1-1.webp",
+    "src/pages/QuizPage.js",
+    "src/lib/helper.js",
   ]) {
-    assert.equal(shipsInTheApp(file), true, `${file} ships in the app`);
+    assert.ok(reached.has(file), `${file} is reached from the entry`);
+  }
+  assert.equal(reached.size, 8, "only the reachable files are part of the build");
+  assert.ok(!reached.has("src/lib/tool.js"), "a module only a script imports does not ship");
+  assert.ok(!reached.has("src/lib/tool.test.js"), "a test file does not ship");
+  assert.deepEqual([...appModules({ sources: {} })], [], "no sources is no build");
+  assert.deepEqual([...appModules()], [], "and no entry is nothing reached either");
+});
+
+test("a file ships only as part of the application or of the wrapper it installs", () => {
+  const appFiles = appModules({ sources: SOURCES });
+
+  // What the application reaches: its screens, its styles, its helpers.
+  for (const file of ["src/App.jsx", "src/pages/Home.jsx", "src/lib/helper.js", "src/index.css"]) {
+    assert.equal(shipsInTheApp(file, appFiles), true, `${file} ships in the app`);
   }
 
   // The wrapper and the way it is assembled: a device installs these too.
@@ -36,72 +123,123 @@ test("a file the installed application is built from is one the check counts", (
     "android/app/src/main/res/drawable-mdpi/splash_mark.png",
     "android/app/build.gradle",
     "build/offline-plugin.js",
+    "public/favicon.svg",
+    "public/photos/level-1-1.webp",
     "index.html",
     "capacitor.config.json",
-    "package.json",
     "package-lock.json",
     "vite.config.js",
+    "tailwind.config.js",
   ]) {
     assert.equal(shipsInTheApp(file), true, `${file} is part of what is built`);
   }
 
-  // And what does not: the documentation, the workflows, the checks themselves.
-  // A check that failed on these would be one nobody keeps, and a paragraph
-  // about signing a release is exactly the commit that follows a release
-  // without changing the application at all.
+  // And what does not. Under src/, a module the application does not reach and a
+  // test beside the code both ship nowhere, which is the whole reason the walk
+  // exists: a check that failed on them would be one nobody keeps.
   for (const file of [
+    "src/lib/tool.js",
+    "src/lib/tool.test.js",
     "README.md",
     "ANDROID_RELEASE.md",
-    "ACCESSIBILITY.md",
-    "CONTRIBUTING.md",
+    "package.json",
     ".github/workflows/uptime.yml",
     ".github/workflows/android.yml",
     "scripts/check-site.mjs",
+    "scripts/check-release.mjs",
     "scripts/android-version.mjs",
   ]) {
-    assert.equal(shipsInTheApp(file), false, `${file} does not ship`);
+    assert.equal(shipsInTheApp(file, appFiles), false, `${file} does not ship`);
   }
 
   // A path is compared as the repository writes it, and a name that merely
   // starts like an entry is not under it: `srcfile.js` is not under `src/`.
-  assert.equal(shipsInTheApp("src"), false, "a directory name alone is not a file of it");
-  assert.equal(shipsInTheApp("srcfile.js"), false, "a name that merely starts with src is not src/");
-  assert.equal(shipsInTheApp("./src/App.jsx"), true, "a leading ./ is the same file");
-  assert.equal(shipsInTheApp(""), false);
-  assert.equal(shipsInTheApp(null), false);
-  assert.equal(shipsInTheApp(undefined), false);
+  assert.equal(shipsInTheApp("src", appFiles), false, "a directory name alone is not a file of it");
+  assert.equal(shipsInTheApp("srcfile.js", appFiles), false, "a name that merely starts with src is not src/");
+  assert.equal(shipsInTheApp("./src/App.jsx", appFiles), true, "a leading ./ is the same file");
+  assert.equal(shipsInTheApp("", appFiles), false);
+  assert.equal(shipsInTheApp(null, appFiles), false);
+  assert.equal(shipsInTheApp(undefined, appFiles), false);
+});
+
+test("this repository's own application is the files its entry reaches", () => {
+  // The walk above is only as good as it is on the real tree: this is the same
+  // decision the daily check makes, read from the sources that are here.
+  const appFiles = appModules({ sources: sourcesUnder("src") });
+
+  assert.ok(appFiles.has(APP_ENTRY), "the entry the site starts from is part of the build");
+  assert.ok(appFiles.has("src/App.jsx"), "the application itself is part of the build");
+  assert.ok(appFiles.has("src/pages/Home.jsx"), "a screen the first route reaches is part of it");
+  assert.ok(appFiles.size > 40, `the application is more than a handful of files (found ${appFiles.size})`);
+
+  // And the files that must not be in it, which is what a commit that adds a
+  // check would otherwise be counted for. A module of pure logic written for a
+  // script is imported by that script and by its own test and by nothing a
+  // reader loads; a test file runs under Node and ships nowhere.
+  for (const file of [
+    "src/lib/release-drift.js",
+    "src/lib/release-drift.test.js",
+    "src/lib/site-health.js",
+    "src/lib/site-health.test.js",
+  ]) {
+    assert.equal(appFiles.has(file), false, `${file} is not reached from the entry`);
+    assert.equal(shipsInTheApp(file, appFiles), false, `${file} does not ship`);
+  }
+
+  for (const file of appFiles) {
+    assert.match(file, /^src\//, `${file} is a file of the application under src/`);
+    assert.ok(!file.endsWith(".test.js"), `${file} is a test and does not ship`);
+  }
+
+  // A dependency change moves the lockfile and is seen; a script or a note does
+  // not, and is not a reason to cut a version.
+  assert.equal(shipsInTheApp("package-lock.json", appFiles), true);
+  assert.equal(shipsInTheApp("package.json", appFiles), false);
 });
 
 test("only the files that ship are reported, once each and in order", () => {
+  const appFiles = appModules({ sources: SOURCES });
+
   // GitHub answers a comparison with an object per file, and another endpoint
   // with the name alone: both shapes are read, and a file touched by three
   // commits is listed once.
-  const changed = shippingChanges([
-    { filename: "src/pages/Android.jsx" },
-    { filename: "README.md" },
-    "src/pages/Android.jsx",
-    { filename: "android/app/src/main/res/values/styles.xml" },
-    { filename: ".github/workflows/verify.yml" },
-    { filename: "src/components/StartupLanguage.jsx" },
-    { filename: null },
-    {},
-    null,
-  ]);
+  const changed = shippingChanges(
+    [
+      { filename: "src/pages/Home.jsx" },
+      { filename: "README.md" },
+      "src/pages/Home.jsx",
+      { filename: "android/app/src/main/res/values/styles.xml" },
+      { filename: ".github/workflows/verify.yml" },
+      { filename: "src/lib/helper.js" },
+      { filename: "src/lib/tool.js" },
+      { filename: null },
+      {},
+      null,
+    ],
+    appFiles
+  );
 
   assert.deepEqual(changed, [
     "android/app/src/main/res/values/styles.xml",
-    "src/components/StartupLanguage.jsx",
-    "src/pages/Android.jsx",
+    "src/lib/helper.js",
+    "src/pages/Home.jsx",
   ]);
 
-  assert.deepEqual(shippingChanges([]), []);
-  assert.deepEqual(shippingChanges(null), [], "no list at all is not a list of changes");
-  assert.deepEqual(shippingChanges(["README.md"]), [], "a commit over documentation alone ships nothing");
+  assert.deepEqual(shippingChanges([], appFiles), []);
+  assert.deepEqual(shippingChanges(null, appFiles), [], "no list at all is not a list of changes");
+  assert.deepEqual(shippingChanges(["README.md"], appFiles), [], "a commit over documentation alone ships nothing");
+  assert.deepEqual(
+    shippingChanges(["src/lib/tool.js", "package.json"], appFiles),
+    [],
+    "a script-only module and the manifest ship nothing"
+  );
 });
 
 test("the three states of the repository are told apart", () => {
+  const appFiles = appModules({ sources: SOURCES });
+
   // The release is the branch: nothing to do, and no version to cut.
-  assert.deepEqual(driftOf({ version: "1.0.1", tag: "v1.0.1", aheadBy: 0, files: [] }), {
+  assert.deepEqual(driftOf({ version: "1.0.1", tag: "v1.0.1", aheadBy: 0, files: [], appFiles }), {
     version: "1.0.1",
     tag: "v1.0.1",
     aheadBy: 0,
@@ -115,7 +253,15 @@ test("the three states of the repository are told apart", () => {
     version: "1.0.1",
     tag: "v1.0.1",
     aheadBy: 3,
-    files: ["README.md", ".github/workflows/uptime.yml", "scripts/check-release.mjs"],
+    files: [
+      "README.md",
+      ".github/workflows/uptime.yml",
+      "scripts/check-release.mjs",
+      "src/lib/tool.js",
+      "src/lib/tool.test.js",
+      "package.json",
+    ],
+    appFiles,
   });
   assert.equal(quiet.aheadBy, 3);
   assert.equal(quiet.drifting, false);
@@ -127,6 +273,7 @@ test("the three states of the repository are told apart", () => {
     tag: "v1.0.1",
     aheadBy: 5,
     files: ["src/pages/Home.jsx", "README.md", "android/app/build.gradle"],
+    appFiles,
   });
   assert.equal(behind.drifting, true);
   assert.deepEqual(behind.files, ["android/app/build.gradle", "src/pages/Home.jsx"]);
@@ -134,7 +281,7 @@ test("the three states of the repository are told apart", () => {
   // A count that is missing or nonsense reads as none rather than as a crash:
   // the list of files is what decides, and a number only says how far behind.
   for (const aheadBy of [undefined, null, -2, Number.NaN, "3"]) {
-    assert.equal(driftOf({ aheadBy }).aheadBy, 0, `${aheadBy} is not a count of commits`);
+    assert.equal(driftOf({ aheadBy, appFiles }).aheadBy, 0, `${aheadBy} is not a count of commits`);
   }
 });
 
@@ -182,8 +329,15 @@ test("the check is asked for by the daily run, and stays out of the verification
   const verify = read("scripts/verify.mjs");
   assert.doesNotMatch(verify, /check-release/, "the verification now needs the network");
 
-  // And it is registered where a person can run it by hand, with the same shape
-  // as the other on-demand checks.
+  // And what decides is what the application is built from, walked from its
+  // entry, so the script reads this checkout rather than counting every file
+  // under src/.
+  const script = read("scripts/check-release.mjs");
+  assert.match(script, /appModules\(\{ sources:/, "the check no longer walks the application's imports");
+  assert.match(script, /appFiles,/, "the check no longer hands the reachable set to the verdict");
+
+  // It is registered where a person can run it by hand, with the same shape as
+  // the other on-demand checks.
   const { scripts } = JSON.parse(read("package.json"));
   assert.match(scripts["check:release"], /check-release\.mjs/, "package.json registers the release check");
   assert.ok(!scripts.verify.includes("check:release"), "the verification runs the release check");
