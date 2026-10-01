@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import {
+  CSP_META,
   DEFAULT_SITE_ORIGIN,
   PREVIEW_FILE,
   PREVIEW_MARKER,
@@ -143,4 +144,35 @@ test("the page carries the marker the build fills in, and the build is wired to 
   const workflow = read(".github/workflows/pages.yml");
   assert.match(workflow, new RegExp(SITE_ORIGIN_VARIABLE), "the workflow hands the address to the build");
   assert.match(workflow, /steps\.pages\.outputs\.base_url/, "the address GitHub answers for the repository");
+});
+
+test("the built page carries a policy, written where a browser reads it first", () => {
+  // GitHub Pages cannot send a header, so the only place a policy can travel is
+  // inside the page. It is narrow on purpose: the application loads nothing from
+  // anywhere but itself, and the policy is what keeps that true rather than
+  // merely intended.
+  assert.match(CSP_META, /(^|;\s*)default-src 'self'/, "anything not named below would be allowed to come from anywhere");
+  assert.match(CSP_META, /object-src 'none'/, "a plugin or an embedded object is no longer refused");
+  assert.match(CSP_META, /script-src 'self'/, "a script no longer has to be one of ours");
+  // The allowance a policy is most often loosened with, and the one thing here
+  // that must never appear: no inline script is in the built page at all.
+  assert.doesNotMatch(CSP_META, /script-src[^;]*unsafe-inline/, "any inline script is allowed to run again");
+  assert.doesNotMatch(CSP_META, /\*/, "the policy allows any origin");
+
+  const plugin = siteFiles({ root: ROOT, environment: { [SITE_ORIGIN_VARIABLE]: siteRoot } });
+  plugin.configResolved({ root: ROOT, command: "build", build: {} });
+  const page = plugin.transformIndexHtml(
+    `<html><head>\n    <meta charset="UTF-8" />\n    <meta name="description" content="A game about Africa." />\n    ${PREVIEW_MARKER}\n  </head><body></body></html>`
+  );
+
+  const policy = page.indexOf('http-equiv="Content-Security-Policy"');
+  assert.ok(policy > 0, "the built page carries no policy at all");
+  // First in the head, and not merely present: what the page has already loaded
+  // is not governed by a policy that comes after it.
+  assert.ok(policy < page.indexOf("charset"), "the policy is not the first thing the browser reads");
+  assert.ok(policy < page.indexOf("og:type"), "the policy arrives after the tags the build adds");
+
+  // And the source page does not carry it, because the development server would
+  // not survive it: Vite injects the React refresh preamble as an inline script.
+  assert.doesNotMatch(read("index.html"), /Content-Security-Policy/, "index.html keeps a policy the dev server cannot run under");
 });

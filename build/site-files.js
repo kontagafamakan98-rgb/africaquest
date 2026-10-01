@@ -47,6 +47,44 @@ export const PREVIEW_MARKER = "<!--site-preview-->";
 /** The social card, named here because two files have to agree on it. */
 export const PREVIEW_FILE = "social-preview.png";
 
+/**
+ * What the built page is allowed to load.
+ *
+ * GitHub Pages serves files and cannot be told to send a header, so a policy can
+ * only travel inside the page, as the meta tag a browser reads before it loads
+ * anything else. It is written by the build rather than kept in index.html
+ * because the development server is not what it protects: Vite injects the React
+ * refresh preamble as an inline script while developing, and a policy strict
+ * enough to be worth having would block exactly that, and nothing in production.
+ *
+ * The application loads nothing from anywhere but its own origin - no font, no
+ * script, no picture, no call - so the policy is `'self'` and little more. The
+ * one allowance it cannot drop is an inline style: React writes the reading
+ * position of the notch area and a few measuring styles as attributes, and a
+ * style attribute is governed by `style-src` like any other style. `script-src`
+ * deliberately does not carry that allowance: the built page has no inline
+ * script in it, and saying so is the whole point of writing this down.
+ */
+export const CSP_META = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-src 'none'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "form-action 'self'",
+].join("; ");
+
+/** The meta tag that carries the policy, as the browser reads it. */
+export function cspTag() {
+  return `<meta http-equiv="Content-Security-Policy" content="${CSP_META}" />`;
+}
+
 /** The address the site is served from, without a trailing slash. */
 export function siteOrigin(environment = process.env) {
   const given = typeof environment?.[SITE_ORIGIN_VARIABLE] === "string"
@@ -191,7 +229,12 @@ export function siteFiles({ root = process.cwd(), environment = process.env } = 
     transformIndexHtml(html) {
       const description = /<meta\s+name="description"\s+content="([^"]*)"/.exec(html)?.[1] ?? "";
       const tags = previewTags({ siteRoot, description });
-      return html.replace(PREVIEW_MARKER, tags);
+      // The policy is the first thing in the head, before the tags the build
+      // adds and before anything the page could load: a browser reads a policy
+      // where it stands, and what it has already fetched is not covered by it.
+      return html
+        .replace(/<head>/i, `<head>\n    ${cspTag()}`)
+        .replace(PREVIEW_MARKER, tags);
     },
     generateBundle() {
       if (!building) return;
