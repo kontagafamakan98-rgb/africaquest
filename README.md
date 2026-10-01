@@ -545,6 +545,17 @@ what tells the publisher, since GitHub notifies the owner of a scheduled workflo
 that failed. That is why no third party watches this site and no secret is kept
 for one.
 
+The verdict is also kept where it can be read a month later. A run is one of
+hundreds, it is kept for ninety days, and it says nothing about the days before
+it: a month of green runs looks exactly like a check that stopped running, which
+is the one failure a daily check cannot report about itself. So each check
+appends what it found to a single issue, whose body carries the last forty checks
+as a table. A comment is left only when the site changes state, so a site that is
+down for a week says so once and then sits in the table, and the day it answers
+again is news as well; anything more would be a notification a day. The step that
+keeps it reads `npm run check:site -- --report <path>` rather than asking the site
+a second time, so the two cannot end up disagreeing about what was found.
+
 The same run asks the other half of that question, because the two published
 things do not move together: the site goes out on every push to `main`, and the
 APK only on a version tag, since it has to be signed and attached to a release.

@@ -12,6 +12,12 @@
 # third party watching the site and no secret in this file. A run that succeeds
 # says nothing to anybody, which is the point.
 #
+# The verdict of the site check is kept as well as given, for the same reason:
+# a run is easy to lose among hundreds, and a month of green ones cannot be told
+# apart from a check that stopped running. Each check appends what it found to one
+# issue, whose body holds the last forty as a table, and a comment is left only
+# when the site changes state (see scripts/announce-uptime.mjs).
+#
 # The half of it that can last is left as an issue as well, because a run is easy
 # to lose among hundreds and says nothing once it is green again. When the
 # released app is behind the site, the same run opens an issue naming the files
@@ -76,8 +82,28 @@ jobs:
 
       # No install step: this script reads files over the network and imports
       # nothing outside the repository.
+      #
+      # The verdict is left in a file as well as in the log of this run, because
+      # the step below keeps it: a run is one of hundreds, it says nothing about
+      # the days before it, and a green one every day for a month looks exactly
+      # like a check that stopped running.
       - name: Read the published site
-        run: node scripts/check-site.mjs
+        run: node scripts/check-site.mjs --report uptime-report.json
+
+      # The alarm a failing run gives is kept for ninety days and says nothing
+      # about the days before it, so the same verdict is appended to one issue,
+      # where it can be read a month later. The body of that issue is the record
+      # and a comment is the news: one is left only when the site changes state,
+      # so a site that is down for a week says so once and then sits in the
+      # table. It runs whatever the step before it did, so a check that never
+      # reached its verdict leaves the log alone rather than writing a gap into
+      # it. The repository is the one the run belongs to, which GitHub hands in
+      # by itself, so a fork keeps its own log without being told to.
+      - name: Keep the day-by-day record of what was found
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/announce-uptime.mjs --report uptime-report.json
 
       # The other half of what is published, and the half that can fall behind
       # without anybody noticing: the site goes out on every push to main, while

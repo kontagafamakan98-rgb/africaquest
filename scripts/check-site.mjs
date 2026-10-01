@@ -38,11 +38,45 @@
  * Exit code 0 when every address answers with what it should be, 1 when any of
  * them does not, and 2 when there was nothing to check at all.
  */
+import { writeFileSync } from "node:fs";
 import { addressOf, chosenScripts, CONCURRENCY, hostAddressOf, inFlight, precachedFrom, SETTLE_ATTEMPTS, SETTLE_WAIT_MS, SITE_FILES, SPACING_MS, TIMEOUT_MS, verdictIsAlarming, verdictLine, verdictOf } from "../src/lib/site-health.js";
 import { siteOrigin } from "../build/site-files.js";
 
 const AGENT = "AfricaHistoryQuest/1.0 (site check; kojoapp98@gmail.com)";
-const given = process.argv.slice(2).find((argument) => !argument.startsWith("--"));
+const ARGUMENTS = process.argv.slice(2);
+
+/** The options that are followed by a value, so the value is not read as an address. */
+const VALUED_OPTIONS = new Set(["--report"]);
+
+/**
+ * The first argument that is not an option and not the value of one.
+ *
+ * Without this the address being checked would be taken from `--report` and the
+ * run would read a file name as a site, which is a check that reports on nothing
+ * and says it in no uncertain terms.
+ */
+function positional() {
+  for (let at = 0; at < ARGUMENTS.length; at += 1) {
+    if (VALUED_OPTIONS.has(ARGUMENTS[at])) {
+      at += 1;
+      continue;
+    }
+    if (!ARGUMENTS[at].startsWith("--")) return ARGUMENTS[at];
+  }
+  return "";
+}
+
+/** The value of `--name value`, or an empty string when it was not given. */
+function option(name) {
+  const at = ARGUMENTS.indexOf(`--${name}`);
+  const value = at === -1 ? "" : ARGUMENTS[at + 1] || "";
+  return value.startsWith("--") ? "" : value;
+}
+
+/** Where the verdict is left for the step that keeps the day-by-day log. */
+const REPORT = option("report");
+
+const given = positional();
 const origin = given ? given.replace(/\/+$/, "") : siteOrigin();
 
 if (!/^https?:\/\//i.test(origin)) {
@@ -154,7 +188,33 @@ if (results.length === 0) {
   process.exit(2);
 }
 
+/**
+ * The verdict, written where the step after this one reads it.
+ *
+ * A run says nothing about the days before it, so the same answer is kept in an
+ * issue as well. It is written here rather than asked for again there, for the
+ * same reason the drift check leaves a report: two steps asking the same
+ * question twice can end up disagreeing about what was found.
+ */
+function emitReport(outcome) {
+  if (!REPORT) return;
+  const answered = results.filter((answer) => verdictOf(answer) === "healthy").length;
+  const report = {
+    site: origin,
+    outcome,
+    checkedAt: new Date().toISOString(),
+    asked: results.length,
+    answered,
+  };
+  try {
+    writeFileSync(REPORT, `${JSON.stringify(report, null, 2)}\n`);
+  } catch (error) {
+    console.error(`site: the verdict could not be left at ${REPORT} (${error.message})`);
+  }
+}
+
 if (alarming.length === 0) {
+  emitReport("up");
   console.log(`\nsite: all ${results.length} addresses answered, and every one of them is what it should be`);
   process.exit(0);
 }
@@ -168,4 +228,5 @@ console.error(
     "  an address that answered with something else means what arrived was not that file - on a single page site, that is\n" +
     "  usually the host answering a path it does not have with the application itself."
 );
+emitReport("down");
 process.exit(1);
