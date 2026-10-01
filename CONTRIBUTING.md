@@ -38,6 +38,10 @@ screen that throws while it draws, or a control that reaches a reader with no
 name, fails here instead of in front of a player. That is the reason `jsdom`,
 `axe-core` and `esbuild` sit in the development dependencies.
 
+The half of accessibility no test can reach - sitting down with NVDA or
+VoiceOver and going through a lesson and then a quiz - is written out step by
+step, with what counts as a failure, in [ACCESSIBILITY.md](ACCESSIBILITY.md).
+
 ## House rules
 
 The rules in `src/lib/design-rules.test.js` are the taste of this project, and

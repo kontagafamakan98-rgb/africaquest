@@ -373,7 +373,9 @@ down with a real screen reader, NVDA on Windows or VoiceOver on a Mac or an iPho
 through a lesson and then a quiz. That session is the only way to hear the order the parts arrive
 in, whether the announcements land often enough and not too often, and whether a heading a sighted
 reader walks past is one a screen reader trips over. Until it happens, the automated audit is what
-is covered here, and it is worth saying which of the two it is.
+is covered here, and it is worth saying which of the two it is. The session itself, step by step,
+with the route to follow and what counts as a failure, is written in
+[ACCESSIBILITY.md](ACCESSIBILITY.md), so the next person does not start from a blank page.
 
 ## The weight of a build
 
