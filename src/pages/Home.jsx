@@ -29,7 +29,8 @@ const ReviewSession = lazy(() => import("../components/game/ReviewSession"));
 const StatsScreen = lazy(() => import("../components/game/StatsScreen"));
 import { collectDueReviews, collectReviewQueue, nextReviewDelay, formatReviewDelay, questionKey, countDueReviews, unlockedLevelIds } from "../components/game/learning";
 import { useReviewReminder } from "../lib/use-review-reminder.js";
-import { Map, BookOpen, Award, BarChart3, Settings, ChevronRight, RotateCcw, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Map, BookOpen, Award, BarChart3, Settings, ChevronRight, RotateCcw, Clock, Smartphone } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useT, useLang } from "../components/i18n";
@@ -278,7 +279,19 @@ export default function Home() {
         }}
       >
         <div className="max-w-lg mx-auto">
-          <h1 className="text-xl font-extrabold tracking-tight leading-tight text-white">{t.appTitle}</h1>
+          {/* The Android app sits beside the title rather than as a card among
+              the levels: a reader who came to install the game finds it on the
+              first screen, and one who came to play reads past a single word. */}
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-xl font-extrabold tracking-tight leading-tight text-white">{t.appTitle}</h1>
+            <Link
+              to="/Android"
+              className="shrink-0 mt-0.5 inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/70 hover:text-white hover:border-white/30 transition-colors active:scale-[0.99]"
+            >
+              <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
+              {t.androidAppShort}
+            </Link>
+          </div>
           <p className="text-amber-100/80 text-[11px] font-medium mt-0.5">{t.appSubtitle}</p>
 
           {/* One number carries the screen: how far along the timeline the player
