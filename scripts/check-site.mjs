@@ -22,6 +22,13 @@
  * level, the last), and they are fetched: assets published under a path they are
  * not served from fail all three at once, which is what happened.
  *
+ * A deployment in flight is not read as an outage. Pages answers a 404 for every
+ * address until the new deployment is published, and a run that happened to read
+ * the site in that minute would wake the publisher for a site that is about to
+ * be there. So a read in which not one address came back at all is made again,
+ * a few times, before it is believed; anything that did arrive is decided at
+ * once.
+ *
  * It is deliberately not part of `npm run verify`: the verification says whether
  * the project can be built, and this says whether the site that was built can be
  * reached, which needs a network and a deployment that has finished. The Uptime
@@ -31,7 +38,7 @@
  * Exit code 0 when every address answers with what it should be, 1 when any of
  * them does not, and 2 when there was nothing to check at all.
  */
-import { addressOf, chosenScripts, CONCURRENCY, hostAddressOf, precachedFrom, SITE_FILES, SPACING_MS, TIMEOUT_MS, verdictIsAlarming, verdictLine, verdictOf } from "../src/lib/site-health.js";
+import { addressOf, chosenScripts, CONCURRENCY, hostAddressOf, inFlight, precachedFrom, SETTLE_ATTEMPTS, SETTLE_WAIT_MS, SITE_FILES, SPACING_MS, TIMEOUT_MS, verdictIsAlarming, verdictLine, verdictOf } from "../src/lib/site-health.js";
 import { siteOrigin } from "../build/site-files.js";
 
 const AGENT = "AfricaHistoryQuest/1.0 (site check; kojoapp98@gmail.com)";
@@ -96,16 +103,43 @@ async function askAll(entries) {
   return answers;
 }
 
-const results = await askAll(SITE_FILES);
+/**
+ * One whole read of the site: the files it is made of, and then the scripts the
+ * worker names, which can only be asked for once the worker itself answered.
+ *
+ * It is a function rather than a run of statements because it is run more than
+ * once: a read in which nothing answered is a read to make again (see below).
+ */
+async function readSite() {
+  const results = await askAll(SITE_FILES);
 
-// What the worker installs, asked for by the names only the worker knows. A
-// worker that did not answer is already a fault of its own above; there is
-// nothing to learn from the list inside a file that is not there.
-const worker = results.find((answer) => answer.entry.kind === "worker");
-if (worker && verdictOf(worker) === "healthy") {
-  const scripts = chosenScripts(precachedFrom(worker.body));
-  console.log(`\n  ${scripts.length} script(s) named by the worker, asked for in turn\n`);
-  results.push(...(await askAll(scripts)));
+  // What the worker installs, asked for by the names only the worker knows. A
+  // worker that did not answer is already a fault of its own above; there is
+  // nothing to learn from the list inside a file that is not there.
+  const worker = results.find((answer) => answer.entry.kind === "worker");
+  if (worker && verdictOf(worker) === "healthy") {
+    const scripts = chosenScripts(precachedFrom(worker.body));
+    console.log(`\n  ${scripts.length} script(s) named by the worker, asked for in turn\n`);
+    results.push(...(await askAll(scripts)));
+  }
+  return results;
+}
+
+// A deployment that has not finished and a site that is gone answer alike for a
+// minute or two: until the new deployment is published, Pages serves a 404 (or
+// nothing) for every address, which is the same thing a repository whose Pages
+// setting was turned off says. Reading the site once would wake the publisher
+// for a site that is about to be there, which is the alarm people learn to
+// ignore. So a read in which not one address came back at all is made again,
+// a few times, before it is believed. A read in which something arrived, and a
+// read in which the site answered with the wrong content, are decided at once:
+// the site is published, and what arrived is the failure this check exists for.
+let results = await readSite();
+for (let attempt = 2; attempt <= SETTLE_ATTEMPTS && inFlight(results); attempt += 1) {
+  console.log(`\n  none of the ${results.length} addresses answered: a deployment may still be publishing.`);
+  console.log(`  asking again in ${Math.round(SETTLE_WAIT_MS / 1000)}s (${attempt} of ${SETTLE_ATTEMPTS}).`);
+  await sleep(SETTLE_WAIT_MS);
+  results = await readSite();
 }
 
 const alarming = [];

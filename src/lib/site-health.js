@@ -57,6 +57,25 @@ export const CONCURRENCY = 4;
 /** Between two requests, so a daily check is never a small flood. */
 export const SPACING_MS = 250;
 
+/**
+ * How many times the whole site is read before a total absence is believed.
+ *
+ * One read is the reading; the ones after it are the waiting. Three of them,
+ * with the wait below, come to a window of a minute and a half: longer than a
+ * GitHub Pages deployment takes to be published, and short enough that a site
+ * that is really gone is still reported in the same run.
+ */
+export const SETTLE_ATTEMPTS = 3;
+
+/**
+ * How long to wait between two of those reads.
+ *
+ * A deployment in flight is a state that passes on its own, and the whole point
+ * of reading again is to let it. A minute is more than the minute or so a
+ * publication takes, and it is spent only when nothing answered at all.
+ */
+export const SETTLE_WAIT_MS = 45000;
+
 /** What the site is made of, in the order a reader meets it. */
 export const SITE_FILES = [
   { path: "", kind: "page", what: "the application itself" },
@@ -241,6 +260,37 @@ export function verdictOf({ kind, status = 0, body = "", error = null } = {}) {
 /** Whether that answer is worth waking somebody up for. */
 export function verdictIsAlarming(verdict) {
   return verdict !== "healthy";
+}
+
+/**
+ * The three ways an address can say that the file is not there at all.
+ *
+ * They are held apart from `wrong`, which says that something did arrive and it
+ * is not what it should be. A site that is merely not published yet answers
+ * nothing, and a site that is published and broken answers with the wrong
+ * content: only the first of the two is a state worth waiting out.
+ */
+const ABSENT = new Set(["missing", "refused", "unreachable"]);
+
+/**
+ * Whether what came back looks like a deployment that has not finished.
+ *
+ * A deployment in flight and a site that is gone are told apart by time rather
+ * than by an answer: Pages serves a 404 for every address until the new
+ * deployment is published, which is exactly what a repository whose Pages
+ * setting is off says too. So when not one address came back at all, the check
+ * reads the site again before it believes what it found. When even one address
+ * is the application itself, the site is published, and everything else that is
+ * missing or wrong is a fault of the deployment that put it there - which is the
+ * failure this check exists for, and not one to wait out.
+ *
+ * @param {{ kind?: string, status?: number, body?: string, error?: string|null }[]} answers
+ *   One answer per address that was asked for.
+ * @returns {boolean} whether the whole site is absent rather than broken
+ */
+export function inFlight(answers) {
+  if (!Array.isArray(answers) || answers.length === 0) return false;
+  return answers.every((answer) => ABSENT.has(verdictOf(answer)));
 }
 
 /** The line the check prints for one address, and the whole of what it says. */

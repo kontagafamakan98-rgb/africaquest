@@ -5,10 +5,13 @@ import path from "node:path";
 import {
   CONCURRENCY,
   FIRST_PHOTO,
+  SETTLE_ATTEMPTS,
+  SETTLE_WAIT_MS,
   SITE_FILES,
   SPACING_MS,
   TIMEOUT_MS,
   addressOf,
+  inFlight,
   looksLike,
   verdictIsAlarming,
   verdictLine,
@@ -194,6 +197,36 @@ test("what an answer means is not the same question as whether it answered", () 
   }
 });
 
+test("a site that answers nothing is waited out, and a broken one is not", () => {
+  // A deployment in flight and a site that is gone answer alike for a minute or
+  // two: until the new deployment is published, Pages serves a 404 for every
+  // address, which is what a repository whose Pages setting was turned off says
+  // as well. So a read in which nothing arrived is made again; anything that did
+  // arrive is the failure this check exists for, and is decided at once.
+  const gone = SITE_FILES.map((file) => ({ kind: file.kind, status: 404, body: "" }));
+  assert.equal(inFlight(gone), true, "a site that answers nothing is waited out");
+
+  const unreachable = SITE_FILES.map((file) => ({ kind: file.kind, status: 0, body: "" }));
+  assert.equal(inFlight(unreachable), true, "a host that does not answer is waited out too");
+
+  // One address up means the site is up: what is missing beside it is a fault of
+  // the deployment that put it there, not a deployment still in flight.
+  const oneUp = [
+    { kind: "page", status: 200, body: '<div id="root"></div><title>Africa History Quest</title>' },
+    ...gone.slice(1),
+  ];
+  assert.equal(inFlight(oneUp), false, "a site that is there is not waited out");
+
+  // And something that arrived with the wrong content is exactly what this check
+  // must catch rather than sleep through.
+  const wrong = [{ kind: "page", status: 200, body: "<h1>Not found</h1>" }, ...gone.slice(1)];
+  assert.equal(inFlight(wrong), false, "a site answering with the wrong content is not waited out");
+
+  // Nothing checked says nothing about the site, and is not a state to wait out.
+  assert.equal(inFlight([]), false);
+  assert.equal(inFlight(undefined), false);
+});
+
 test("the check is asked for, paced, and stays out of the verification", () => {
   const { scripts } = JSON.parse(read("package.json"));
   assert.match(scripts["check:site"], /check-site\.mjs/, "package.json registers the site check");
@@ -219,6 +252,13 @@ test("the check is asked for, paced, and stays out of the verification", () => {
   // A refusal is not read as a verdict of its own: only four files are asked
   // for, four at a time, spread out, with a timeout on each.
   assert.ok(CONCURRENCY <= 4 && SPACING_MS >= 100 && TIMEOUT_MS >= 5000, "the pacing is a flood");
+
+  // And a site that answered nothing is read again before it is believed, which
+  // is a wait in this script and not a softer verdict: the same alarming answer
+  // is what a site that is really gone still ends on.
+  assert.match(script, /inFlight\(/, "the check never waits for a deployment in flight");
+  assert.ok(SETTLE_ATTEMPTS >= 2 && SETTLE_ATTEMPTS <= 5, "the site is read too few or too many times");
+  assert.ok(SETTLE_WAIT_MS >= 5000 && SETTLE_WAIT_MS <= 120000, "the wait is not a wait, or it is a day");
 
   // And a failing run is what tells the publisher: GitHub notifies the owner of
   // a scheduled workflow that failed, which is why no third party watches this.
