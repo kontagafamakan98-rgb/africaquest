@@ -540,6 +540,17 @@ test("the installer the release publishes is read back, and it is what the tag p
 
   const manifest = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
   assert.match(manifest.scripts["check:desktop"] ?? "", /check-desktop\.mjs/, "npm has no way to ask for the check");
+
+  // The build produces the installer and stops there. electron-builder publishes
+  // a release by itself the moment it sees a version tag, and the build runner
+  // has no token for it: left on, the installer is assembled and the step then
+  // fails trying to publish it from a job that may only read. The release job is
+  // the one write this workflow is allowed, so the build is told never to.
+  assert.match(
+    manifest.scripts["desktop:build"] ?? "",
+    /--publish never/,
+    "the installer build tries to publish the release itself"
+  );
 });
 
 test("the workflow installs the image library the photograph check reads with", () => {

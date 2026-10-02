@@ -48,7 +48,7 @@
     "desktop:icon": "node scripts/generate-desktop-icon.mjs",
     "desktop:runtime": "node scripts/desktop-runtime.mjs",
     "desktop:start": "npm run desktop:runtime --silent && electron .",
-    "desktop:build": "npm run build --silent && npm run desktop:runtime --silent && electron-builder --win nsis"
+    "desktop:build": "npm run build --silent && npm run desktop:runtime --silent && electron-builder --win nsis --publish never"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.2",
