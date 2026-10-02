@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Smartphone, Download, ExternalLink, ShieldAlert, ShieldCheck, WifiOff } from "lucide-react";
+import { ArrowLeft, Smartphone, Download, ExternalLink, Share2, ShieldAlert, ShieldCheck, WifiOff } from "lucide-react";
 import { useLang } from "../components/i18n";
 import {
   RELEASES_PAGE,
   RELEASE_TIMEOUT_MS,
   latestAndroidRelease,
 } from "../lib/android-release";
+import { shareApp } from "../lib/share";
 
 /**
  * The Android app, where to get it, and how to install it.
@@ -31,6 +32,13 @@ import {
  * The wording lives in the module rather than in the shared dictionary, the way
  * the About page keeps its own: this is a page read once, and its text is long
  * enough that keeping it beside the layout is what makes it editable.
+ *
+ * The last thing the screen does is hand itself on. This is the one page of the
+ * project a reader sends to somebody else, and what a friend needs is not the
+ * file but the page: it carries the download, the steps and the answer to the
+ * warning. So the button shares the address the reader is already on, through
+ * the sheet their phone already uses to talk to people, and the address is shown
+ * as text as well for the browsers that have no sheet at all.
  */
 const CONTENT = {
   en: {
@@ -44,6 +52,15 @@ const CONTENT = {
     download: "Download for Android",
     direct: "Download the APK file directly",
     releasePage: "Open the release page",
+    shareHeading: "Hand it to a friend",
+    shareBody:
+      "This page is the whole of it: the file, what a phone asks, and what Play Protect's warning means. Send the address and a friend has everything they need to install the game.",
+    shareButton: "Share this page",
+    shareCopied: "The address is on the clipboard. Paste it into a message and send it.",
+    shareUnavailable: "This browser cannot share by itself. The address below is the link to send.",
+    shareLinkLabel: "The address of this page",
+    shareMessage:
+      "Africa History Quest, the history of Africa as a quiz game, installed on Android. Open {url} and follow what it says. If your phone says Play Protect blocked it, choose Install anyway.",
     installHeading: "How to install it",
     installSteps: [
       "Open the download and let the APK arrive. That is the file format Android installs applications from.",
@@ -75,6 +92,15 @@ const CONTENT = {
     download: "Télécharger pour Android",
     direct: "Télécharger directement le fichier APK",
     releasePage: "Ouvrir la page des versions",
+    shareHeading: "Le passer à un ami",
+    shareBody:
+      "Cette page dit tout : le fichier, ce que le téléphone demande, et ce que veut dire l'avertissement de Play Protect. Envoyez l'adresse et un ami a tout ce qu'il lui faut pour installer le jeu.",
+    shareButton: "Partager cette page",
+    shareCopied: "L'adresse est dans le presse-papiers. Collez-la dans un message et envoyez-le.",
+    shareUnavailable: "Ce navigateur ne peut pas partager de lui-même. L'adresse ci-dessous est le lien à envoyer.",
+    shareLinkLabel: "L'adresse de cette page",
+    shareMessage:
+      "Africa History Quest, l'histoire de l'Afrique en jeu de quiz, à installer sur Android. Ouvrez {url} et suivez ce qui est indiqué. Si votre téléphone dit que Play Protect l'a bloquée, choisissez Installer quand même.",
     installHeading: "Comment l'installer",
     installSteps: [
       "Ouvrez le téléchargement et laissez le fichier APK arriver. C'est le format avec lequel Android installe une application.",
@@ -105,6 +131,9 @@ export default function Android() {
   // same thing to a reader.
   const [state, setState] = useState("loading");
   const [release, setRelease] = useState(null);
+  // What the share button last did, or null when it did nothing worth saying: a
+  // sheet that opened and was closed leaves the screen exactly as it was.
+  const [shareOutcome, setShareOutcome] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -130,6 +159,17 @@ export default function Android() {
   }, []);
 
   const archive = release?.download && release.download !== RELEASES_PAGE ? release.download : null;
+
+  // The address of this very page, which is what a friend needs: it carries the
+  // download, the steps and the paragraph about Play Protect. Read at render and
+  // not at load, and fallen back to the release page for a program with no
+  // window at all, which is only ever a test.
+  const page = typeof window === "undefined" ? RELEASES_PAGE : window.location.href;
+
+  async function onShare() {
+    const outcome = await shareApp({ template: t.shareMessage, url: page });
+    setShareOutcome(outcome === "copied" || outcome === "unavailable" ? outcome : null);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -206,6 +246,31 @@ export default function Android() {
             {t.releasePage}
             <ExternalLink className="w-3 h-3" aria-hidden="true" />
           </a>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5" aria-labelledby="share">
+          <h2 id="share" className="flex items-center gap-2 text-sm font-extrabold text-slate-800">
+            <Share2 className="w-4 h-4 text-amber-600" aria-hidden="true" />
+            {t.shareHeading}
+          </h2>
+          <p className="mt-1 text-xs text-slate-600 leading-relaxed">{t.shareBody}</p>
+          <button
+            type="button"
+            onClick={onShare}
+            className="mt-3 flex w-full min-h-11 items-center justify-center gap-2 rounded-2xl bg-amber-500 px-4 py-3 text-sm font-bold text-[#1C150C] transition-colors hover:bg-amber-400 active:scale-[0.99]"
+          >
+            <Share2 className="w-4 h-4" aria-hidden="true" />
+            {t.shareButton}
+          </button>
+          {/* Announced rather than shown: the copy is confirmed for the reader who
+              asked for it, and the browser that cannot share says so once. */}
+          <p className="mt-2 text-xs text-slate-600 leading-relaxed" aria-live="polite">
+            {shareOutcome === "copied" ? t.shareCopied : shareOutcome === "unavailable" ? t.shareUnavailable : ""}
+          </p>
+          {/* The address as words, so a reader can select it by hand where no
+              button can send it for them. */}
+          <p className="mt-3 text-xs font-semibold text-slate-500">{t.shareLinkLabel}</p>
+          <p className="text-xs text-slate-500 break-all">{page}</p>
         </section>
 
         <section>

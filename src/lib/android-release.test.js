@@ -151,6 +151,20 @@ test("this is the only address the application talks to, and it is asked on dema
   assert.match(read("src/pages.config.js"), /"Android": Android/, "the Android screen is not routed");
 });
 
+test("the page a friend is sent is this page, not the release behind it", () => {
+  // The hand-off is the one thing this screen does for somebody who is not its
+  // reader. What a friend needs is not the file alone but the page that explains
+  // it, so what is checked here is that the screen shares its own address rather
+  // than a link to GitHub, and that the message is real wording in both
+  // languages rather than an address on its own.
+  const page = read("src/pages/Android.jsx");
+  assert.match(page, /import \{ shareApp \}/, "the screen does not reach the sharing module");
+  assert.match(page, /window\.location\.href/, "the screen shares an address that is not the one being read");
+  for (const phrase of ["shareMessage", "{url}"]) {
+    assert.ok(page.includes(phrase), `the shared message does not carry "${phrase}"`);
+  }
+});
+
 test("the page says what a phone shows when Play Protect refuses the file", () => {
   // The one refusal that is not a fault of the file, and the one a reader is
   // least likely to guess: a phone blocks every app from outside the Play Store,
