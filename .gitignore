@@ -14,6 +14,9 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# The Windows installer and the unpacked application electron-builder writes:
+# the output of a build, like dist, and nothing anybody edits by hand.
+release
 *.local
 
 # Editor directories and files

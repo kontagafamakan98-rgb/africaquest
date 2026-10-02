@@ -129,6 +129,14 @@ file that travels with the work.
   into `android/`, from the same favicon every other piece of artwork here is drawn from.
 - `npm run android:sync` builds the web application and copies it into the native Android
   project, which is the step before Gradle assembles the APK.
+- `npm run desktop:start` opens the build in a desktop window, which is what the installed
+  Windows application is. It builds nothing, so `npm run build` has to have run first, and it
+  fetches the Electron runtime if the install did not.
+- `npm run desktop:build` builds the site and then the Windows installer, writing
+  `Africa-History-Quest-Setup-<version>.exe` into `release/`.
+- `npm run desktop:icon` writes the icon the installer wears into `build/desktop/icon.ico`, from
+  the same favicon every other piece of artwork here is drawn from. The verification checks it
+  rather than writes it, so a favicon that changed without the icon following it stops the run.
 
 ## The content, and the database it is edited in
 
@@ -352,6 +360,41 @@ signed with another key before this one is installed. That warning is why the sc
 of its own: a file that passes every check in `ANDROID_RELEASE.md` is still refused by a phone that
 was not told what the warning means.
 
+## The Windows application
+
+The same build also ships as an installed Windows program: Electron wraps `dist` in a shell that
+starts the small server in `electron/server.js` on the loopback interface and opens one window on
+it. So the game is opened from the desktop rather than from a browser tab, and it plays with no
+network at all, exactly as it does on a phone. Nothing about the shell changes the site, and
+nothing in the site changes for the shell: it is the same build, and the same page GitHub Pages
+serves. The only reason it is served rather than opened off the disk is that a page loaded from a
+`file://` address has no origin to fetch its own files against and cannot keep the service worker
+that makes it work offline.
+
+The shell reimplements nothing and hands the page nothing: no preload script, no Node integration,
+a sandboxed renderer, so the game runs with the same reach it has in a browser - which is the
+property the site is written to. The one thing it decides is where a link out of the game opens.
+The Android page's download and a reference at Wikipedia belong to the reader's own browser, so
+they are handed there and the window stays where it is.
+
+To build the installer, on Windows:
+
+```bash
+npm install
+npm run desktop:build
+```
+
+The file is written to `release/Africa-History-Quest-Setup-<version>.exe`, and running it puts a
+shortcut on the desktop and an entry in Apps and features that uninstalls the application the way
+any other Windows program does. It is assembled by `.github/workflows/desktop.yml` on a version
+tag as well, and attached to the release that tag names, next to the APK.
+
+It is not code signed, and that is a decision rather than an oversight: a certificate for a
+Windows program costs a few hundred pounds a year and belongs to a named company. What Windows
+shows the first time the installer is run is SmartScreen's "unrecognised app" - choose **More
+info**, then **Run anyway** - which is the same shape of conversation as the Play Protect warning
+on an Android phone, and [WINDOWS_RELEASE.md](WINDOWS_RELEASE.md) is where it is written down.
+
 ## Project layout
 
 ```
@@ -361,6 +404,7 @@ src/
   components/ui   reusable primitives
   pages/          Home, Quiz, About, Privacy Policy, Terms of Use, Photo credits, Bibliography
   Layout.jsx      shared page wrapper
+electron/         the Windows shell: the window, and the server the page is served from
 ```
 
 ## What the first screen waits for

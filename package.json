@@ -1,8 +1,11 @@
 {
   "name": "africa-history-quest",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Africa History Quest, an educational quiz game about the history of Africa, for the browser, Android and the Windows desktop.",
+  "author": "Africa History Quest",
   "type": "module",
+  "main": "electron/main.js",
   "engines": {
     "node": ">=22"
   },
@@ -40,7 +43,11 @@
     "preview": "vite preview",
     "android:icons": "node scripts/generate-android-icons.mjs",
     "android:version": "node scripts/android-version.mjs",
-    "android:sync": "npm run build --silent && cap sync android"
+    "android:sync": "npm run build --silent && cap sync android",
+    "desktop:icon": "node scripts/generate-desktop-icon.mjs",
+    "desktop:runtime": "node scripts/desktop-runtime.mjs",
+    "desktop:start": "npm run desktop:runtime --silent && electron .",
+    "desktop:build": "npm run build --silent && npm run desktop:runtime --silent && electron-builder --win nsis"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.2",
@@ -71,6 +78,8 @@
     "autoprefixer": "^10.4.20",
     "axe-core": "^4.13.0",
     "baseline-browser-mapping": "^2.8.32",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
     "esbuild": "^0.25.12",
     "eslint": "^9.19.0",
     "eslint-plugin-react": "^7.37.4",
@@ -83,5 +92,8 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
     "vite": "^6.1.0"
+  },
+  "allowScripts": {
+    "electron@44.5.1": true
   }
 }

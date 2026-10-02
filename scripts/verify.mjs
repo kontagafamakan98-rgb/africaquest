@@ -31,6 +31,16 @@ const STEPS = [
     command: process.execPath,
     args: ["scripts/generate-icons.mjs", "--check"],
   },
+  // The icon the Windows installer wears, drawn from the same favicon as the
+  // browser icons above: a check rather than a generation, so a favicon that
+  // changed without the desktop icon following it stops the verification here
+  // rather than being noticed on somebody's desktop.
+  {
+    id: "desktop-icon",
+    name: "Icône de l'application Windows (Setup)",
+    command: process.execPath,
+    args: ["scripts/generate-desktop-icon.mjs", "--check"],
+  },
   {
     id: "facts",
     name: "Bref du jeu (premier écran)",
@@ -132,7 +142,7 @@ for (let i = 0; i < STEPS.length; i++) {
     if (step.id === "translations" && res.stdout) {
       const summaryLine = res.stdout.trim().split("\n")[0];
       console.log(`    ↳ ${summaryLine}`);
-    } else if ((step.id === "photos" || step.id === "icons") && res.stdout) {
+    } else if ((step.id === "photos" || step.id === "icons" || step.id === "desktop-icon") && res.stdout) {
       const lines = res.stdout.trim().split("\n");
       console.log(`    ↳ ${lines[0]}`);
       // A photograph is prepared in two formats and sometimes a third, and what

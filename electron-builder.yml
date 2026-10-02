@@ -1,0 +1,73 @@
+# The Windows application, as an installer.
+#
+# `npm run desktop:build` builds the site and then hands it to electron-builder,
+# which assembles it with the Electron runtime into `Africa-History-Quest-Setup-
+# <version>.exe`: a program somebody can double-click, that puts a shortcut on
+# the desktop and an entry in Apps and features, and that uninstalls itself the
+# way any other Windows program does.
+#
+# The application it installs is the one this repository builds, not a second
+# version of it: the shell in electron/ starts the same loopback server the tests
+# read, and that server serves the same dist/ that GitHub Pages publishes and
+# that Capacitor wraps for Android. What the installer adds is the runtime and
+# the shortcut; there is no second copy of the game to drift.
+appId: com.africaquest.desktop
+productName: Africa History Quest
+copyright: Africa History Quest
+
+directories:
+  # Where the installer and the unpacked application are written. Ignored by git,
+  # like dist: it is the output of a build, not a file of the project.
+  output: release
+  # The icon's own folder rather than the repository's build/, which holds the
+  # build scripts. electron-builder looks here for the pictures an installer
+  # wears, and the two meanings of the word build/ are kept apart.
+  buildResources: build/desktop
+
+# What travels inside the application: the shell, the built site, and the
+# manifest that names the shell's entry point. Nothing else, and the last line
+# is the one that has to be written rather than assumed: electron-builder copies
+# the project's production dependencies in by default, and every one of them is
+# already bundled into dist by Vite. Left in, they are forty megabytes of React,
+# Tailwind and jsPDF inside a file the player already has, carried by an
+# installation that never loads a byte of them.
+files:
+  - electron/**/*
+  - dist/**/*
+  - package.json
+  - "!**/*.map"
+  - "!node_modules/**/*"
+
+asar: true
+
+# The Electron runtime that is already on disk, rather than a second copy
+# downloaded and unpacked into the output folder.
+#
+# The copy electron-builder makes on its own is renamed into place the moment it
+# is unpacked, and on this project's own machine Windows refuses that rename with
+# EPERM: a fresh directory of twenty thousand files is still being read by the
+# virus scanner, and a rename while a handle is open fails. Waiting is not a knob
+# this build has. Copying from the runtime `npm install` already fetched is: it
+# is the same version electron-builder would have downloaded, it is the one the
+# shell has been run against, and it turns a rename into the copy that was going
+# to happen either way.
+electronDist: node_modules/electron/dist
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/desktop/icon.ico
+
+# An installer rather than a portable archive, and one a person chooses the
+# destination of: the point of this build is somebody who does not have Node,
+# does not have the repository, and should not have to know what either is.
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Africa History Quest
+  artifactName: Africa-History-Quest-Setup-${version}.exe

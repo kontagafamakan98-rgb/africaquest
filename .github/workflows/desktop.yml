@@ -1,0 +1,139 @@
+# The installer that is not the site and not the phone build.
+#
+# The game is a web application, and three shells hand the same `dist` to three
+# kinds of machine: GitHub Pages serves it to a browser, Capacitor wraps it for
+# Android, and electron/ opens it in a window of its own on Windows. Nothing here
+# changes what the site publishes: the installer carries the build this workflow
+# makes, and the shell around it.
+#
+# The installer is assembled here rather than on a laptop because the person who
+# asked for one should be able to hand out a file rather than a repository, and
+# because the artifact of a version tag has to keep working: a release asset is
+# the copy somebody keeps, where a build artifact expires. It is started by hand
+# and on a version tag, not on every push to main: an installer is not rebuilt
+# for a change that only the site cares about.
+#
+# It is not signed, and that is a decision rather than an oversight. A
+# certificate for a Windows program costs a few hundred pounds a year and
+# belongs to a named company, and neither is something this project has. What
+# Windows shows the reader without one is SmartScreen's "unrecognised app" the
+# first time the installer is run, which is what WINDOWS_RELEASE.md explains,
+# and what the page that hands the file out should say too.
+name: Desktop
+
+on:
+  workflow_dispatch:
+    inputs:
+      # A tag to name the installer after, when the run is started by hand rather
+      # than by pushing one. Left empty, the version in package.json is used, so
+      # a hand-held run still produces a file with a version in its name.
+      version:
+        description: "A version to name the installer after, like v1.0.8. Empty: the version in package.json."
+        required: false
+        default: ""
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    name: Build the Windows installer
+    # Windows, because the installer is a Windows program and the shell it wraps
+    # is one: electron-builder can cross-build a few formats but not this one,
+    # and a runner that is not Windows would be the wrong place to find out.
+    runs-on: windows-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        # The runner's default shell on Windows is PowerShell, and the steps
+        # below are written the shell this project's own scripts are written in:
+        # named here once rather than repeated on every step.
+        shell: bash
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is built with
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install the dependencies from the lockfile
+        run: npm ci
+
+      # The version the release is named after, written into the manifest the
+      # installer reads: the name of the file somebody downloads, the number in
+      # Apps and features and the tag are then the same three numbers, and none
+      # of them can drift from the others. A run by hand that named no version
+      # keeps the one the repository carries, which is what a build on a laptop
+      # produces too.
+      - name: Write the version the run names
+        env:
+          NAMED: ${{ inputs.version || github.ref_name }}
+        if: startsWith(env.NAMED, 'v')
+        run: npm version "${NAMED#v}" --no-git-tag-version --allow-same-version
+
+      # The build, then the runtime, then electron-builder: the runtime step is
+      # the one that matters here, because a fresh checkout is where npm's
+      # approval list for install scripts is easy to get wrong, and a runner that
+      # skipped Electron's would fail three steps later with a message about a
+      # folder that does not exist. It fetches nothing when the install already
+      # did, which is the ordinary case.
+      - name: Build the site and the installer
+        run: npm run desktop:build
+
+      # Kept as well as released: a hand-held run has no tag to hang a release
+      # on, and the artifact is what somebody downloads the same day.
+      - name: Keep the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: africa-history-quest-windows-setup
+          path: release/*.exe
+          if-no-files-found: error
+
+  # A job of its own rather than two more steps in the one above, for the reason
+  # the APK is published from a second job: a build that compiles whatever a pull
+  # request contains is not the same trust as one allowed to write to the
+  # repository, and the write is only ever a release.
+  release:
+    name: Attach the installer to the release
+    needs: installer
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Take the installer the build produced
+        uses: actions/download-artifact@v4
+        with:
+          name: africa-history-quest-windows-setup
+          path: setup
+
+      # `gh` rather than an action of its own: the runner carries the command,
+      # and the release is created here so that pushing a tag twice leaves one
+      # release rather than an error.
+      #
+      # The loop is for the second publisher of the same tag. A version tag
+      # starts this workflow and the Android one, and both attach a file to the
+      # release that tag names: whichever of the two creates it, the other finds
+      # it already there and uploads into it. Without the retry, the two racing
+      # each other would leave one of them red for having lost a race rather than
+      # for having failed.
+      - name: Publish the release this tag names
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          for attempt in 1 2 3; do
+            gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 && break
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" \
+              --notes "Africa History Quest $TAG, for Windows. The installer puts a shortcut on the desktop and an entry in Apps and features, and the game plays with no network at all. It is not code signed, so Windows may show a SmartScreen warning the first time it is run: choose More info, then Run anyway." && break
+            sleep 5
+          done
+          gh release upload "$TAG" "setup/Africa-History-Quest-Setup-${TAG#v}.exe" --clobber --repo "$GITHUB_REPOSITORY"
