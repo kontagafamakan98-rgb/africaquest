@@ -46,6 +46,7 @@ function node(shape) {
     height: 40,
     fontSize: 14,
     interactive: false,
+    inline: false,
     pinned: false,
     clipX: false,
     clipY: false,
@@ -233,6 +234,27 @@ test("a control smaller than a thumb wants is worth saying, and a hidden input i
   assert.deepEqual(judged.notes.map((note) => note.rule), ["smaller than a thumb wants"]);
   assert.match(judged.notes[0].what, /button "Android" at 62x22/);
   assert.ok(TAP_COMFORTABLE > 0 && OVERLAP_MIN_PX > 0);
+});
+
+test("a link set in a sentence is not a target a thumb is asked to hit", () => {
+  // The page of works this game stands on is three hundred links laid out as
+  // text, and a note naming every one of them says nothing a reader can fix. A
+  // link inside a run of text is exempt from the size a target is asked for -
+  // in WCAG and in axe's own rule - and it is the only thing read that way: the
+  // same box on a button is a control, and the note is about those.
+  const mixed = screen({
+    nodes: [
+      node({ id: 0, sel: "a:nth-child(1)", tag: "a", label: "A work, in a sentence of its own", interactive: true, inline: true, width: 190, height: 17 }),
+      node({ id: 1, sel: "button:nth-child(2)", tag: "button", label: "Cancel", interactive: true, width: 36, height: 36 }),
+    ],
+  });
+  const notes = judge(mixed).notes;
+  assert.deepEqual(notes.map((note) => note.rule), ["smaller than a thumb wants"]);
+  assert.match(notes[0].what, /button "Cancel" at 36x36/);
+  assert.ok(
+    !notes.some((note) => note.what.includes("in a sentence of its own")),
+    "a link in a run of text is left out of the count"
+  );
 });
 
 test("a screen of small controls is summed up rather than listed", () => {

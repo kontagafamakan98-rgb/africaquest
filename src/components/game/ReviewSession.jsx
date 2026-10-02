@@ -30,8 +30,17 @@ export default function ReviewSession({ items = [], title, subtitle, region, onE
 
   // Rebuilt on every render, as the review level always was: switching the
   // language in the middle of a session re-reads the questions in the new one.
+  //
+  // The wording is taken from the levels here rather than read off the item that
+  // was handed over, and that is not a preference: the map counts what is due
+  // from the schedule alone, so an item that comes from it carries a position and
+  // no question at all. Keeping such an item is what a session used to do, and
+  // the screen it then built had nothing to ask - a blank run, and one that threw
+  // before it could even be drawn.
   const questionsOf = new Map(getLevels(lang).map((level) => [level.id, level.questions]));
-  const resolved = items.filter((item) => questionsOf.get(item.levelId)?.[item.index]);
+  const resolved = items
+    .map((item) => ({ ...item, question: questionsOf.get(item.levelId)?.[item.index] }))
+    .filter((item) => item.question);
   const level = buildReviewLevel(resolved, { title, subtitle, region });
 
   // Nothing to ask: a session is never opened empty, and a question the game no

@@ -382,18 +382,18 @@ const WALK = [
   // arrives. It is not inside a `main` - the layout wraps the pages of the game
   // in a plain box - so what proves it drew is the heading of the picker, which
   // the skeleton that waits in its place does not have.
-  { name: "a level, before a difficulty is chosen", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3" },
+  { name: "a level, before a difficulty is chosen", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "main h2" },
   // The four shapes of question the quiz draws, one screen each. A run opens on
   // the chronology and the matching - the when and the who of the lesson, built
   // from the lesson rather than written as a question - and then asks the band
   // the difficulty draws on; so the matching is reached by answering the
   // chronology, the four answers by answering both, and the exam is the fourth
   // setting of the picker, which opens the same run with the verdict held back.
-  { name: "a quiz, on the chronology question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy"], then: "text=Check my order" },
-  { name: "a quiz, on the matching question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy", "text=Check my order", "text=Continue"], then: "[role=radiogroup]" },
-  { name: "a quiz, on a question with four answers", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy", "text=Check my order", "text=Continue", "all=[role=radiogroup] > button:nth-child(1)", "text=Check my matches", "text=Continue"], then: "button[aria-label='Hint']" },
-  { name: "the hint sheet, over a question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy", "text=Check my order", "text=Continue", "all=[role=radiogroup] > button:nth-child(1)", "text=Check my matches", "text=Continue", "button[aria-label='Hint']"], then: "[role=dialog]" },
-  { name: "a quiz set as an exam", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Exam mode"], then: "text=Continue" },
+  { name: "a quiz, on the chronology question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "main h2", clicks: ["text=Easy"], then: "text=Check my order" },
+  { name: "a quiz, on the matching question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "main h2", clicks: ["text=Easy", "text=Check my order", "text=Continue"], then: "[role=radiogroup]" },
+  { name: "a quiz, on a question with four answers", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "main h2", clicks: ["text=Easy", "text=Check my order", "text=Continue", "all=[role=radiogroup] > button:nth-child(1)", "text=Check my matches", "text=Continue"], then: "button[aria-label='Hint']" },
+  { name: "the hint sheet, over a question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "main h2", clicks: ["text=Easy", "text=Check my order", "text=Continue", "all=[role=radiogroup] > button:nth-child(1)", "text=Check my matches", "text=Continue", "button[aria-label='Hint']"], then: "[role=dialog]" },
+  { name: "a quiz set as an exam", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "main h2", clicks: ["text=Exam mode"], then: "text=Continue" },
   { name: "the review session", url: "/", seed: REVIEWING, wait: "main button", clicks: ["main button"] },
   { name: "the about page", url: "/About", seed: LANGUAGE, wait: "main" },
   { name: "the privacy notice", url: "/PrivacyPolicy", seed: LANGUAGE, wait: "main" },
@@ -852,7 +852,7 @@ async function keyboardPass(session, origin) {
         if (await read("a lesson", holdsControl("/take the quiz/i"))) {
           // 3. And on from the lesson, which is where a reader goes next.
           if (await travel(focusedHolds("/take the quiz/i"), "the control that takes the quiz")) {
-            if (await read("a level, before a difficulty is chosen", `document.querySelector("h3")`)) {
+            if (await read("a level, before a difficulty is chosen", `document.querySelector("main h2")`)) {
               if (await travel(focusedHolds("/easy/i"), "the easy setting")) {
                 // 4. The quiz, with a question on it. The chronology opens it.
                 if (await read("a quiz", holdsControl("/check my order/i"))) {

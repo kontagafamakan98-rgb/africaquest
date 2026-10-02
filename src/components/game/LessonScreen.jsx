@@ -83,7 +83,10 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
       {/* No photograph and no controls on paper: the sheet opens on the name of
           the lesson instead, written just below, and a photograph prints as a
           page of ink. */}
-      <div className="relative h-44 overflow-hidden print:hidden">
+      {/* The name of the lesson, over its photograph, outside the reading: a
+          header is a landmark of its own, and content outside every landmark is
+          what axe reports as a screen read in fragments. */}
+      <header className="relative h-44 overflow-hidden print:hidden">
         <div className={`absolute inset-0 bg-gradient-to-br ${level.color}`} />
         {img && (
           <LevelPicture src={img} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -92,7 +95,7 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
         <button
           onClick={onBack}
           aria-label={t.backToLearn}
-          className="absolute top-4 left-4 p-2 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
+          className="absolute top-4 left-4 p-3 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
           style={{ marginTop: "var(--sat)" }}
         >
           <ChevronLeft className="w-5 h-5" />
@@ -105,7 +108,7 @@ export default function LessonScreen({ levelId, onStartQuiz, onBack, onStudied, 
           </div>
           <p className="text-white/85 text-sm">{level.subtitle}</p>
         </div>
-      </div>
+      </header>
 
       <main className="max-w-lg mx-auto px-4 py-5 space-y-6">
         {/* The name of the lesson, drawn for the sheet alone: on screen it is

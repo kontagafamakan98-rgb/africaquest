@@ -361,8 +361,11 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
   const LevelIcon = level.icon;
   const DiffIcon = diff.icon;
 
+  // A run is a screen of its own rather than a part of one: it is what a shared
+  // link to a level opens. So it carries the page's landmark, and the level it
+  // is playing is the heading the page is named by.
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-lg mx-auto">
         <HintModal
           open={showHints}
@@ -384,7 +387,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
           <div className="absolute inset-0 px-4 py-3 flex flex-col justify-between">
             {/* Top row */}
             <div className="flex items-center gap-3">
-              <button onClick={onBack} aria-label={t.cancel} className="p-2 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors">
+              <button onClick={onBack} aria-label={t.cancel} className="p-3 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors">
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <div className="flex-1">
@@ -412,7 +415,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
                 <button
                   onClick={() => setShowHints(true)}
                   aria-label={t.hint}
-                  className="p-2 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
+                  className="p-3.5 rounded-lg bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
                 >
                   <Lightbulb className="w-4 h-4" aria-hidden="true" />
                 </button>
@@ -421,7 +424,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
             {/* Bottom: title + counter */}
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-white font-extrabold text-sm drop-shadow">{level.title}</p>
+                <h1 className="text-white font-extrabold text-sm drop-shadow">{level.title}</h1>
                 <p className="text-white/85 text-xs">{level.region}</p>
               </div>
               <LevelIcon className="w-6 h-6 text-white/90" aria-hidden="true" />
@@ -521,7 +524,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
                             onClick={() => handleMoveMoment(position, -1)}
                             disabled={position === 0}
                             aria-label={`${t.chronologyMoveUp}: ${q.steps[moment]}`}
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white transition-colors"
+                            className="p-3.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white transition-colors"
                           >
                             <ArrowUp className="w-4 h-4" aria-hidden="true" />
                           </button>
@@ -529,7 +532,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
                             onClick={() => handleMoveMoment(position, 1)}
                             disabled={position === order.length - 1}
                             aria-label={`${t.chronologyMoveDown}: ${q.steps[moment]}`}
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white transition-colors"
+                            className="p-3.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white transition-colors"
                           >
                             <ArrowDown className="w-4 h-4" aria-hidden="true" />
                           </button>
@@ -612,7 +615,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
                             onKeyDown={(event) => handleMatchKey(event, index)}
                             disabled={isAnswered}
                             className={cn(
-                              "w-9 h-9 rounded-lg border-2 text-sm font-bold flex items-center justify-center transition-colors",
+                              "w-11 h-11 rounded-lg border-2 text-sm font-bold flex items-center justify-center transition-colors",
                               assignment[index] === choice
                                 ? "border-amber-400 bg-amber-100 text-amber-800"
                                 : "border-slate-200 text-slate-600 hover:bg-slate-100",
@@ -729,7 +732,7 @@ export default function QuizScreen({ level, difficulty, onComplete, onBack, onAn
         </div>
         </div>{/* end px-4 */}
         </div>{/* end max-w-lg */}
-    </div>
+    </main>
   );
 }
 
@@ -746,7 +749,7 @@ function ResultsScreen({ level, difficulty, score, total, stars, xp, timeSeconds
   const DiffIcon = difficulty.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Hero */}
       <div className="relative h-48 overflow-hidden">
         <div className={`absolute inset-0 bg-gradient-to-br ${level.color}`} />
@@ -754,7 +757,7 @@ function ResultsScreen({ level, difficulty, score, total, stars, xp, timeSeconds
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 text-center">
           <p className="text-white/85 text-xs uppercase tracking-widest font-bold">{level.region}</p>
-          <h3 className="text-white font-extrabold text-lg">{level.title}</h3>
+          <h1 className="text-white font-extrabold text-lg">{level.title}</h1>
         </div>
       </div>
 
@@ -906,7 +909,7 @@ function ResultsScreen({ level, difficulty, score, total, stars, xp, timeSeconds
           </Button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

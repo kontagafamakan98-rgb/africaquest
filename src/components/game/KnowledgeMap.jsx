@@ -128,7 +128,7 @@ function LevelRow({ row, questions, onReview }) {
       type="button"
       onClick={() => onReview({ id: row.id, title: row.title, region: row.region }, questions)}
       aria-label={`${row.title}, ${questions.length} ${t.fragileQuestions}`}
-      className="-mx-2 px-2 py-1 rounded-xl w-full text-left transition-colors hover:bg-[#1C150C] flex items-center gap-2"
+      className="-mx-2 px-2 py-1 min-h-11 rounded-xl w-full text-left transition-colors hover:bg-[#1C150C] flex items-center gap-2"
     >
       <span className="flex-1 min-w-0">{body}</span>
       <ChevronRight className="w-3.5 h-3.5 text-amber-300 shrink-0" aria-hidden="true" />

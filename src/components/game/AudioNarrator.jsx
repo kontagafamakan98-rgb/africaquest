@@ -194,14 +194,14 @@ export default function AudioNarrator({ levelId }) {
           <button
             onClick={handleStop}
             aria-label={t.stopAudio}
-            className="p-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
+            className="p-3 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 transition-colors"
           >
             <VolumeX className="w-4 h-4 text-slate-600" aria-hidden="true" />
           </button>
         )}
         <button
           onClick={handlePlay}
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold text-sm transition-all ${
+          className={`flex items-center gap-2 min-h-11 px-3 py-2 rounded-xl font-bold text-sm transition-all ${
             state === "playing"
               ? "bg-orange-700 text-white shadow-md shadow-orange-200"
               : "bg-amber-700 text-white hover:bg-amber-800 shadow-md shadow-amber-200"

@@ -83,7 +83,7 @@ export default function PhotoViewer({ photo, onClose }) {
               type="button"
               onClick={onClose}
               aria-label={t.close}
-              className="self-end p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+              className="self-end p-3 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
             >
               <X className="w-5 h-5" aria-hidden="true" />
             </button>

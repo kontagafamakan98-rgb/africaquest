@@ -15,8 +15,11 @@ export default function PageNotFound() {
     window.location.replace(basePath());
   }, []);
 
+  // It is not a dialog and it is not routed through the layout the other pages
+  // share, so it carries the page's landmark itself rather than leaving every
+  // word of it outside one.
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+    <main className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
       <div className="max-w-md w-full text-center space-y-4">
         <h1 className="text-6xl font-light text-slate-300">404</h1>
         <h2 className="text-xl font-semibold text-slate-800">Page not found</h2>
@@ -30,6 +33,6 @@ export default function PageNotFound() {
           Back to the game
         </Link>
       </div>
-    </div>
+    </main>
   );
 }

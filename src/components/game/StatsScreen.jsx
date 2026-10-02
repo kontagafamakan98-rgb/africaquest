@@ -127,7 +127,7 @@ export default function StatsScreen({ progress, onReviewLevel }) {
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="ml-auto flex items-center gap-1.5 h-9 px-3 rounded-xl border border-amber-400/40 text-xs font-bold text-amber-200 hover:bg-amber-500/10 transition-colors disabled:opacity-60"
+          className="ml-auto flex items-center gap-1.5 h-11 px-3 rounded-xl border border-amber-400/40 text-xs font-bold text-amber-200 hover:bg-amber-500/10 transition-colors disabled:opacity-60"
         >
           <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
           {exporting ? t.exportingPdf : t.exportPdf}

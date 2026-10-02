@@ -79,7 +79,7 @@ export default function PhotoCredits() {
         <div className="max-w-lg mx-auto px-5">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-white/70 hover:text-white mb-3"
+            className="inline-flex items-center gap-1.5 min-h-11 text-xs font-bold text-white/70 hover:text-white mb-3"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             {t.backToGame}
@@ -146,7 +146,7 @@ export default function PhotoCredits() {
                       href={photo.source}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 mt-1 text-[11px] font-semibold text-amber-800 underline decoration-amber-400 underline-offset-2 hover:text-amber-950"
+                      className="inline-flex items-center gap-1 min-h-11 mt-1 text-[11px] font-semibold text-amber-800 underline decoration-amber-400 underline-offset-2 hover:text-amber-950"
                     >
                       {t.photoCreditsSource}
                       <ExternalLink className="w-3 h-3" aria-hidden="true" />

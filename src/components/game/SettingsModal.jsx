@@ -166,7 +166,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
             <div className="px-5 pb-2 max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 id="settings-title" className="text-lg font-extrabold text-slate-800">{t.settings}</h2>
-                <button onClick={onClose} aria-label={t.close} className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                <button onClick={onClose} aria-label={t.close} className="p-3 rounded-lg hover:bg-slate-100 transition-colors">
                   <X className="w-5 h-5 text-slate-500" />
                 </button>
               </div>
@@ -219,7 +219,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                       // Only the wording changes colour here. The outline and the
                       // paper stay put, so nothing flashes while the mark slides
                       // from one language to the other.
-                      className={`relative isolate flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-slate-200 bg-white text-sm font-bold transition-colors ${
+                      className={`relative isolate flex-1 flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border-2 border-slate-200 bg-white text-sm font-bold transition-colors ${
                         currentLang === lang.code
                           ? "text-amber-800"
                           : "text-slate-600 hover:border-slate-300"
@@ -250,7 +250,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                   onClick={reminder.toggle}
                   disabled={reminder.busy || !reminder.support.notifications}
                   aria-pressed={reminder.enabled}
-                  className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-xs font-bold transition-colors disabled:opacity-60 ${
+                  className={`w-full flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border-2 text-xs font-bold transition-colors disabled:opacity-60 ${
                     reminder.enabled
                       ? "border-amber-500 bg-amber-50 text-amber-800"
                       : "border-slate-200 bg-white text-slate-600 hover:border-amber-400 hover:text-amber-800"
@@ -293,7 +293,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                   <div className="flex gap-2">
                     <button
                       onClick={handleExportBackup}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border-2 border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" aria-hidden="true" />
                       {t.backupExport}
@@ -301,7 +301,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                     {/* A file picker is a label around a real input: it works with
                         the keyboard and with a screen reader, unlike a hidden input
                         opened from a script. */}
-                    <label className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 focus-within:border-amber-500 transition-colors cursor-pointer">
+                    <label className="flex-1 flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border-2 border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 focus-within:border-amber-500 transition-colors cursor-pointer">
                       <Upload className="w-3.5 h-3.5" aria-hidden="true" />
                       {t.backupImport}
                       <input
@@ -378,7 +378,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                   <Link
                     to="/PrivacyPolicy"
                     onClick={onClose}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
                     {t.privacyPolicy}
@@ -386,7 +386,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                   <Link
                     to="/TermsOfService"
                     onClick={onClose}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     {t.termsOfService}
@@ -398,7 +398,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                 <Link
                   to="/PhotoCredits"
                   onClick={onClose}
-                  className="mt-2 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
+                  className="mt-2 flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
                 >
                   <Camera className="w-3.5 h-3.5" aria-hidden="true" />
                   {t.photoCredits}
@@ -409,7 +409,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                 <Link
                   to="/Bibliography"
                   onClick={onClose}
-                  className="mt-2 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
+                  className="mt-2 flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
                 >
                   <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
                   {t.bibliography}
@@ -419,7 +419,7 @@ export default function SettingsModal({ open, onClose, reminder }) {
                 <Link
                   to="/About"
                   onClick={onClose}
-                  className="mt-2 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
+                  className="mt-2 flex items-center justify-center gap-2 py-2.5 min-h-11 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-amber-400 hover:text-amber-800 transition-colors"
                 >
                   <Info className="w-3.5 h-3.5" aria-hidden="true" />
                   {t.aboutPage}

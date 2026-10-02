@@ -93,7 +93,7 @@ export default function About() {
         <div className="max-w-lg mx-auto px-5">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-white/70 hover:text-white mb-3"
+            className="inline-flex items-center gap-1.5 min-h-11 text-xs font-bold text-white/70 hover:text-white mb-3"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             {t.back}

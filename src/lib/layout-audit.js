@@ -109,6 +109,9 @@ export const INTERACTIVE_SELECTOR = [
  */
 export function collectInPage(interactiveSelector) {
   const SLACK_PX = 1;
+  // The elements that hold a run of text rather than laying a control out.
+  const TEXT_BLOCKS =
+    "p, li, dd, dt, figcaption, blockquote, caption, td, th, span, em, strong, cite, q, label";
   const viewport = {
     width: document.documentElement.clientWidth,
     height: window.innerHeight,
@@ -223,6 +226,18 @@ export function collectInPage(interactiveSelector) {
       // travels as null, and the two ends stop agreeing on what was measured.
       fontSize: Math.round((parseFloat(style.fontSize) || 0) * 10) / 10,
       interactive,
+      // A link set inside a block of text rather than given a box of its own. It
+      // is not something anybody aims at - it is a word in a sentence, its size
+      // is the line it sits on - so WCAG exempts it from the size a target is
+      // asked for, and axe's own rule makes the same exception. Two things are
+      // asked of it: it is laid out inline, and it lives in a block that holds
+      // text. A link the page gave its own box to, like the way out of a reading
+      // page, is a control and is left in the count.
+      inline:
+        interactive &&
+        element.tagName.toLowerCase() === "a" &&
+        /^inline/.test(style.display) &&
+        Boolean(element.parentElement && element.parentElement.matches(TEXT_BLOCKS)),
       pinned,
       clipX,
       clipY,
@@ -363,8 +378,17 @@ export function judge({ viewport, page, nodes }) {
   // and a list of hundreds says less about a screen than the worst six do. What
   // is kept is the size of the smallest control, which is the one thing a reader
   // of the report can act on.
+  //
+  // A link inside a sentence is left out of the count on purpose. The page of
+  // works this game stands on is three hundred links laid out as text, and a
+  // report naming every one of them says nothing a reader can fix: nobody aims
+  // at a word in the middle of a paragraph, and forcing those three hundred to
+  // the height of a thumb would turn the page into a column of buttons. WCAG
+  // exempts exactly that case and axe's own rule makes the same exception, so
+  // this note is now about the controls a thumb is really asked to hit.
   const small = nodes
-    .filter((node) => node.interactive && Math.min(node.width, node.height) >= TAP_PRESENT)
+    .filter((node) => node.interactive && !node.inline)
+    .filter((node) => Math.min(node.width, node.height) >= TAP_PRESENT)
     .filter((node) => Math.min(node.width, node.height) < TAP_COMFORTABLE)
     .sort((left, right) => Math.min(left.width, left.height) - Math.min(right.width, right.height) || left.id - right.id);
   for (const node of small.slice(0, 6)) {

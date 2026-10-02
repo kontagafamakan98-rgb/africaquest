@@ -133,7 +133,7 @@ export default function Android() {
         <div className="max-w-lg mx-auto px-5">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-white/70 hover:text-white mb-3"
+            className="inline-flex items-center gap-1.5 min-h-11 text-xs font-bold text-white/70 hover:text-white mb-3"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             {t.back}
@@ -179,7 +179,7 @@ export default function Android() {
               href={archive}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex items-center justify-center gap-1.5 text-xs font-semibold text-amber-800 underline decoration-amber-400 underline-offset-2 hover:text-amber-950"
+              className="mt-2 flex items-center justify-center gap-1.5 min-h-11 text-xs font-semibold text-amber-800 underline decoration-amber-400 underline-offset-2 hover:text-amber-950"
             >
               {t.direct}
               <ExternalLink className="w-3 h-3" aria-hidden="true" />
@@ -190,7 +190,7 @@ export default function Android() {
             href={RELEASES_PAGE}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+            className="mt-3 flex items-center justify-center gap-1.5 min-h-11 text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
           >
             {t.releasePage}
             <ExternalLink className="w-3 h-3" aria-hidden="true" />

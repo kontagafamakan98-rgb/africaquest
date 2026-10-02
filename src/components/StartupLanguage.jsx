@@ -40,9 +40,12 @@ const CHOICE = [
   },
 ];
 
+// The screen is the whole of the page rather than a part of one, so its own
+// element is the page's landmark: without one, every word here is content outside
+// any landmark, which is what axe reports as a screen read in fragments.
 export default function StartupLanguage({ onChoose }) {
   return (
-    <div
+    <main
       className="fixed inset-0 flex flex-col items-center justify-center px-6 text-center"
       style={{ background: "linear-gradient(160deg, #1F140B 0%, #33200F 55%, #452611 100%)" }}
     >
@@ -92,6 +95,6 @@ export default function StartupLanguage({ onChoose }) {
           </button>
         ))}
       </div>
-    </div>
+    </main>
   );
 }

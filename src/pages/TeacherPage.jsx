@@ -76,7 +76,7 @@ export default function TeacherPage() {
         <div className="max-w-lg mx-auto px-5">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-white/70 hover:text-white mb-3"
+            className="inline-flex items-center gap-1.5 min-h-11 text-xs font-bold text-white/70 hover:text-white mb-3"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             <BackLabel />
@@ -381,7 +381,7 @@ function ClassDashboard({ levels }) {
             <span>{importStatus.message}</span>
             <button
               onClick={() => setImportStatus(null)}
-              className="p-1 rounded-md hover:bg-black/5 transition-colors"
+              className="min-h-11 min-w-11 flex items-center justify-center rounded-md hover:bg-black/5 transition-colors"
               aria-label={t.close}
             >
               <X className="w-3.5 h-3.5" aria-hidden="true" />

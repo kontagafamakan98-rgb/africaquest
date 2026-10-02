@@ -286,7 +286,7 @@ export default function Home() {
             <h1 className="text-xl font-extrabold tracking-tight leading-tight text-white">{t.appTitle}</h1>
             <Link
               to="/Android"
-              className="shrink-0 mt-0.5 inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/70 hover:text-white hover:border-white/30 transition-colors active:scale-[0.99]"
+              className="shrink-0 mt-0.5 inline-flex items-center gap-1 min-h-11 rounded-lg border border-white/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white/70 hover:text-white hover:border-white/30 transition-colors active:scale-[0.99]"
             >
               <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
               {t.androidAppShort}
@@ -340,7 +340,7 @@ export default function Home() {
                         <RotateCcw className="w-5 h-5 text-white" aria-hidden="true" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-extrabold text-sm">{t.reviewMistakes}</h3>
+                        <h2 className="text-white font-extrabold text-sm">{t.reviewMistakes}</h2>
                         <p className="text-white/75 text-xs">
                           {dueReviews.length} {t.reviewQuestions}
                         </p>
@@ -366,7 +366,7 @@ export default function Home() {
                     >
                       <Clock className="w-4 h-4 text-amber-300/80 shrink-0" aria-hidden="true" />
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-extrabold text-sm">{t.reviewScreen}</h3>
+                        <h2 className="text-white font-extrabold text-sm">{t.reviewScreen}</h2>
                         <p className="text-white/70 text-xs">
                           {reviewQueue.length} {t.reviewPending}
                         </p>
@@ -388,9 +388,14 @@ export default function Home() {
                       <Fragment key={level.id}>
                         {opensEra && (
                           <div className="flex items-center gap-3 pt-2 pb-0.5 px-1">
-                            <span className="text-amber-200/90 text-[10px] font-black uppercase tracking-[0.18em]">
+                            {/* The era opens each run of cards, so it is the
+                                heading of that run rather than a label on the
+                                row: a card under it is one step in, and a page
+                                that went from the title straight to a card
+                                skipped the level axe counts. */}
+                            <h2 className="text-amber-200/90 text-[10px] font-black uppercase tracking-[0.18em]">
                               {t.eras?.[level.era] || level.era}
-                            </span>
+                            </h2>
                             <span className="flex-1 h-px bg-white/10" aria-hidden="true" />
                           </div>
                         )}
