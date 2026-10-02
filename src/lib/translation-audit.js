@@ -127,12 +127,20 @@ export function auditTranslations({ levels = [], french = {}, stories = {} } = {
  * They live in a component, so they are read as text rather than imported, and
  * this is the only place that knows their shape: the build script and the tests
  * both come through here.
+ *
+ * The text is read with one line ending whatever the file carries. A checkout on
+ * Windows arrives with CRLF, and the pattern below is anchored on the newline
+ * that introduces each story: read without folding the two, it finds nothing on
+ * such a machine and every level is reported as having no lesson story in
+ * French. `.gitattributes` asks for LF everywhere, and this is the second half
+ * of that, so the read is the same whichever way the file was checked out.
  */
 export function extractLevelStories(source = "") {
   const stories = {};
   const block = /\n {2}(\d+): \{\n {4}en: "((?:[^"\\]|\\.)*)",\n {4}fr: "((?:[^"\\]|\\.)*)"\n {2}\},?/g;
+  const text = String(source).replace(/\r\n?/g, "\n");
 
-  for (const match of String(source).matchAll(block)) {
+  for (const match of text.matchAll(block)) {
     stories[Number(match[1])] = { en: match[2], fr: match[3] };
   }
 

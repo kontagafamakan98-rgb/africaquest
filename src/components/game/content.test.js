@@ -100,6 +100,21 @@ test("every level has a lesson story, told in both languages", () => {
   });
 });
 
+test("the lesson stories are read the same way however the file was checked out", () => {
+  // Git on Windows checks a text file out with CRLF unless it is told otherwise,
+  // and the pattern that finds a story is anchored on the newline in front of it:
+  // read with the two line endings left in, it finds nothing on such a machine and
+  // the build reports every level as having no lesson story in French. The reading
+  // is held to one answer whichever ending the file carries, so the failure cannot
+  // come back through a checkout rather than through this code.
+  const source = readFileSync(STORY_FILE, "utf8");
+  const windows = source.replace(/\r?\n/g, "\r\n");
+
+  const plain = extractLevelStories(source);
+  assert.ok(Object.keys(plain).length > 0, "no lesson story was found at all");
+  assert.deepEqual(extractLevelStories(windows), plain);
+});
+
 test("every level carries a full study pack, in both languages", () => {
   // A lesson is the history in several paragraphs, the dated moments that hold
   // the period together, the people, the places and the words. The floors below

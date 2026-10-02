@@ -1,0 +1,16 @@
+# One line ending, on every machine.
+#
+# Git on Windows checks text files out with CRLF unless it is told otherwise,
+# and this project is written on Windows as much as anywhere. A program that
+# reads a committed file and searches it for a newline then reads bytes the
+# writer never wrote: the lesson stories are found in AudioNarrator.jsx by
+# searching for "\n  <number>: {" and the same search finds "\r\n" instead, so
+# the build fails on a machine that checked the repository out the ordinary
+# Windows way while the same commit builds on Linux. This file removes the
+# difference between the two machines rather than teaching every reader about
+# it, which is one rule here against one `\r` to remember in each of them.
+#
+# The batch file is the one text file that keeps its CRLF: `cmd.exe` reads it,
+# and the format it expects is the one Windows writes.
+* text=auto eol=lf
+*.bat text eol=crlf
