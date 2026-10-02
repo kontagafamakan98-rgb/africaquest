@@ -58,12 +58,23 @@ export const PREVIEW_FILE = "social-preview.png";
  * enough to be worth having would block exactly that, and nothing in production.
  *
  * The application loads nothing from anywhere but its own origin - no font, no
- * script, no picture, no call - so the policy is `'self'` and little more. The
- * one allowance it cannot drop is an inline style: React writes the reading
- * position of the notch area and a few measuring styles as attributes, and a
- * style attribute is governed by `style-src` like any other style. `script-src`
- * deliberately does not carry that allowance: the built page has no inline
- * script in it, and saying so is the whole point of writing this down.
+ * script, no picture - so the policy is `'self'` and little more. Two allowances
+ * it cannot drop:
+ *
+ * - an inline style, because React writes the reading position of the notch area
+ *   and a few measuring styles as attributes, and a style attribute is governed
+ *   by `style-src` like any other style. `script-src` deliberately does not carry
+ *   that allowance: the built page has no inline script in it, and saying so is
+ *   the whole point of writing this down.
+ *
+ * - one address outside the site, which is the one call the application ever
+ *   makes: the page that installs the Android app asks GitHub for the newest
+ *   release, so that it can say which version is downloadable and where. The
+ *   first policy this file carried named no address at all, and the effect was
+ *   that screen quietly losing its answer and saying the version could not be
+ *   read - a fault no test could see, since nothing in the build makes that call.
+ *   It is written here as the address a reader is sent to rather than as a
+ *   wildcard, and `connect-src` is the only directive that has to carry it.
  */
 export const CSP_META = [
   "default-src 'self'",
@@ -74,7 +85,7 @@ export const CSP_META = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self'",
-  "connect-src 'self'",
+  "connect-src 'self' https://api.github.com",
   "worker-src 'self'",
   "manifest-src 'self'",
   "form-action 'self'",

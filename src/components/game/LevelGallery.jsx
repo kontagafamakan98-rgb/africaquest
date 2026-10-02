@@ -27,7 +27,16 @@ export default function LevelGallery({ photos = [] }) {
       </h2>
       <p className="text-xs text-slate-600 mb-3">{t.galleryIntro}</p>
 
-      <ul className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4">
+      {/* A strip that scrolls sideways, and a strip a keyboard can reach: with
+          nothing focusable inside it - a photograph is not a control - there was
+          no way to scroll it at all without a pointer, which is what axe reports
+          as a scrollable region without keyboard access. The focus ring is the
+          one the rest of the game draws. */}
+      <ul
+        tabIndex={0}
+        aria-label={t.gallery}
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+      >
         {photos.map((photo) => (
           <li key={photo.file} className="snap-start shrink-0 w-[76%]">
             <figure>

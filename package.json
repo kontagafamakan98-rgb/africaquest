@@ -17,6 +17,7 @@
     "check:references": "node scripts/check-reference-pages.mjs",
     "check:references:record": "node scripts/check-reference-pages.mjs --record",
     "check:site": "node scripts/check-site.mjs",
+    "audit:layout": "node scripts/audit-layout.mjs",
     "check:release": "node scripts/check-release.mjs",
     "content:pull": "node --env-file-if-exists=.env.local scripts/neon-content.mjs pull",
     "content:push": "node --env-file-if-exists=.env.local scripts/neon-content.mjs push",

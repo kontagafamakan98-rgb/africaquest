@@ -314,10 +314,16 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Scrollable content area */}
+      {/* Scrollable content area. Focusable because of that: the page itself
+          does not scroll - the shell is the height of the screen and this is
+          what moves inside it - so a reader with no pointer has nothing to
+          scroll with on a tab that holds no control. The badges are exactly
+          that tab, and axe reads the screen as a scrollable region with no
+          keyboard access. */}
       <main
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto no-scrollbar"
+        tabIndex={0}
+        className="flex-1 overflow-y-auto no-scrollbar focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         <PullToRefresh onRefresh={handleRefresh}>

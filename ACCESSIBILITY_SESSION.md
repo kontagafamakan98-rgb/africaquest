@@ -123,8 +123,10 @@ note at most.
 ## What is not worth the session either
 
 Anything the automated audit already covers: a control with no name, a contrast fault, a picture
-with no description. `npm run verify` has already refused each of those, and spending the session
-on them spends it on the half that is already checked.
+with no description, a word that cannot be read against what is behind it, a target too small to
+aim at, a row that has to be scrolled with a finger. `npm run verify` has already refused the
+first three, `npm run audit:layout` reads the rest in a real browser at the size of a phone, and
+spending the session on any of them spends it on the half that is already checked.
 
 ## The session in one page
 

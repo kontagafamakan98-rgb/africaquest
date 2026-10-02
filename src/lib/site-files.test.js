@@ -159,6 +159,12 @@ test("the built page carries a policy, written where a browser reads it first", 
   assert.doesNotMatch(CSP_META, /script-src[^;]*unsafe-inline/, "any inline script is allowed to run again");
   assert.doesNotMatch(CSP_META, /\*/, "the policy allows any origin");
 
+  // The one address outside the site, and the reason it is named here: the
+  // screen that installs the Android app asks GitHub for the newest release.
+  // The first policy this file carried named no address at all, and that screen
+  // lost its answer in silence - a fault only a browser could show.
+  assert.match(CSP_META, /connect-src[^;]*https:\/\/api\.github\.com/, "the Android screen can no longer read the newest release");
+
   const plugin = siteFiles({ root: ROOT, environment: { [SITE_ORIGIN_VARIABLE]: siteRoot } });
   plugin.configResolved({ root: ROOT, command: "build", build: {} });
   const page = plugin.transformIndexHtml(

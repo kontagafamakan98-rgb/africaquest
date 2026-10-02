@@ -101,6 +101,12 @@ file that travels with the work.
 - `npm run check:release` reads the latest release and the commits the branch has made after its
   tag, and fails when any of them touched a file the installed app is built from, on demand and
   outside the verification, since it needs the network and a release that exists.
+- `npm run audit:layout` opens the built site in Chrome at the size of a phone and reads every
+  screen there: axe with every rule it has, including the two that need a layout engine and are
+  therefore switched off in the check that runs on every verification, and then the geometry no
+  rule expresses - a page that scrolls sideways, an element that hangs off the screen, words cut
+  off by the box that holds them, two pieces of text drawn on each other. Outside the verification,
+  since a browser is a heavy thing to hand a check that runs on every push.
 - `npm run weights:record` records this build as the pass the next one is compared with.
 - `npm run stress` walks the newest and the heaviest progress record the application accepts
   and holds every path that has to read one to a budget, outside the verification.
@@ -411,6 +417,25 @@ source: `src/components/game/screens.test.js` draws every screen for real, in a 
 inside the test, and hands the markup it produced to axe. A fault axe rates serious or critical
 fails the run, and the test ends by drawing two deliberate faults to prove the audit still refuses
 them, because a check nobody has seen fail is a check nobody knows is running.
+
+The one thing that check cannot do is lay anything out. It builds its browser out of jsdom, where
+the rectangle of every element is zero, so the rules axe marks as needing a layout engine are
+switched off there rather than run - the contrast of a word against what is really behind it, and
+the size of a target in real pixels - and nothing else ran them either. A second job does.
+`.github/workflows/layout.yml` builds the site and opens it in the browser a phone has:
+`npm run audit:layout` reads nineteen screens at 320 and 390 pixels wide, hands each one to axe
+with every rule it has, and then measures what no rule expresses - a page that scrolls sideways,
+an element that hangs off the screen, words cut off by the box that holds them, and two pieces of
+text drawn on each other. A fault ends the run. The rules of that measuring are in
+`src/lib/layout-audit.js` with tests of their own, and they are why this pass found the two
+things it then fixed: the Android screen could no longer read the newest release, because the
+policy written just before it allowed no address but the site itself, and two lists scrolled with
+no keyboard access at all.
+
+It stays out of `npm run verify` for the same reason the stress run does, and one more: a browser
+is a heavy thing to hand a check that has to come back quickly, and a runner without one would
+turn that into a failed build. It is run by hand with `npm run audit:layout`, or on a single
+screen with `npm run audit:layout -- --only "the study list"`.
 
 What an audit can never read is the part of a screen a reader hears rather than sees, so the
 gestures that matter are drawn and then asserted one by one. An answer is announced in words

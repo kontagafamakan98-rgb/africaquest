@@ -1,0 +1,84 @@
+# Reads every screen in a real browser at the size of a phone.
+#
+# The Verify workflow draws every screen for real and hands the markup to axe,
+# and that is what turns the accessibility of a screen from a promise into a
+# check. But the document it draws into is jsdom, which lays nothing out: every
+# rectangle in it is zero, so the rules axe marks as needing a layout engine
+# cannot run there, and both checks that matter most on a phone - the contrast of
+# a word against what is behind it, and the size of a target in real pixels - were
+# switched off in that run. Nothing else ran them either.
+#
+# So this job opens the built site in the Chrome that is already on the runner. It
+# is a job of its own rather than a step of `npm run verify` for two reasons: a
+# browser is a heavy thing to hand a check that has to come back quickly on every
+# push, and a runner without one would turn a missing browser into a failing
+# build. Nothing is installed for it beyond the dependencies the build needs: the
+# audit speaks to the browser over the DevTools protocol, which is a WebSocket,
+# which every Node of this project's vintage already has.
+#
+# What it reads is the build, not the published address: a layout fault is found
+# before it is published rather than after, and no run depends on a deployment or
+# on the network. The verdict is left as a file as well as in the log, so the
+# summary says the same thing the log does.
+name: Layout
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Reading the repository and building it. Nothing here writes anywhere.
+permissions:
+  contents: read
+
+jobs:
+  layout:
+    name: Read every screen at the size of a phone
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is verified on
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install the dependencies from the lockfile
+        run: npm ci
+
+      # The audit reads dist/, so the build comes first, and it is the same build
+      # the deployment publishes: a fault found here is a fault found in what a
+      # reader is about to be given.
+      - name: Build the site the audit reads
+        run: npm run build
+
+      - name: Read it in a browser the size of a phone
+        run: npm run audit:layout -- --report layout-report.json
+
+      # The run has already failed when there is something to fix, and this is
+      # what makes the reason readable without opening the log. It runs either
+      # way, because a fault is exactly when the summary is worth having.
+      - name: Leave the verdict in the run
+        if: always()
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            if (!fs.existsSync("layout-report.json")) {
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, "## No report was left: the audit did not reach the site.\n");
+              process.exit(0);
+            }
+            const report = require("./layout-report.json");
+            const lines = [
+              `## ${report.faults.length} fault(s) on ${report.readings} screen reading(s)`,
+              "",
+              ...report.faults.map((fault) => `- ${fault.where}: ${fault.rule} - ${fault.what}`),
+              "",
+              `And ${report.notes.length} thing(s) worth knowing, none of them a failure.`,
+            ];
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
+          '

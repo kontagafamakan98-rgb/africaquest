@@ -2,9 +2,16 @@
 
 Part of the accessibility of Africa History Quest is a check and part of it is a promise. The
 check runs on every `npm run verify`: `src/components/game/screens.test.js` draws every screen for
-real and hands the markup to axe, and a fault axe rates serious or critical fails the run. What no
-audit can read is the part of a screen a reader hears rather than sees, and that is what this
-session is for. It is written down here so that the next person does not start from a blank page.
+real and hands the markup to axe, and a fault axe rates serious or critical fails the run. A second
+job reads the built site in a real browser at the size of a phone, because that drawing lays
+nothing out: seen through jsdom, the rectangle of every element is zero, so the rules axe needs a
+layout engine for - the contrast of a word against what is behind it, the size of a target in real
+pixels - cannot run there and were switched off. `.github/workflows/layout.yml` runs it on every
+change, and it is run by hand as `npm run audit:layout`.
+
+What no audit can read is the part of a screen a reader hears rather than sees, and that is what
+this session is for. It is written down here so that the next person does not start from a blank
+page.
 
 ## What this session is for
 
