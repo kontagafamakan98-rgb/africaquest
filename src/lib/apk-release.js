@@ -89,8 +89,10 @@ export function signerFrom(text) {
 
   return {
     // `apksigner` prints "Verifies" on its own line when the file verifies, and
-    // exits non-zero with "DOES NOT VERIFY" when it does not.
-    verified: /^Verifies$/m.test(printed),
+    // exits non-zero with "DOES NOT VERIFY" when it does not. The line may end in
+    // a carriage return, since a tool that writes to a console writes whichever
+    // ending that console wants.
+    verified: /^Verifies\r?$/m.test(printed),
     sha256: digest ? digest[1].toLowerCase() : null,
     dn: name ? name[1].trim() : null,
     schemes,

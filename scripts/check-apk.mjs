@@ -17,7 +17,7 @@
  * signature is still read and it is said that it was not compared, which is the
  * honest answer rather than a pass.
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -40,23 +40,28 @@ function option(argv, name) {
 }
 
 /**
- * A tool, run, with what it said handed back either way.
+ * A tool, run, with everything it said handed back either way.
  *
  * `apksigner` exits non-zero on a file it cannot verify, and that is an answer
  * rather than a failure: the point of running it is to find out, and a file with
  * no signature is exactly the finding this check exists for. A tool that is not
  * installed is different - it is the run that is wrong, not the APK - and it is
  * said so at once rather than read as an unsigned file.
+ *
+ * Both streams are read, and merged. Which of the two a Java tool writes to is
+ * an implementation detail that has changed between versions, and a check that
+ * silently reads the wrong one reports a signed file as unsigned - which is the
+ * one way this check could be worse than not having it.
  */
 function tool(command, args) {
-  try {
-    return { ok: true, out: execFileSync(command, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }) };
-  } catch (error) {
-    if (error.code === "ENOENT") {
+  const result = spawnSync(command, args, { encoding: "utf8" });
+  if (result.error) {
+    if (result.error.code === "ENOENT") {
       throw new Error(`${command} is not on PATH. Install the Android build tools (aapt2, apksigner) and a JDK (keytool) first.`);
     }
-    return { ok: false, out: `${error.stdout ?? ""}${error.stderr ?? ""}` };
+    throw result.error;
   }
+  return { ok: result.status === 0, out: `${result.stdout ?? ""}${result.stderr ?? ""}` };
 }
 
 /**
@@ -124,6 +129,17 @@ async function main() {
   if (faults.length > 0) {
     console.error("\napk: what is wrong with the file a device would be given:\n");
     for (const fault of faults) console.error(`  x ${fault.rule}\n      ${fault.what}`);
+    // What the tools said, because a finding about a file is only actionable
+    // while the reading it came from is still on the screen. Trimmed, so that a
+    // tool that printed a hundred lines does not bury the finding itself.
+    console.error("\napk: what the tools said:\n");
+    for (const [name, said] of [
+      ["aapt2", badging.out],
+      ["apksigner", certs.out],
+    ]) {
+      const lines = said.trim().split("\n");
+      console.error(`  ${name}: ${lines.slice(0, 20).join("\n    ")}${lines.length > 20 ? `\n    ... ${lines.length - 20} more line(s)` : ""}`);
+    }
   } else {
     console.log(`\napk: the file is signed with this project's key and carries ${version.versionName} / ${version.versionCode}`);
   }

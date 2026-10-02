@@ -65,6 +65,11 @@ test("the signature is read, and a file that does not verify carries none", () =
   assert.equal(signer.sha256, "4a6ade807d1ffd707203c3c91f70b73e9f73d8a79429074c5f6e50e8d60204fe");
   assert.deepEqual(signer.schemes, ["v2", "v3"], "the schemes that say the file is signed");
 
+  // A tool that writes to a console writes the line ending that console wants,
+  // and a reading that missed "Verifies" over a carriage return would report a
+  // signed file as unsigned.
+  assert.equal(signerFrom(CERTS.replace(/\n/g, "\r\n")).verified, true, "a Windows line ending hid the verdict");
+
   const unsigned = signerFrom("DOES NOT VERIFY\nERROR: Missing META-INF/MANIFEST.MF\n");
   assert.equal(unsigned.verified, false);
   assert.equal(unsigned.sha256, null, "a file that does not verify named a signer");
