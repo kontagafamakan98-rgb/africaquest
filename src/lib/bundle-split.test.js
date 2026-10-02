@@ -146,7 +146,7 @@ test("a level's questions are asked for one level at a time, when it is opened",
   assert.equal(new Set(asked).size, 26, "and none of them is declared twice");
 
   // Each loader points at a file that is really there, and the two lists are the
-  // same twenty: a level added to the game whose module nobody asks for, or a
+  // same twenty-six: a level added to the game whose module nobody asks for, or a
   // module left behind by a level that was renumbered, fails here.
   const directory = path.join(ROOT, "src", "components", "game", "levels");
   assert.ok(existsSync(directory), "the levels have a directory of their own");

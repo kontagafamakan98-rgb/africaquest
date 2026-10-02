@@ -7,7 +7,7 @@
  * one level, and the twenty-six modules below are what the bundler turns into
  * twenty-six requests instead of one of four hundred kilobytes. The study material
  * travels with each level for the same reason: a lesson draws its own history,
- * timeline, people, places and words, and not the nineteen other lessons.
+ * timeline, people, places and words, and not the twenty-five other lessons.
  *
  * Each module is written by scripts/generate-level-content.mjs from the same
  * three tables the rest of the game is written from, and the tests hold a level

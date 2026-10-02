@@ -15,7 +15,7 @@ import {
 import { LEVEL_GALLERIES, LEVEL_PHOTOS } from "../../lib/level-images.js";
 
 // The map is drawn from a brief of the game rather than from the game itself, so
-// that a player waiting for it does not download two hundred questions, twenty
+// that a player waiting for it does not download two hundred questions, twenty-six
 // lesson stories and sixty photographs first. The brief is written out of the
 // three tables that own those facts, and this suite is the seam where the two
 // could drift apart: a level renamed, a picture replaced or a question added

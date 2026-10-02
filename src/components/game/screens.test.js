@@ -934,7 +934,7 @@ test("a level is named in full by the screen that lists the lessons", async () =
   // The study list used to keep the state of a level and its mastery in a
   // column of their own on the right, and draw the name of the level in what
   // was left: about a hundred and twenty pixels on a phone, which is three
-  // words. Fourteen of the twenty names came out cut short, and a reader could
+  // words. Fourteen of the twenty-six names came out cut short, and a reader could
   // not tell "Kingdom of Kush" from "Kingdom of Axum".
   //
   // jsdom lays nothing out, so what is read back here is not how wide the
