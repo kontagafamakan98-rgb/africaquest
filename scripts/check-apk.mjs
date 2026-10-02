@@ -109,12 +109,16 @@ async function main() {
   }
 
   const badging = tool("aapt2", ["dump", "badging", apk]);
-  const certs = tool("apksigner", ["verify", "--print-certs", apk]);
+  // Verbose, so that the lines naming the schemes are there when somebody reads
+  // the output; whether the file verifies is `certs.ok`, which is the exit
+  // status, because the quiet run prints no verdict at all.
+  const certs = tool("apksigner", ["verify", "-v", "--print-certs", apk]);
 
   const { faults, notes } = judgeApk({
     fileName,
     badging: badgingFrom(badging.out),
     signer: signerFrom(certs.out),
+    verified: certs.ok,
     expected: {
       tag,
       appId,

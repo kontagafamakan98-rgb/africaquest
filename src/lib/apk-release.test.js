@@ -42,6 +42,7 @@ const judge = (over = {}) =>
     fileName: "africa-history-quest-1.0.7.apk",
     badging: badgingFrom(BADGING),
     signer: signerFrom(CERTS),
+    verified: true,
     expected: expected(),
     ...over,
   });
@@ -59,19 +60,18 @@ test("the package line is read, and the platform is not mistaken for the version
   assert.equal(badgingFrom(""), null, "empty input was read as a package");
 });
 
-test("the signature is read, and a file that does not verify carries none", () => {
+test("the key the file was signed with is read from what apksigner printed", () => {
   const signer = signerFrom(CERTS);
-  assert.equal(signer.verified, true);
   assert.equal(signer.sha256, "4a6ade807d1ffd707203c3c91f70b73e9f73d8a79429074c5f6e50e8d60204fe");
+  assert.equal(signer.dn, "CN=Africa Quest, O=Africa History Quest");
   assert.deepEqual(signer.schemes, ["v2", "v3"], "the schemes that say the file is signed");
 
-  // A tool that writes to a console writes the line ending that console wants,
-  // and a reading that missed "Verifies" over a carriage return would report a
-  // signed file as unsigned.
-  assert.equal(signerFrom(CERTS.replace(/\n/g, "\r\n")).verified, true, "a Windows line ending hid the verdict");
+  // A tool that writes to a console writes the line ending that console wants.
+  const windows = signerFrom(CERTS.replace(/\n/g, "\r\n"));
+  assert.equal(windows.sha256, signer.sha256, "a carriage return hid the certificate");
+  assert.equal(windows.dn, signer.dn, "a carriage return was kept in the name");
 
   const unsigned = signerFrom("DOES NOT VERIFY\nERROR: Missing META-INF/MANIFEST.MF\n");
-  assert.equal(unsigned.verified, false);
   assert.equal(unsigned.sha256, null, "a file that does not verify named a signer");
 });
 
@@ -88,6 +88,7 @@ test("a published file that says another version than the tag fails", () => {
     fileName: "africa-history-quest-1.0.7.apk",
     badging: stale,
     signer: signerFrom(CERTS),
+    verified: true,
     expected: expected(),
   });
 
@@ -108,10 +109,23 @@ test("an APK signed with a key that is not the project's fails", () => {
 });
 
 test("a file with no signature fails, whatever else it says", () => {
-  const { faults } = judge({ signer: signerFrom("DOES NOT VERIFY\n") });
+  const { faults } = judge({ signer: signerFrom("DOES NOT VERIFY\n"), verified: false });
 
   assert.equal(faults.length, 1);
   assert.match(faults[0].rule, /not signed with anything a device will trust/);
+});
+
+test("whether the file verifies is the tool's exit status, and not something read out of its words", () => {
+  // This is the fault the check shipped with. A quiet `apksigner` prints the
+  // certificate and no verdict at all - the verdict is its exit status - so a
+  // reading of the words found nothing to trust and reported a signed release as
+  // unsigned. The words are enough to name the key, and they are not enough to
+  // say that the key was ever checked.
+  const { faults } = judge({ verified: false });
+
+  assert.equal(faults.length, 1);
+  assert.match(faults[0].rule, /not signed with anything a device will trust/);
+  assert.match(faults[0].what, /did not verify the file/, "the reading of the words was reported as the verdict");
 });
 
 test("another application is caught even when its version and key are right", () => {

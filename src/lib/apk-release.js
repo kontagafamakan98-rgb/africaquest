@@ -75,9 +75,9 @@ export function badgingFrom(text) {
  * not verify carries no signer, so both the flag and the digest are read and
  * either being missing is the same finding.
  *
- * @param {string} text what `apksigner verify --print-certs` printed
- * @returns {{ verified: boolean, sha256: string|null, dn: string|null, schemes: string[] }}
- *   whether it verified, who signed it, and which schemes say so
+ * @param {string} text what `apksigner verify -v --print-certs` printed
+ * @returns {{ sha256: string|null, dn: string|null, schemes: string[] }}
+ *   who signed the file, and which schemes say so
  */
 export function signerFrom(text) {
   const printed = String(text);
@@ -87,12 +87,12 @@ export function signerFrom(text) {
     new RegExp(`Verified using ${scheme} scheme \\([^)]*\\): true`).test(printed)
   );
 
+  // Whether the file verifies is deliberately not read here. `apksigner` says so
+  // with its exit status, and the lines naming the schemes are only printed when
+  // it is asked to be verbose - a verdict read out of the text would be missing
+  // on the quiet run this check makes, and a signed file would come back as an
+  // unsigned one. What the text is good for is naming the key.
   return {
-    // `apksigner` prints "Verifies" on its own line when the file verifies, and
-    // exits non-zero with "DOES NOT VERIFY" when it does not. The line may end in
-    // a carriage return, since a tool that writes to a console writes whichever
-    // ending that console wants.
-    verified: /^Verifies\r?$/m.test(printed),
     sha256: digest ? digest[1].toLowerCase() : null,
     dn: name ? name[1].trim() : null,
     schemes,
@@ -106,6 +106,7 @@ export function signerFrom(text) {
  * @param {string} read.fileName the name the file is published under
  * @param {ReturnType<typeof badgingFrom>} read.badging the package line, or nothing
  * @param {ReturnType<typeof signerFrom>} read.signer the signature, as `apksigner` saw it
+ * @param {boolean} read.verified whether `apksigner` verified the file, which is what its exit status said
  * @param {object} read.expected what the tag promised
  * @param {string} read.expected.tag the tag the release is named after
  * @param {string|null} read.expected.appId the application the file has to be, or null to skip
@@ -115,7 +116,7 @@ export function signerFrom(text) {
  * @param {string|null} read.expected.certificateSha256 the project's certificate, or null when unknown
  * @returns {{ faults: {rule: string, what: string}[], notes: {rule: string, what: string}[] }}
  */
-export function judgeApk({ fileName, badging, signer, expected }) {
+export function judgeApk({ fileName, badging, signer, verified, expected }) {
   const faults = [];
   const notes = [];
 
@@ -155,10 +156,10 @@ export function judgeApk({ fileName, badging, signer, expected }) {
     });
   }
 
-  if (!signer.verified || !signer.sha256) {
+  if (!verified || !signer.sha256) {
     faults.push({
       rule: "the published APK is not signed with anything a device will trust",
-      what: signer.verified
+      what: verified
         ? "apksigner verified the file but named no signer"
         : "apksigner did not verify the file: it carries no signature, or one that is broken",
     });
@@ -174,7 +175,7 @@ export function judgeApk({ fileName, badging, signer, expected }) {
     });
   }
 
-  if (signer.verified && signer.schemes.length > 0) {
+  if (verified && signer.schemes.length > 0) {
     notes.push({
       rule: "the schemes the signature carries",
       what: signer.schemes.join(", "),
