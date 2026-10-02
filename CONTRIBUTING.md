@@ -41,6 +41,9 @@ name, fails here instead of in front of a player. That is the reason `jsdom`,
 The half of accessibility no test can reach - sitting down with NVDA or
 VoiceOver and going through a lesson and then a quiz - is written out step by
 step, with what counts as a failure, in [ACCESSIBILITY.md](ACCESSIBILITY.md).
+[ACCESSIBILITY_SESSION.md](ACCESSIBILITY_SESSION.md) is the same sitting as a form
+to fill in as you go, one line per checkpoint, because the wording heard is the
+evidence and it is the first thing to go.
 
 ## House rules
 

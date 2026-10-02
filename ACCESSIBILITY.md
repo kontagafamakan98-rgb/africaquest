@@ -142,6 +142,11 @@ counts.
 
 ## Recording the session
 
+[ACCESSIBILITY_SESSION.md](ACCESSIBILITY_SESSION.md) is that recording, already laid out: the five
+things to write down before the first word, one line per checkpoint to mark pass, note or failure,
+and a place for the words heard under each. Copy it and fill it in as you go, rather than writing
+the session up afterwards - the wording is the evidence, and it is the first thing to go.
+
 Write down, in this order: the five things from "Before you start"; then each checkpoint, marked
 pass, note or failure; then, for every failure, the exact words heard and the step that produced
 them. A recording that says "the chronology was confusing" cannot be fixed; one that says which
