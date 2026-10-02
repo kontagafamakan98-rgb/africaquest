@@ -68,7 +68,7 @@ export default function LegalPage({ title, intro, updatedLabel, updatedAt, secti
               </p>
             ))}
             {section.bullets && (
-              <ul className="list-disc pl-5 space-y-1 text-sm text-slate-600 leading-relaxed">
+              <ul className="list-disc pl-5 space-y-1 text-sm text-slate-600 leading-relaxed break-words">
                 {section.bullets.map((bullet) => (
                   <li key={bullet}>{withMailto(bullet)}</li>
                 ))}
@@ -77,14 +77,23 @@ export default function LegalPage({ title, intro, updatedLabel, updatedAt, secti
             {section.facts && (
               <dl className="mt-2 divide-y divide-slate-100 border-y border-slate-100">
                 {section.facts.map((fact) => (
-                  <div key={fact.label} className="flex gap-3 py-1.5 text-sm">
-                    <dt className="w-32 shrink-0 font-semibold text-slate-700">{fact.label}</dt>
+                  // A label and its value side by side, and one above the other
+                  // on a phone. A column of a hundred and twenty-eight pixels
+                  // leaves a hundred and forty of the three hundred and twenty a
+                  // small screen has, and the address a reader writes to is one
+                  // word that cannot be broken: it hung seventeen pixels past
+                  // the edge, and the page scrolled sideways to show it. A
+                  // definition list reading downwards is no worse for it, and
+                  // `break-words` is there so that no address long enough to be
+                  // real can ever do that again.
+                  <div key={fact.label} className="flex flex-col gap-0.5 py-1.5 text-sm sm:flex-row sm:gap-3">
+                    <dt className="font-semibold text-slate-700 sm:w-32 sm:shrink-0">{fact.label}</dt>
                     <dd
-                      className={
+                      className={`min-w-0 break-words ${
                         fact.missing
                           ? "font-semibold text-amber-700 leading-relaxed"
                           : "text-slate-600 leading-relaxed"
-                      }
+                      }`}
                     >
                       {withMailto(fact.value)}
                     </dd>
