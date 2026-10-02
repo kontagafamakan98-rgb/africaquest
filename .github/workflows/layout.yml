@@ -79,12 +79,17 @@ jobs:
               process.exit(0);
             }
             const report = require("./layout-report.json");
+            // A fault read on each question of a quiz, and again at the other
+            // width, is one line here: the audit gathers the repeats, and what
+            // is left to say is how many readings it was found in.
+            const spread = (entry) =>
+              entry.count > 1 ? ` (the same fault on ${entry.count - 1} more reading(s))` : "";
             const lines = [
-              `## ${report.faults.length} fault(s) on ${report.readings} screen reading(s)`,
+              `## ${report.faults.length} distinct fault(s) across ${report.readings} screen reading(s)`,
               "",
-              ...report.faults.map((fault) => `- ${fault.where}: ${fault.rule} - ${fault.what}`),
+              ...report.faults.map((fault) => `- ${fault.where}: ${fault.rule} - ${fault.what}${spread(fault)}`),
               "",
-              `And ${report.notes.length} thing(s) worth knowing, none of them a failure.`,
+              `And ${report.notes.length} distinct thing(s) worth knowing, none of them a failure.`,
             ];
             fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
           '

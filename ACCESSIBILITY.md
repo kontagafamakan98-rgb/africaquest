@@ -9,7 +9,10 @@ layout engine for - the contrast of a word against what is behind it, the size o
 pixels - cannot run there and were switched off. `.github/workflows/layout.yml` runs it on every
 change, and it is run by hand as `npm run audit:layout`. It reads twenty-four screens, and the
 twenty-four are every shape of question the quiz draws and every sheet or viewer that opens over a
-screen, so none of them is reached only through another.
+screen, so none of them is reached only through another. Because four of them are the same quiz
+shell and each is read at two widths, a fault of that shell arrives several times; the report
+gathers the repeats into one line naming the readings it was found in, so a page with a missing
+landmark is one fault on six screens rather than six faults.
 
 That same job does a second thing a markup cannot be read for: at each width it puts the pointer
 away and walks the game with nothing but Tab, Shift and Tab and Enter, from the bottom bar to the

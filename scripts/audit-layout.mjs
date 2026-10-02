@@ -20,7 +20,9 @@
  * element that hangs off the screen, words cut off by the box that holds them,
  * two pieces of text drawn on each other. The rules of that second reading live
  * in src/lib/layout-audit.js with tests of their own; this file is the part that
- * needs a browser and a site to read.
+ * needs a browser and a site to read. The report it prints is gathered by
+ * src/lib/layout-report.js, so that a fault read once per question of a quiz, and
+ * again at the other width, is said once rather than six times.
  *
  * It is not part of `npm run verify`. A browser is a heavy thing to hand a check
  * that has to come back in a couple of minutes, and a runner without one would
@@ -42,6 +44,7 @@ import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync, statSync 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { INTERACTIVE_SELECTOR, PHONE_SIZES, collectInPage, judge } from "../src/lib/layout-audit.js";
+import { collapseRepeats } from "../src/lib/layout-report.js";
 import {
   SWEEP_LIMIT,
   TABBABLE_SELECTOR,
@@ -1070,22 +1073,43 @@ async function main() {
     }
   }
 
-  console.log(`\nlayout: ${readings} screen(s) read, ${faults.length} fault(s), ${notes.length} note(s)`);
-  if (faults.length > 0) {
+  // The readings say the same few things more than once: a fault of the shell a
+  // quiz is built from is read on each question it draws and again at the other
+  // width, and an element cut short is the same cut at both. They are gathered
+  // before they are printed, so that the report says each fault once and names
+  // the readings it was found in beside it. What belongs together, and why, is
+  // src/lib/layout-report.js.
+  const gatheredFaults = collapseRepeats(faults);
+  const gatheredNotes = collapseRepeats(notes);
+
+  /** The readings behind a gathered line, when there was more than one. */
+  const repeats = (entry) => {
+    if (entry.count < 2) return "";
+    const others = entry.screens.slice(1);
+    const shown = others.slice(0, 3).join("; ");
+    const rest = others.length > 3 ? `; and ${others.length - 3} more` : "";
+    return `\n      the same on ${others.length} other reading(s): ${shown}${rest}`;
+  };
+
+  console.log(`\nlayout: ${readings} screen(s) read, ${gatheredFaults.length} fault(s), ${gatheredNotes.length} note(s)`);
+  if (gatheredFaults.length > 0) {
     console.error("\nlayout: what is wrong, in the order it was read:\n");
-    for (const fault of faults) console.error(`  x ${fault.where}\n      ${fault.rule} - ${fault.what}`);
+    for (const fault of gatheredFaults) console.error(`  x ${fault.where}\n      ${fault.rule} - ${fault.what}${repeats(fault)}`);
   } else {
     console.log("\nlayout: every screen fits the phone it was read at, and axe found nothing serious on it");
   }
-  if (notes.length > 0) {
+  if (gatheredNotes.length > 0) {
     console.log("\nlayout: worth knowing, and none of it a failure:\n");
-    for (const note of notes) console.log(`  - ${note.where}\n      ${note.rule} - ${note.what}`);
+    for (const note of gatheredNotes) console.log(`  - ${note.where}\n      ${note.rule} - ${note.what}${repeats(note)}`);
   }
   if (report) {
-    writeFileSync(report, JSON.stringify({ browser, sizes: PHONE_SIZES, readings, faults, notes }, null, 2));
+    writeFileSync(
+      report,
+      JSON.stringify({ browser, sizes: PHONE_SIZES, readings, faults: gatheredFaults, notes: gatheredNotes }, null, 2)
+    );
     console.log(`\nlayout: the verdict left at ${report}`);
   }
-  process.exitCode = faults.length > 0 ? 1 : 0;
+  process.exitCode = gatheredFaults.length > 0 ? 1 : 0;
 }
 
 main().catch((error) => {

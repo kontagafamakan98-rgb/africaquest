@@ -437,6 +437,14 @@ things it then fixed: the Android screen could no longer read the newest release
 policy written just before it allowed no address but the site itself, and two lists scrolled with
 no keyboard access at all.
 
+A fault is said once. A quiz is four screens that are the same shell with a different question
+drawn in it, and every screen is read at two widths, so a fault of that shell is read eight times
+over - eight lines that a reader has to compare by eye to find out that they say the same thing.
+The report gathers them: an entry that names the same axe rule, or the same element of the screen,
+is one line, naming the readings it was found in beside it. Two paragraphs cut short on one screen
+are still two findings, because gathering on the rule alone would hide work rather than shorten the
+report. That gathering is `src/lib/layout-report.js`, with tests of their own.
+
 The list of screens is the inventory of what a reader can open, and it is written out rather than
 discovered, so a screen added to the game without a line here is a screen this pass quietly
 stopped covering. That is why each of the four shapes of question the quiz draws is a screen of
