@@ -82,6 +82,39 @@ A run started by hand builds and keeps the debug APK and signs nothing. **A vers
 repository with none of these four secrets fails before it builds anything**, with an annotation
 naming them, because the release it would otherwise publish is one no device will install.
 
+## What is read back out of the published file
+
+A fourth job runs after the release is published, and it is the only one of the four that reads the
+file a reader will actually be given. Every step before it works on what the build produced: the
+artifact the signed build kept, the name it was uploaded under, the version the tag named. The asset
+on the release page is a copy of that, and the copy is where a wrong version, a signature from a
+key that is not this project's, or a file carried under the wrong name would go unnoticed.
+
+It downloads the asset with `gh release download`, then runs `npm run check:apk` over it. The check
+reads the version and the package with `aapt2 dump badging`, the signature with `apksigner verify
+--print-certs`, and compares the signer's certificate against the keystore's own - `keytool
+exportcert` and a SHA-256 of the bytes - so what it proves is not "signed" but "signed with the key
+this project signs with". What it decides, and what would make the file wrong, is
+`src/lib/apk-release.js`, which is a plain module with tests of its own; the tools are only run by
+the script.
+
+It is a job of its own rather than three more steps in the release, for the reason the release is a
+job of its own: publishing and checking are different trust. It fails the run rather than
+withdrawing anything, since an APK already published is not un-published by a red mark, and the run
+is where somebody can still see which of the three promises went wrong.
+
+To read a file by hand, with the two Android tools and a JDK on `PATH`:
+
+```bash
+npm run check:apk -- --apk africa-history-quest-1.2.3.apk --tag v1.2.3
+```
+
+The key is named the way the build names it, so a machine that can already sign can also check:
+`ANDROID_KEYSTORE`, `ANDROID_KEY_ALIAS` and `ANDROID_KEYSTORE_PASSWORD`. With no key given, the
+signature is still read and the report says it was not compared, which is the honest answer rather
+than a pass; `--certificate <sha256>` compares against a fingerprint when the key itself is
+elsewhere.
+
 To build a release APK on a machine that has the keystore, set the same four variables and run:
 
 ```bash

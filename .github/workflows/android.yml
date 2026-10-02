@@ -24,6 +24,15 @@ name: Android
 
 on:
   workflow_dispatch:
+    inputs:
+      # A release to read back, so that the check which runs after a tag can also
+      # be asked for on a release that is already published, without pushing a
+      # tag that would publish another one. Left empty, a hand-held run builds
+      # and signs as it always did and reads nothing back.
+      verify-tag:
+        description: "A published release to read back, like v1.0.7. Empty: build only."
+        required: false
+        default: ""
   push:
     tags: ["v*"]
 
@@ -192,3 +201,92 @@ jobs:
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" \
               --notes "Africa History Quest $TAG. It opens from a home screen and runs with no network at all, and the progress it saves stays on the device. Signed, so a device installs it the way it installs any other application."
           gh release upload "$TAG" "apk/africa-history-quest-$VERSION.apk" --clobber --repo "$GITHUB_REPOSITORY"
+
+  # The file a device is given, read back from the release it was published to.
+  #
+  # Everything above works on what the build produced: the artifact the signed
+  # build kept, the name it was uploaded under, the version the tag named. The
+  # asset on the release page is a copy, and this is the only place that reads the
+  # copy a reader downloads. It fails the run rather than withdrawing anything:
+  # an APK already published is not un-published by a red mark, and the run is
+  # where somebody can still see which of the three promises went wrong.
+  #
+  # A job of its own rather than three more steps in the release above, for the
+  # reason the release is a job of its own: publishing and checking are different
+  # trust, and a check that lived beside the write would be read as part of it.
+  verify:
+    name: Read the published APK
+    needs: release
+    # A tag publishes and then reads itself back. A run by hand may name a release
+    # that is already out, which is how the check is tried on an old release
+    # without a tag that would publish another one. `always()` because a release
+    # job that did not run - a hand-held build - must not take the check with it.
+    if: always() && (startsWith(github.ref, 'refs/tags/v') || inputs.verify-tag != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      # The tag the release is named after, whether it is the one that pushed this
+      # run or the one a hand-held run asked about.
+      TAG: ${{ inputs.verify-tag || github.ref_name }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      # A JDK for keytool and for apksigner, which are both Java programs, and
+      # the Android tools the file itself is read with.
+      - name: Install the JDK the signature is read with
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install the Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install the build tools aapt2 and apksigner come from
+        run: yes | sdkmanager "build-tools;35.0.0" >/dev/null
+
+      # setup-android puts the command-line tools and the platform tools on PATH
+      # and leaves the build tools off it, which is the one directory the two
+      # programs this job runs are in.
+      - name: Put the build tools on PATH
+        run: echo "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools/35.0.0" >> "$GITHUB_PATH"
+
+      - name: Install the Node version the app is verified on
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # What a reader's browser is sent to, asked of the release rather than of
+      # the run: the two are the same file only because the release job uploaded
+      # one, and that is exactly what this job is here to notice.
+      - name: Download the asset the release carries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'africa-history-quest-*.apk' --dir published
+          ls -l published
+
+      # The key is decoded into the runner's temporary directory and never the
+      # checkout, exactly as the build does, so no job of this workflow leaves a
+      # copy of a signing key where an artifact would carry it off.
+      - name: Decode the key the file should be signed with
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | tr -d '\r\n\t ' | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          test -s "$RUNNER_TEMP/release.keystore"
+
+      # The three names below are the ones android/app/build.gradle reads, and
+      # scripts/check-apk.mjs reads them the same way rather than inventing a
+      # vocabulary of its own: one name for the key, wherever it is used.
+      - name: Read the version and the signature back out of the file
+        env:
+          ANDROID_KEYSTORE: ${{ runner.temp }}/release.keystore
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          npm run check:apk -- --apk "$(ls published/*.apk)" --tag "$TAG"

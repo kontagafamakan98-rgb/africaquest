@@ -412,12 +412,14 @@ test("a version tag decides the version, and the key it is signed with is one th
 
   // Every line that names the key file names the runner's temporary directory in
   // the same breath, so a copy of a signing key cannot end up in the checkout
-  // where the artifact of the run would carry it off.
+  // where the artifact of the run would carry it off. There are two places the
+  // key is decoded - the build that signs with it, and the check that reads the
+  // published file back - and both are held to the same rule.
   const keyLines = source.split("\n").filter((line) => line.includes("release.keystore"));
   assert.equal(
-    keyLines.length,
-    3,
-    "the key file is named somewhere other than where it is decoded, checked and read"
+    keyLines.filter((line) => line.includes("base64 --decode")).length,
+    2,
+    "the key is decoded somewhere other than the build and the check that reads the published file"
   );
   for (const line of keyLines) {
     assert.match(line, /RUNNER_TEMP|runner\.temp/, `the key is written outside the runner's temporary directory: ${line.trim()}`);
@@ -452,6 +454,52 @@ test("a version tag decides the version, and the key it is signed with is one th
   const ignore = readFileSync(path.join(ROOT, "android", ".gitignore"), "utf8");
   assert.match(ignore, /^\*\.keystore$/m, "a keystore put in android/ would be committed");
   assert.match(ignore, /^\*\.jks$/m, "a .jks keystore put in android/ would be committed");
+});
+
+test("the file the release publishes is read back, and is what the tag promised", () => {
+  // Every step above this one works on what the build produced: the artifact the
+  // signed build kept, the name it was uploaded under, the version the tag named.
+  // The asset a reader downloads is a copy of that, and the copy is the only
+  // place where the three promises of a release - the version the tag names, the
+  // key it is signed with, and the name it is carried under - can be read the way
+  // a reader meets them. So a job takes the published file, and nothing else.
+  const source = readFileSync(path.join(ROOT, ".github", "workflows", "android.yml"), "utf8");
+
+  const check = source.indexOf("Read the published APK");
+  assert.ok(check > 0, "nothing reads the published APK back");
+  assert.ok(check > source.indexOf("Attach the APK to the release"), "the check runs before the release it reads");
+
+  const job = source.slice(check);
+  assert.match(job, /^ {4}needs: release$/m, "the check does not wait for the release it reads");
+  assert.match(job, /if: always\(\) && \(startsWith\(github\.ref, 'refs\/tags\/v'\)/, "the check runs where there is no release");
+  assert.match(job, /timeout-minutes:\s*\d+/, "a hung check cannot hold a runner for hours");
+
+  // The published asset rather than the artifact of the run: the artifact is
+  // what the build produced, and reading it would check nothing the steps above
+  // have not already read.
+  assert.match(job, /gh release download "\$TAG"[^\n]*--pattern '[^']*\.apk'/, "the artifact is read instead of the published file");
+  assert.match(job, /npm run check:apk -- --apk/, "the published file is never handed to the check");
+  assert.match(job, /--tag "\$TAG"/, "the file is not read against the tag it was released as");
+
+  // The tag a hand-held run names, so the check can be tried on a release that
+  // is already published without a tag that would publish another one.
+  assert.match(source, /verify-tag:/, "an old release cannot be read back by hand");
+  assert.match(job, /TAG: \$\{\{ inputs\.verify-tag \|\| github\.ref_name \}\}/, "a hand-held check does not know which release to read");
+
+  // The signature is compared against the project's own key rather than read
+  // alone, and the key is decoded into the runner's temporary directory as the
+  // build decodes it: that is the difference between "signed" and "signed by us".
+  assert.match(
+    job,
+    /ANDROID_KEYSTORE: \$\{\{ runner\.temp \}\}\/release\.keystore/,
+    "the key the file should carry is never given to the check"
+  );
+
+  assert.ok(existsSync(path.join(ROOT, "scripts", "check-apk.mjs")), "the check has no program");
+  assert.ok(existsSync(path.join(ROOT, "src", "lib", "apk-release.js")), "what the file would be read for is written down nowhere");
+
+  const manifest = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  assert.match(manifest.scripts["check:apk"] ?? "", /check-apk\.mjs/, "npm has no way to ask for the check");
 });
 
 test("the workflow installs the image library the photograph check reads with", () => {

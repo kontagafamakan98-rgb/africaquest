@@ -101,6 +101,13 @@ file that travels with the work.
 - `npm run check:release` reads the latest release and the commits the branch has made after its
   tag, and fails when any of them touched a file the installed app is built from, on demand and
   outside the verification, since it needs the network and a release that exists.
+- `npm run check:apk` takes the APK a release published and reads three things back out of it -
+  the version it reports, the certificate it is signed with, and the name it is carried under -
+  and fails when any of them is not what the tag promised. It is what the Android workflow runs
+  after a release is published, so a file that was never really signed with this project's key is
+  a red run rather than a support message about an update a device refuses. It needs `aapt2`,
+  `apksigner` and `keytool`, and the keystore through `ANDROID_KEYSTORE`, `ANDROID_KEY_ALIAS` and
+  `ANDROID_KEYSTORE_PASSWORD`; see `ANDROID_RELEASE.md`.
 - `npm run audit:layout` opens the built site in Chrome at the size of a phone and reads every
   screen there: axe with every rule it has, including the two that need a layout engine and are
   therefore switched off in the check that runs on every verification, and then the geometry no
@@ -111,7 +118,10 @@ file that travels with the work.
   keyboard alone, Tab, Shift and Tab and Enter, from the bottom bar to the study list, a lesson,
   the difficulty picker and a quiz, reading the order the focus takes, whether the ring can be seen
   when it arrives, and whether pressing a control does what that control promised. Outside the
-  verification, since a browser is a heavy thing to hand a check that runs on every push.
+  verification, since a browser is a heavy thing to hand a check that runs on every push. The
+  findings are gathered before they are printed - a fault read on each question of a quiz, and
+  again at the other width, is one line naming the readings it was found in - by
+  `src/lib/layout-report.js`, which has tests of its own.
 - `npm run weights:record` records this build as the pass the next one is compared with.
 - `npm run stress` walks the newest and the heaviest progress record the application accepts
   and holds every path that has to read one to a budget, outside the verification.
