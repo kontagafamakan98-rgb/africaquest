@@ -124,9 +124,14 @@ note at most.
 
 Anything the automated audit already covers: a control with no name, a contrast fault, a picture
 with no description, a word that cannot be read against what is behind it, a target too small to
-aim at, a row that has to be scrolled with a finger. `npm run verify` has already refused the
-first three, `npm run audit:layout` reads the rest in a real browser at the size of a phone, and
-spending the session on any of them spends it on the half that is already checked.
+aim at, a row that has to be scrolled with a finger. Add to that the whole of the keyboard, since
+`npm run audit:layout` now walks a lesson and a quiz with Tab, Shift and Tab and Enter: a control
+a Tab never reaches, a focus ring that cannot be seen, a button that does nothing when it is
+pressed, an order the focus takes that is not the one the screen is drawn in. `npm run verify` has
+already refused the first three, the layout audit reads the rest in a real browser at the size of
+a phone, and spending the session on any of them spends it on the half that is already checked.
+What is left for the ears is the wording the keyboard pass can never hear: what each control
+announces when the focus arrives on it, and what it says once it is pressed.
 
 ## The session in one page
 

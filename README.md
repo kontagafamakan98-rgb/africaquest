@@ -105,8 +105,12 @@ file that travels with the work.
   screen there: axe with every rule it has, including the two that need a layout engine and are
   therefore switched off in the check that runs on every verification, and then the geometry no
   rule expresses - a page that scrolls sideways, an element that hangs off the screen, words cut
-  off by the box that holds them, two pieces of text drawn on each other. Outside the verification,
-  since a browser is a heavy thing to hand a check that runs on every push.
+  off by the box that holds them, two pieces of text drawn on each other. At each width it then
+  puts the pointer away and walks the game with the keyboard alone, Tab, Shift and Tab and Enter,
+  from the bottom bar to the study list, a lesson, the difficulty picker and a quiz, reading the
+  order the focus takes, whether the ring can be seen when it arrives, and whether pressing a
+  control does what that control promised. Outside the verification, since a browser is a heavy
+  thing to hand a check that runs on every push.
 - `npm run weights:record` records this build as the pass the next one is compared with.
 - `npm run stress` walks the newest and the heaviest progress record the application accepts
   and holds every path that has to read one to a budget, outside the verification.
@@ -432,6 +436,17 @@ things it then fixed: the Android screen could no longer read the newest release
 policy written just before it allowed no address but the site itself, and two lists scrolled with
 no keyboard access at all.
 
+And at each width, once every screen has been read that way, it puts the mouse away. A journey of
+nothing but Tab, Shift and Tab and Enter starts at the bottom bar, opens the study list and the
+first level of it, reads the lesson, takes the quiz, chooses a difficulty, and then works the
+chronology of the first question - moving a moment, checking the order, and stepping back with
+Shift and Tab - because those presses are the half of a screen no reading of a markup can reach.
+What it finds is the three questions a reader with no pointer has and the markup does not answer:
+whether a Tab reaches every control at all and in the order the screen is drawn in, whether the
+focus can be seen when it arrives, and whether pressing a control does what the control promised.
+The rules are in `src/lib/keyboard-pass.js` with tests of their own; the walking is in
+`scripts/audit-layout.mjs`, and `--no-keyboard` leaves it out.
+
 It stays out of `npm run verify` for the same reason the stress run does, and one more: a browser
 is a heavy thing to hand a check that has to come back quickly, and a runner without one would
 turn that into a failed build. It is run by hand with `npm run audit:layout`, or on a single
@@ -449,12 +464,19 @@ that answers the arrow keys and carries the focus with it. Every dialog holds th
 is open and gives it back afterwards, every picture is described or marked as decoration, and every
 field says what the browser may remember.
 
+The keyboard, then, is proven rather than promised: a lesson and a quiz are walked with nothing
+but keys before anybody sits down with a screen reader, so the order the focus takes, the ring
+that shows it, and the controls that answer a press are already known to work. What is left for
+that session is the part a reading cannot hear.
+
 One thing is deliberately not done here, and it is not a detail of the code: nobody has yet sat
 down with a real screen reader, NVDA on Windows or VoiceOver on a Mac or an iPhone, and gone
 through a lesson and then a quiz. That session is the only way to hear the order the parts arrive
 in, whether the announcements land often enough and not too often, and whether a heading a sighted
-reader walks past is one a screen reader trips over. Until it happens, the automated audit is what
-is covered here, and it is worth saying which of the two it is. The session itself, step by step,
+reader walks past is one a screen reader trips over. The keyboard pass above says nothing about
+that, since a focus that moves in the right order can still announce the wrong thing. Until the
+session happens, the automated audit is what is covered here, and it is worth saying which of the
+two it is. The session itself, step by step,
 with the route to follow and what counts as a failure, is written in
 [ACCESSIBILITY.md](ACCESSIBILITY.md), so the next person does not start from a blank page.
 

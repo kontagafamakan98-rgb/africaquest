@@ -42,6 +42,13 @@ import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync, statSync 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { INTERACTIVE_SELECTOR, PHONE_SIZES, collectInPage, judge } from "../src/lib/layout-audit.js";
+import {
+  SWEEP_LIMIT,
+  TABBABLE_SELECTOR,
+  focusInPage,
+  judgeKeyboard,
+  tabbablesInPage,
+} from "../src/lib/keyboard-pass.js";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const DIST = path.join(ROOT, "dist");
@@ -80,6 +87,10 @@ function options(argv) {
     only: read("--only"),
     report: read("--report"),
     keep: argv.includes("--keep"),
+    // The keyboard journey is walked unless it is asked not to be: it is the
+    // half of the pass that no reading of a markup can do, and a run that
+    // quietly left it out would be a run reporting on half a screen.
+    keyboard: !argv.includes("--no-keyboard"),
   };
 }
 
@@ -427,6 +438,150 @@ function pressScript(spec) {
 }
 
 /**
+ * A key, pressed the way a keyboard presses it.
+ *
+ * Not a `KeyboardEvent` built in the page: one of those is a message the page
+ * receives, and what a browser does with Tab - moving the focus - happens before
+ * any page is told about it, which is exactly what this pass is measuring. So the
+ * key goes in at the browser's own end of the pipe, and the focus moves for the
+ * same reason it moves under a person's finger. Shift is a modifier on the
+ * message rather than a key of its own: eight is the number the protocol gives
+ * it.
+ */
+async function pressKey(session, key, { shift = false } = {}) {
+  const keys = {
+    Tab: { code: 9, dom: "Tab" },
+    Enter: { code: 13, dom: "Enter", text: "\r" },
+    " ": { code: 32, dom: "Space", text: " " },
+    Escape: { code: 27, dom: "Escape" },
+  };
+  const named = keys[key];
+  if (!named) throw new Error(`${key} is not a key this pass knows how to press`);
+  const modifiers = shift ? 8 : 0;
+  // A key that would write a character - Enter and the space bar are both given
+  // as text here - is sent as a real key press. Sent raw and without text, the
+  // browser moves the focus for a Tab but never activates the button a reader
+  // aimed at, and the whole journey would press keys nothing listens to.
+  const shared = {
+    key,
+    code: named.dom,
+    windowsVirtualKeyCode: named.code,
+    nativeVirtualKeyCode: named.code,
+    modifiers,
+  };
+  if (named.text) {
+    shared.text = named.text;
+    shared.unmodifiedText = named.text;
+  }
+  await session.send(
+    "Input.dispatchKeyEvent",
+    { type: named.text ? "keyDown" : "rawKeyDown", ...shared },
+    session.sessionId
+  );
+  await session.send("Input.dispatchKeyEvent", { type: "keyUp", ...shared }, session.sessionId);
+  await pause(25);
+}
+
+/** Where the focus stands after one press of Tab, read in the page itself. */
+async function pressTab(session, { shift = false } = {}) {
+  await pressKey(session, "Tab", { shift });
+  return session.evaluate(`(${focusInPage.toString()})(${JSON.stringify(TABBABLE_SELECTOR)})`);
+}
+
+/**
+ * Tab until the focus is on the control this names, and say if it never was.
+ *
+ * The travel to a screen is not part of the sweep that reads it: a reader on
+ * their way to the study list passes the map, and counting those presses as a
+ * reading of the list would judge the wrong screen. What it does have to do is
+ * arrive, and a journey that cannot is a journey worth failing: it is the whole
+ * of "this screen can be opened without a mouse".
+ */
+async function tabUntil(session, condition, limit = 160) {
+  for (let press = 1; press <= limit; press += 1) {
+    const visit = await pressTab(session);
+    const found = await session
+      .evaluate(`Boolean(document.activeElement && !document.activeElement.matches("body") && (${condition}))`)
+      .catch(() => false);
+    if (found) return { arrived: true, presses: press, visit };
+  }
+  return { arrived: false, presses: limit, visit: null };
+}
+
+/**
+ * Every control of the screen in front of the reader, one press at a time.
+ *
+ * The sweep starts at the first control and ends when the focus comes back to
+ * it, which is the whole of the tab order of a screen: a control that is skipped
+ * is then a control that never appeared in the numbers, and the rules say so. A
+ * tab order is a ring, so the turn ends the first time it closes rather than
+ * being pressed four hundred times.
+ */
+async function sweep(session) {
+  const controls = await session.evaluate(`(${tabbablesInPage.toString()})(${JSON.stringify(TABBABLE_SELECTOR)})`);
+  const visits = [];
+  if (controls.length === 0) return { controls, visits };
+
+  // Walk to the first control without recording anything on the way.
+  //
+  // The screen was opened by pressing something - the bottom bar, a level card -
+  // so the focus is on that control and not at the top of the order. A sweep that
+  // started there would read the order from the middle of itself: the controls
+  // before the one it started on would arrive only when the tab order came back
+  // round, which reads as the walk stepping backwards. So the focus is carried to
+  // the first control first, and only then does the sequence begin.
+  let here = await readFocus(session);
+  for (let press = 0; press < SWEEP_LIMIT && here.index !== 0; press += 1) {
+    await pressKey(session, "Tab");
+    here = await readFocus(session);
+  }
+  if (here.index !== 0) return { controls, visits };
+  visits.push({ ...here, at: 0 });
+
+  // Then one press at a time, and the order has ended when it comes back to
+  // where it started. Pressing on past that would loop for ever: a tab order is
+  // a ring, and the whole of it is one turn.
+  const wraps = [];
+  for (let press = 0; press < SWEEP_LIMIT; press += 1) {
+    const visit = await pressTab(session);
+    if (visit.index === 0) break;
+    // The browser steps out of the page - and back in at the first control -
+    // exactly once per turn: the focus is not on the document at all for those
+    // presses, which is where the address bar would be. That one is the end of
+    // the order rather than a reader losing their place, and it is the only one
+    // that is forgiven: any other is recorded below and called a loss.
+    if (visit.index === -1) {
+      wraps.push(visits.length);
+      continue;
+    }    visits.push({ ...visit, at: press + 1 });
+  }
+
+  // A step out of the controls with the whole order still ahead of it is the
+  // keyboard losing its place, and it is handed on as a visit that the rules
+  // read as one. The turn's own exit - taken once every control has been reached
+  // - is left out, because it is the shape of a tab order and not a fault.
+  for (const at of wraps.filter((position) => position !== controls.length)) {
+    visits.push({
+      index: -1,
+      tag: "body",
+      sel: "the page",
+      label: "",
+      outline: "",
+      shadow: "",
+      onThePage: true,
+      reached: false,
+      at,
+    });
+  }
+  return { controls, visits };
+}
+
+/** Where the focus stands, read in the page: the same list the sweep walks. */
+async function readFocus(session) {
+  return session.evaluate(`(${focusInPage.toString()})(${JSON.stringify(TABBABLE_SELECTOR)})`);
+}
+
+/**
  * The device a screen is opened on, written before the screen is.
  *
  * Storage belongs to an origin, so it is written on a page of that origin that
@@ -514,6 +669,174 @@ async function readScreen(session, origin, step) {
   };
 }
 
+/** Whether the page holds a control whose words match, asked of the page. */
+const holdsControl = (words) =>
+  `[...document.querySelectorAll("button, a[href]")].some((element) => ${words}.test(element.getAttribute("aria-label") || element.textContent || ""))`;
+
+/**
+ * Whether the words are on the control the focus is on.
+ *
+ * The two questions are not the same one. A screen holds the control that takes
+ * the quiz wherever the focus happens to be, so `holdsControl` opens a screen
+ * and proves it drew; a journey is looking for the moment the focus *arrives* at
+ * that control, and asking the page instead would press Enter on the first thing
+ * the focus reached. Which control carries the words is a question only the
+ * focused element can answer.
+ */
+const focusedHolds = (words) =>
+  `${words}.test(document.activeElement.getAttribute("aria-label") || document.activeElement.textContent || "")`;
+
+/** What the screen says, so that a press can be seen to have changed it. */
+const SIGNATURE = `document.body.innerText.replace(/\\s+/g, " ").trim().slice(0, 4000)`;
+
+/**
+ * What the keyboard leaves on a screen, and whether a press changed it.
+ *
+ * One press at a time, over the controls the sweep found, so what is held is not
+ * "this screen has a tab order" but the order itself. A screen the journey could
+ * not reach, or could not read, is a fault of its own: the rest of the route
+ * would otherwise be read as if it had happened.
+ *
+ * @param {object} session the browser
+ * @param {string} origin the site being read
+ * @returns {Promise<{screens: object[], faults: {rule: string, what: string}[], notes: object[]}>}
+ *   one entry per screen, and the places the journey itself broke
+ */
+async function keyboardPass(session, origin) {
+  const screens = [];
+  const faults = [];
+  const notes = [];
+
+  /** One screen, swept: the journey stops here in the report when it cannot be. */
+  const read = async (name, waitFor) => {
+    const arrived = await until(session, waitFor);
+    if (!arrived) {
+      faults.push({ rule: "the keyboard could not open a screen", what: `${name} never appeared within ${STEP_TIMEOUT_MS}ms` });
+      return false;
+    }
+    await pause(SETTLE_MS);
+    const swept = await sweep(session);
+    const after = await session.evaluate(`(${tabbablesInPage.toString()})(${JSON.stringify(TABBABLE_SELECTOR)})`);
+    if (after.length !== swept.controls.length) {
+      notes.push({
+        rule: "a screen changed while it was being read",
+        what: `${name} held ${swept.controls.length} control(s) at the first press and ${after.length} at the last`,
+      });
+    }
+    screens.push({ name, ...swept });
+    return true;
+  };
+
+  /** The press that carries the reader on, and the screen it lands on. */
+  const travel = async (condition, what) => {
+    const found = await tabUntil(session, condition);
+    if (!found.arrived) {
+      faults.push({ rule: "the keyboard cannot reach a control", what: `no Tab found ${what} within ${found.presses} presses` });
+      return false;
+    }
+    await pressKey(session, "Enter");
+    await pause(SETTLE_MS);
+    return true;
+  };
+
+  await seedInto(session, origin, PLAYED);
+  await session.send("Page.navigate", { url: `${origin}/` }, session.sessionId);
+  if (!(await until(session, `document.querySelector("nav button")`))) {
+    faults.push({ rule: "the keyboard pass could not open the game", what: "the map never drew" });
+    return { screens, faults, notes };
+  }
+  await pause(SETTLE_MS);
+
+  // 1. The bottom bar, which is where the study list lives: reached by Tab alone.
+  const toTheList = await tabUntil(session, `document.activeElement.matches("nav button:nth-child(2)")`);
+  if (toTheList.arrived) {
+    await pressKey(session, "Enter");
+    // 2. The study list, then the first level of it, and the lesson it opens.
+    // A level card is the button that carries the title of its level, and the
+    // title is the `h3` drawn inside it. Asking for that rather than for the
+    // first button of the list is what makes this the level and not whatever
+    // else a screen may put at the top of it.
+    if (await read("the study list", `document.querySelector("main button")`)) {
+      if (await travel(`document.activeElement.matches("button") && Boolean(document.activeElement.querySelector("h3"))`, "the first level of the study list")) {
+        if (await read("a lesson", holdsControl("/take the quiz/i"))) {
+          // 3. And on from the lesson, which is where a reader goes next.
+          if (await travel(focusedHolds("/take the quiz/i"), "the control that takes the quiz")) {
+            if (await read("a level, before a difficulty is chosen", `document.querySelector("h3")`)) {
+              if (await travel(focusedHolds("/easy/i"), "the easy setting")) {
+                // 4. The quiz, with a question on it. The chronology opens it.
+                if (await read("a quiz", holdsControl("/check my order/i"))) {
+                  await quizPresses(session, screens, faults, notes);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } else {
+    faults.push({
+      rule: "the keyboard cannot reach a control",
+      what: `no Tab found the study list in the bottom bar within ${toTheList.presses} presses`,
+    });
+  }
+
+  return { screens, faults, notes };
+}
+
+/**
+ * The presses that have to do something: an order moved, and an answer checked.
+ *
+ * This is the half of the pass no reading can reach. A control with a name, a
+ * role and a ring can still do nothing when it is pressed without a pointer, and
+ * a reader would find that out one question at a time. The chronology opens the
+ * quiz, and it is the shape the game itself says must be playable with keys: two
+ * named buttons per row rather than a drag. So the first row is moved down, the
+ * order is read before and after, and then the answer is checked and the screen
+ * is read again.
+ */
+async function quizPresses(session, screens, faults, notes) {
+  const screen = screens[screens.length - 1];
+  const last = screen.controls.length - 1;
+
+  // The way back, taken first, while the whole of the quiz is still on the
+  // screen: a reader who has stepped one control too far retreats with Shift and
+  // Tab, and a screen where that lands on nothing hands them the whole of it
+  // again instead of the one control they passed. The sweep ended on the first
+  // control, so one press in and one press back is the retreat itself.
+  await pressTab(session);
+  const back = await pressTab(session, { shift: true });
+  notes.push({
+    rule: "what one press backwards lands on",
+    what: `one press in on the quiz, Shift and Tab left the focus on ${back.sel} (${back.index} of ${last + 1})`,
+  });
+
+  const before = await session.evaluate(SIGNATURE);
+  const moved = await tabUntil(session, `document.activeElement.getAttribute("aria-label").startsWith("Move down")`);
+  if (!moved.arrived) {
+    faults.push({ rule: "the keyboard cannot reach a control", what: "no Tab found a control that moves a moment down" });
+    return;
+  }
+  const order = await session.evaluate(SIGNATURE);
+  await pressKey(session, "Enter");
+  await pause(SETTLE_MS);
+  const after = await session.evaluate(SIGNATURE);
+  screen.activations = [
+    ...(screen.activations || []),
+    { what: `pressing "${moved.visit.label}" moved a moment`, changed: order !== after },
+  ];
+
+  const checked = await tabUntil(session, `document.activeElement.matches("button") && /check my order/i.test(document.activeElement.textContent || "")`);
+  if (!checked.arrived) {
+    faults.push({ rule: "the keyboard cannot reach a control", what: "no Tab found the control that checks the order" });
+    return;
+  }
+  const said = await session.evaluate(SIGNATURE);
+  await pressKey(session, "Enter");
+  await pause(SETTLE_MS);
+  const told = await session.evaluate(SIGNATURE);
+  screen.activations.push({ what: "pressing the order check", changed: said !== told && told !== before });
+}
+
 /** The screens this run is about: all of them, or the one named on the command
  * line, so that one screen can be read on its own while it is being fixed. */
 function chosen(only) {
@@ -551,7 +874,7 @@ const WITHOUT_WORKER = `
  * before it is published, and it cannot depend on a deployment or on a network.
  */
 async function main() {
-  const { only, report, keep } = options(process.argv.slice(2));
+  const { only, report, keep, keyboard } = options(process.argv.slice(2));
   const screens = chosen(only);
 
   if (!existsSync(path.join(DIST, "index.html"))) {
@@ -609,6 +932,25 @@ async function main() {
         process.stdout.write(read.faults.length === 0 ? "." : "!");
       }
       process.stdout.write("\n");
+
+      // And the same screens again, with no pointer: a lesson and a quiz walked
+      // from the map with Tab, Enter and nothing else. Read at each width,
+      // because what is hidden at one width is not in the tab order there and
+      // that is part of what a reader meets.
+      if (keyboard) {
+        process.stdout.write("keyboard: ");
+        const walked = await keyboardPass(session, site.origin);
+        const judged = judgeKeyboard({
+          screens: walked.screens.map((screen) => ({ ...screen, name: `${screen.name} (${size.width}px)` })),
+        });
+        const where = `the keyboard journey (${size.name}, ${size.width}px)`;
+        faults.push(...walked.faults.map((fault) => ({ where, ...fault })));
+        notes.push(...walked.notes.map((note) => ({ where, ...note })));
+        for (const fault of judged.faults) faults.push({ where, ...fault });
+        for (const note of judged.notes) notes.push({ where, ...note });
+        readings += walked.screens.length;
+        process.stdout.write(`${walked.screens.length} screen(s), ${judged.faults.length + walked.faults.length} fault(s)\n`);
+      }
     }
   } finally {
     if (session) session.close();

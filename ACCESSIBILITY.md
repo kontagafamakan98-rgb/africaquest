@@ -9,9 +9,14 @@ layout engine for - the contrast of a word against what is behind it, the size o
 pixels - cannot run there and were switched off. `.github/workflows/layout.yml` runs it on every
 change, and it is run by hand as `npm run audit:layout`.
 
-What no audit can read is the part of a screen a reader hears rather than sees, and that is what
-this session is for. It is written down here so that the next person does not start from a blank
-page.
+That same job does a second thing a markup cannot be read for: at each width it puts the pointer
+away and walks the game with nothing but Tab, Shift and Tab and Enter, from the bottom bar to the
+study list, a lesson, the difficulty picker and a quiz, moving a moment of the chronology and
+checking the order. So by the time this session starts, a lesson and a quiz have already been
+opened without a mouse, the order the focus takes has been read, the ring that shows it has been
+measured against the stylesheet, and the controls that answer a press have been found to. What no
+audit can read is the part of a screen a reader hears rather than sees, and that is what this
+session is for. It is written down here so that the next person does not start from a blank page.
 
 ## What this session is for
 
@@ -19,6 +24,11 @@ axe can tell that a control has a name. It cannot hear the order the parts of a 
 whether an announcement lands often enough and not too often, or whether a heading a sighted
 reader walks past is one a screen reader trips over. Those three questions are the whole of it,
 and they are the reason a person has to sit down rather than a machine.
+
+The keyboard is no longer one of them. `npm run audit:layout` walks a lesson and a quiz with Tab,
+Shift and Tab and Enter before anybody sits down, so the order the focus takes and whether it can
+be seen are already checked; the three questions above are read with the ears, and a control that
+moves the focus in the right order can still announce the wrong thing.
 
 ## Before you start
 

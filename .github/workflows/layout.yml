@@ -20,6 +20,12 @@
 # before it is published rather than after, and no run depends on a deployment or
 # on the network. The verdict is left as a file as well as in the log, so the
 # summary says the same thing the log does.
+# And once every screen has been read that way, at each width, the pointer is put
+# away: the same job walks a lesson and a quiz with nothing but Tab, Shift and Tab
+# and Enter, from the bottom bar through the study list, the difficulty picker and
+# the first question of the quiz, and reads the order the focus takes, the ring
+# that shows it and whether a press does what the control promised. Those rules
+# are in src/lib/keyboard-pass.js with tests of their own.
 name: Layout
 
 on:
