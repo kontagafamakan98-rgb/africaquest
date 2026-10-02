@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Smartphone, Download, ExternalLink, ShieldCheck, WifiOff } from "lucide-react";
+import { ArrowLeft, Smartphone, Download, ExternalLink, ShieldAlert, ShieldCheck, WifiOff } from "lucide-react";
 import { useLang } from "../components/i18n";
 import {
   RELEASES_PAGE,
@@ -22,8 +22,11 @@ import {
  *
  * Nothing here is a promise the app cannot keep. The download is somebody
  * else's file on somebody else's site, so the button leaves the application for
- * it in a new tab, and the wording about unknown sources is the sentence a phone
- * shows, not a claim invented here.
+ * it in a new tab, and the wording about unknown sources and about Play Protect
+ * is the sentence a phone shows, not a claim invented here. The second of those
+ * two is worth a paragraph of its own: Play Protect refuses a file from outside
+ * the Play Store before any signature is read, and a reader who has not been told
+ * what that warning is reads it as the download being wrong.
  *
  * The wording lives in the module rather than in the shared dictionary, the way
  * the About page keeps its own: this is a page read once, and its text is long
@@ -45,12 +48,16 @@ const CONTENT = {
     installSteps: [
       "Open the download and let the APK arrive. That is the file format Android installs applications from.",
       "Your phone will ask whether this source may install apps. Allow it for this one file, and the installation continues.",
+      "The screen may warn that Play Protect blocked it, because the file does not come from the Play Store. Choose Install anyway (More details, then Install anyway) and the installation continues.",
       "If you already had an earlier copy of the app, remove it first: a phone refuses to update one signed with another key.",
       "Open the app. It asks for no account and needs no network, and everything it knows stays on the device.",
     ],
+    blockedHeading: "If Play Protect blocks it",
+    blockedBody:
+      "Play Protect is the scan a phone runs before it installs an app, and it shows that warning for everything that does not come from the Play Store rather than for something being wrong with the file. Choosing Install anyway once is enough, and the installation continues. If that choice is no longer offered, or the phone now says only App not installed, turn the scan off for a moment (Settings, Google, Play Protect, the gear icon, then Scan apps with Play Protect), install the app, and turn it back on. The file is the signed release this project publishes, it opens with no network at all, and nothing in the game is sent anywhere.",
     signedHeading: "A signed release",
     signedBody:
-      "Every release is signed, so a phone accepts it the way it accepts any other application. The download link points at the release this project publishes, and nothing in the game is sent anywhere when it is opened.",
+      "Every release is signed, which is what a phone checks before it installs a file at all, and the key that signs it stays with this project rather than in the repository. The download link points at the release this project publishes, and nothing in the game is sent anywhere when it is opened.",
     offlineHeading: "This line and your network",
     offlineBody:
       "This screen asks GitHub for the version when it is opened, and only then. With no network, the number is simply absent and the download button still opens the release page.",
@@ -72,12 +79,16 @@ const CONTENT = {
     installSteps: [
       "Ouvrez le téléchargement et laissez le fichier APK arriver. C'est le format avec lequel Android installe une application.",
       "Votre téléphone demandera si cette source peut installer des applications. Autorisez-le pour ce fichier, et l'installation continue.",
+      "L'écran peut avertir que Play Protect l'a bloquée, parce que le fichier ne vient pas du Play Store. Choisissez « Installer quand même » (Plus de détails, puis Installer quand même) et l'installation continue.",
       "Si vous aviez déjà une version antérieure, désinstallez-la d'abord : un téléphone refuse de mettre à jour une application signée avec une autre clé.",
       "Ouvrez l'application. Elle ne demande aucun compte et n'a pas besoin de réseau, et tout ce qu'elle sait reste sur l'appareil.",
     ],
+    blockedHeading: "Si Play Protect la bloque",
+    blockedBody:
+      "Play Protect est l'analyse qu'un téléphone fait avant d'installer une application, et il affiche cet avertissement pour tout ce qui ne vient pas du Play Store, plutôt que parce que le fichier aurait un défaut. Choisir « Installer quand même » une fois suffit, et l'installation continue. Si ce choix n'est plus proposé, ou si le téléphone ne dit plus qu'« Application non installée », désactivez un instant l'analyse (Paramètres, Google, Play Protect, l'icône d'engrenage, puis « Analyser les applications avec Play Protect »), installez l'application, puis réactivez-la. Le fichier est la version signée que ce projet publie, elle s'ouvre sans réseau, et rien du jeu n'est envoyé où que ce soit.",
     signedHeading: "Une version signée",
     signedBody:
-      "Chaque version est signée, donc un téléphone l'accepte comme n'importe quelle autre application. Le lien de téléchargement mène à la version que ce projet publie, et rien du jeu n'est envoyé où que ce soit quand on l'ouvre.",
+      "Chaque version est signée, ce qu'un téléphone vérifie avant même d'installer un fichier, et la clé qui la signe reste à ce projet plutôt que dans le dépôt. Le lien de téléchargement mène à la version que ce projet publie, et rien du jeu n'est envoyé où que ce soit quand on l'ouvre.",
     offlineHeading: "Cette ligne et votre réseau",
     offlineBody:
       "Cet écran demande la version à GitHub quand on l'ouvre, et seulement à ce moment. Sans réseau, le numéro est simplement absent et le bouton de téléchargement ouvre quand même la page des versions.",
@@ -204,6 +215,17 @@ export default function Android() {
               <li key={step}>{step}</li>
             ))}
           </ol>
+        </section>
+
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4" aria-labelledby="play-protect">
+          <h2
+            id="play-protect"
+            className="flex items-center gap-2 text-sm font-extrabold text-amber-900"
+          >
+            <ShieldAlert className="w-4 h-4 text-amber-700" aria-hidden="true" />
+            {t.blockedHeading}
+          </h2>
+          <p className="mt-1 text-xs text-amber-900/90 leading-relaxed">{t.blockedBody}</p>
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">

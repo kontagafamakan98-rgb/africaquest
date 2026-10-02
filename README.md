@@ -346,8 +346,11 @@ page. The button goes to `/releases/latest`, so it answers even when nothing els
 version above it is read from the GitHub API when that screen is opened: the one request the
 application makes of its own, kept to that screen and named in `src/lib/android-release.js`. The
 page also carries the steps a phone needs to install an APK, since such a file is installed by
-allowing one source to install applications rather than from a store, and by removing an earlier
-copy signed with another key before this one is installed.
+allowing one source to install applications rather than from a store, by answering the Play Protect
+warning a phone shows for anything from outside the Play Store, and by removing an earlier copy
+signed with another key before this one is installed. That warning is why the screen has a section
+of its own: a file that passes every check in `ANDROID_RELEASE.md` is still refused by a phone that
+was not told what the warning means.
 
 ## Project layout
 

@@ -150,3 +150,15 @@ test("this is the only address the application talks to, and it is asked on dema
   assert.match(page, /RELEASES_PAGE/, "the screen has no fallback for a request that never answers");
   assert.match(read("src/pages.config.js"), /"Android": Android/, "the Android screen is not routed");
 });
+
+test("the page says what a phone shows when Play Protect refuses the file", () => {
+  // The one refusal that is not a fault of the file, and the one a reader is
+  // least likely to guess: a phone blocks every app from outside the Play Store,
+  // and somebody who has not been told reads that as the download being wrong.
+  // Both languages are read, because the warning this answers is shown in
+  // whichever language the phone is set to, not in the one the screen is.
+  const page = read("src/pages/Android.jsx");
+  for (const phrase of ["Play Protect", "Install anyway", "Installer quand même"]) {
+    assert.ok(page.includes(phrase), `the install steps do not name "${phrase}"`);
+  }
+});

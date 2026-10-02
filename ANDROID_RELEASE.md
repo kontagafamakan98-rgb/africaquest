@@ -125,3 +125,30 @@ cd android && ./gradlew assembleRelease
 
 Without them the same command produces an unsigned `app-release-unsigned.apk`, which no device will
 install.
+
+## When a phone refuses the file: Play Protect
+
+A release can pass every check above and still be refused by the phone, and the message to expect is
+"Blocked by Play Protect". It is not a verdict on the file. Play Protect is the scan Android runs
+before it installs an app, and it shows that warning for anything that does not come from the Play
+Store, which is every APK this project publishes. The signature is read and trusted; the developer
+is simply one Google has not seen before. The same file from a GitHub release, a USB drive or a
+message is refused the same way.
+
+What the person doing the install does:
+
+1. On the warning, choose **Install anyway** (**More details**, then **Install anyway**). The install
+   then continues, and this is the ordinary path for a sideloaded app.
+2. Answer that first prompt. The warning is shown once, and a second attempt after it has been
+dismissed fails with "App not installed" (`INSTALL_FAILED_VERIFICATION_FAILURE`, code -22) and no
+   choice at all, which is the state that reads as the file being broken.
+3. If the warning no longer appears, the scan can be turned off for the length of the install:
+   Settings, Google, Play Protect, the gear icon, then **Scan apps with Play Protect**. Turn it back
+   on when the app is installed.
+
+Nothing here is something the build can change, and it is better said plainly than left as a support
+message. Google's own [developer guidance for Play Protect warnings](https://developers.google.com/android/play-protect/warning-dev-guidance)
+lists an install block for apps from outside the Play Store and the appeal that can be requested
+when a file has been flagged in error. Publishing the application on the Play Store, even on an
+internal testing track, is the only way to stop the warning appearing at all; until then, the
+`/Android` screen tells the reader what the warning means before they meet it.
