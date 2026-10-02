@@ -23,6 +23,7 @@
     "audit:layout": "node scripts/audit-layout.mjs",
     "check:release": "node scripts/check-release.mjs",
     "check:apk": "node scripts/check-apk.mjs",
+    "check:desktop": "node scripts/check-desktop.mjs",
     "content:pull": "node --env-file-if-exists=.env.local scripts/neon-content.mjs pull",
     "content:push": "node --env-file-if-exists=.env.local scripts/neon-content.mjs push",
     "content:check": "node --env-file-if-exists=.env.local scripts/neon-content.mjs check",

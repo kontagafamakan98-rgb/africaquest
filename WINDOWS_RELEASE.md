@@ -79,12 +79,36 @@ somebody shipping to strangers and is not worth it to a game handed to friends.
 
 ## Reading it back
 
-Nothing reads a published installer back the way `npm run check:apk` reads a published APK, and
-that is a gap rather than a decision. What could be checked without a certificate is thin: the file
-exists, it is the size the build reported, and it carries the version the tag named. The Windows
-properties a person could read - the publisher, the signature - are empty by design here, so the
-check that would matter is the one thing a red run could not fix.
+`npm run check:desktop` reads a published installer the way `npm run check:apk` reads a published
+APK, and for the same reason: every step before it works on what the build produced, and the file on
+the release page is a copy. The copy is where a wrong version, another program carried under this
+project's name, or a file under a name the version does not make would go unnoticed.
 
-What stands in its place is that the installer is built from the same `dist` as the two other
-targets, by a workflow that runs the same build, and that the file is attached to the release in
-the same job that produced it rather than copied there by hand.
+It needs nothing on `PATH`. The version a Windows program carries lives in a resource inside the
+file itself, so the check opens the file and reads that resource rather than asking PowerShell or a
+signing tool. That is why it runs on any machine with Node, including the Linux runner the workflow
+uses for it.
+
+```bash
+npm run check:desktop -- --exe Africa-History-Quest-Setup-1.0.8.exe --tag v1.0.8
+```
+
+It reads three things and holds the file to the tag:
+
+- **the version**, both the file version and the product version, against the three numbers the tag
+  names, worked out the same way the Android tag is;
+- **the program**, which the file says it is, against `Africa History Quest`, so a release carrying
+  another build entirely is caught;
+- **the name**, against `Africa-History-Quest-Setup-<version>.exe`, the name `electron-builder.yml`
+  writes and the workflow uploads.
+
+The signature is read and said rather than demanded. This installer is not code signed, so a
+missing Authenticode signature is the ordinary state and is reported as a note, not a fault; a run
+that one day signs the file, or wants to require it, passes `--require-signature` and the same check
+becomes the gate without a second check being written.
+
+What it decides, and what would make the file wrong, is `src/lib/desktop-release.js`, a plain module
+with tests of its own; the script is only the part that opens the file and prints the verdict. The
+workflow runs it in a job of its own, after the release is published, and fails the run rather than
+withdrawing anything: an installer already downloaded is not un-downloaded by a red mark. To read a
+release that is already out, start the Desktop workflow by hand and name it in **verify-tag**.

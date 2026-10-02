@@ -502,6 +502,46 @@ test("the file the release publishes is read back, and is what the tag promised"
   assert.match(manifest.scripts["check:apk"] ?? "", /check-apk\.mjs/, "npm has no way to ask for the check");
 });
 
+test("the installer the release publishes is read back, and it is what the tag promised", () => {
+  // The desktop build has the same gap the Android one does, and the same answer:
+  // every step before this one works on the artifact the build kept, the name it
+  // was uploaded under and the version the manifest was given, and the asset a
+  // reader downloads is a copy of that. A job takes the published file, and
+  // nothing else, so the version a person would install is read the way a person
+  // would meet it.
+  const source = readFileSync(path.join(ROOT, ".github", "workflows", "desktop.yml"), "utf8");
+
+  const check = source.indexOf("Read the published installer");
+  assert.ok(check > 0, "nothing reads the published installer back");
+  assert.ok(check > source.indexOf("Attach the installer to the release"), "the check runs before the release it reads");
+
+  const job = source.slice(check);
+  assert.match(job, /^ {4}needs: release$/m, "the check does not wait for the release it reads");
+  assert.match(job, /if: always\(\) && \(startsWith\(github\.ref, 'refs\/tags\/v'\)/, "the check runs where there is no release");
+  assert.match(job, /timeout-minutes:\s*\d+/, "a hung check cannot hold a runner for hours");
+  assert.match(job, /^ {4}permissions:\n {6}contents: read$/m, "the check may write to the repository");
+
+  // The published asset rather than the artifact of the run, which reading would
+  // check nothing the steps above have not already read.
+  assert.match(job, /gh release download "\$TAG"[^\n]*--pattern '[^']*\.exe'/, "the artifact is read instead of the published file");
+  assert.match(job, /npm run check:desktop -- --exe/, "the published file is never handed to the check");
+  assert.match(job, /--tag "\$TAG"/, "the file is not read against the tag it was released as");
+
+  // The tag a hand-held run names, so the check can be tried on a release that
+  // is already published without a tag that would publish another one.
+  assert.match(source, /verify-tag:/, "an old release cannot be read back by hand");
+  assert.match(job, /TAG: \$\{\{ inputs\.verify-tag \|\| github\.ref_name \}\}/, "a hand-held check does not know which release to read");
+
+  assert.ok(existsSync(path.join(ROOT, "scripts", "check-desktop.mjs")), "the check has no program");
+  assert.ok(
+    existsSync(path.join(ROOT, "src", "lib", "desktop-release.js")),
+    "what the file would be read for is written down nowhere"
+  );
+
+  const manifest = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  assert.match(manifest.scripts["check:desktop"] ?? "", /check-desktop\.mjs/, "npm has no way to ask for the check");
+});
+
 test("the workflow installs the image library the photograph check reads with", () => {
   // Half of `npm run verify` opens every JPEG and reads its pixels through
   // Pillow. A runner that has Python but not Pillow fails on the gallery, which

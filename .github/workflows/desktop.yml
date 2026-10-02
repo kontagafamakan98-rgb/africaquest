@@ -31,6 +31,14 @@ on:
         description: "A version to name the installer after, like v1.0.8. Empty: the version in package.json."
         required: false
         default: ""
+      # A release to read back, so that the check which runs after a tag can also
+      # be asked for on a release that is already published, without pushing a
+      # tag that would publish another one. Left empty, a hand-held run builds
+      # and reads nothing back.
+      verify-tag:
+        description: "A published release to read back, like v1.0.8. Empty: build only."
+        required: false
+        default: ""
   push:
     tags: ["v*"]
 
@@ -137,3 +145,61 @@ jobs:
             sleep 5
           done
           gh release upload "$TAG" "setup/Africa-History-Quest-Setup-${TAG#v}.exe" --clobber --repo "$GITHUB_REPOSITORY"
+
+  # The file a reader is given, read back from the release it was published to.
+  #
+  # Everything above works on what the build produced: the artifact the build
+  # kept, the name it was uploaded under, the version the manifest was given. The
+  # asset on the release page is a copy, and this is the only place that reads the
+  # copy a reader downloads. It fails the run rather than withdrawing anything: an
+  # installer already published is not un-published by a red mark, and the run is
+  # where somebody can still see which of the promises went wrong.
+  #
+  # A job of its own rather than three more steps in the release above, for the
+  # reason the release is a job of its own: publishing and checking are different
+  # trust, and a check that lived beside the write would be read as part of it.
+  #
+  # It runs on Linux although the file is a Windows program, because reading it
+  # is Node reading bytes: the version a Windows program carries is in the file
+  # itself, and the check asks no tool and no PowerShell for it. That is also why
+  # it needs no `npm ci` here, exactly as the APK check reads its file with the
+  # tools on PATH rather than with the project's own dependencies.
+  verify:
+    name: Read the published installer
+    needs: release
+    # A tag publishes and then reads itself back. A run by hand may name a release
+    # that is already out, which is how the check is tried on an old release
+    # without a tag that would publish another one. `always()` because a release
+    # job that did not run - a hand-held build - must not take the check with it.
+    if: always() && (startsWith(github.ref, 'refs/tags/v') || inputs.verify-tag != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      # The tag the release is named after, whether it is the one that pushed this
+      # run or the one a hand-held run asked about.
+      TAG: ${{ inputs.verify-tag || github.ref_name }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install the Node version the app is verified on
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # What a reader's browser is sent to, asked of the release rather than of
+      # the run: the two are the same file only because the release job uploaded
+      # one, and that is exactly what this job is here to notice.
+      - name: Download the asset the release carries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'Africa-History-Quest-Setup-*.exe' --dir published
+          ls -l published
+
+      - name: Read the version and the name back out of the file
+        run: npm run check:desktop -- --exe "$(ls published/*.exe)" --tag "$TAG"

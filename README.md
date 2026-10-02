@@ -108,6 +108,14 @@ file that travels with the work.
   a red run rather than a support message about an update a device refuses. It needs `aapt2`,
   `apksigner` and `keytool`, and the keystore through `ANDROID_KEYSTORE`, `ANDROID_KEY_ALIAS` and
   `ANDROID_KEYSTORE_PASSWORD`; see `ANDROID_RELEASE.md`.
+- `npm run check:desktop` takes the Windows installer a release published and reads what the file
+  says about itself - the version it carries, the program it names, and the name it is carried
+  under - and fails when any of them is not what the tag promised. It is what the Desktop workflow
+  runs after a release is published, so an installer that is not the one the tag named is a red run
+  rather than a download somebody trusts. Unlike `check:apk` it needs no tool: the version a
+  Windows program carries lives in a resource inside the file, read as bytes, so it runs anywhere
+  Node does; the signature is read and said rather than demanded, since this installer is
+  deliberately not code signed. See `WINDOWS_RELEASE.md`.
 - `npm run audit:layout` opens the built site in Chrome at the size of a phone and reads every
   screen there: axe with every rule it has, including the two that need a layout engine and are
   therefore switched off in the check that runs on every verification, and then the geometry no
