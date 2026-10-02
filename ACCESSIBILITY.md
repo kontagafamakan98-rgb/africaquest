@@ -7,7 +7,9 @@ job reads the built site in a real browser at the size of a phone, because that 
 nothing out: seen through jsdom, the rectangle of every element is zero, so the rules axe needs a
 layout engine for - the contrast of a word against what is behind it, the size of a target in real
 pixels - cannot run there and were switched off. `.github/workflows/layout.yml` runs it on every
-change, and it is run by hand as `npm run audit:layout`.
+change, and it is run by hand as `npm run audit:layout`. It reads twenty-four screens, and the
+twenty-four are every shape of question the quiz draws and every sheet or viewer that opens over a
+screen, so none of them is reached only through another.
 
 That same job does a second thing a markup cannot be read for: at each width it puts the pointer
 away and walks the game with nothing but Tab, Shift and Tab and Enter, from the bottom bar to the

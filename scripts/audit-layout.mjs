@@ -359,29 +359,49 @@ const REVIEWING = { ...LANGUAGE, aq_progress_v1: JSON.stringify(REVIEWING_PROGRE
  * screen nobody checks: the list is the inventory of what a reader can open, and
  * a screen added to the application without a line here is a screen this audit
  * silently stopped covering. `seed` is what the device already holds before the
- * screen is opened, `clicks` is what is pressed to get there, and `wait` is the
- * element that proves the screen really drew instead of throwing.
+ * screen is opened, `clicks` is what is pressed to get there, `wait` is the
+ * element that proves the screen really drew instead of throwing, and `then` is
+ * the one that proves the sheet a press opened is really open - a modal read
+ * without it would be the screen underneath.
  */
 const WALK = [
   { name: "the screen that asks for a language", url: "/", seed: {}, wait: "button" },
-  { name: "the map, on a device that has never played", url: "/", seed: FRESH, wait: "nav button" },
+  // A device that has never played opens on the offer to bring a backup across,
+  // before the first question: the map under it and the dialog over it are one
+  // reading, and the dialog is what proves the screen is the one it should be.
+  { name: "the welcome that offers to keep a backup", url: "/", seed: FRESH, wait: "[role=dialog]" },
   { name: "the map of a player who has played", url: "/", seed: PLAYED, wait: "nav button" },
   { name: "the study list", url: "/", seed: PLAYED, wait: "main button", clicks: ["nav button:nth-child(2)"] },
   { name: "the badges", url: "/", seed: PLAYED, wait: "main button", clicks: ["nav button:nth-child(3)"] },
   { name: "the statistics", url: "/", seed: PLAYED, wait: "main", clicks: ["nav button:nth-child(4)"] },
-  { name: "the settings", url: "/", seed: PLAYED, wait: "main", clicks: ["nav button:nth-child(5)"] },
+  // The fifth tab is a sheet over the tab the player was on rather than a tab of
+  // its own, so what proves it drew is the dialog and not a screen of the map.
+  { name: "the settings sheet", url: "/", seed: PLAYED, wait: "nav button", clicks: ["nav button:nth-child(5)"], then: "[role=dialog]" },
   { name: "a lesson", url: "/", seed: PLAYED, wait: "main button", clicks: ["nav button:nth-child(2)", "main button"] },
   // The quiz is opened by its own address, which is how a shared link to a level
   // arrives. It is not inside a `main` - the layout wraps the pages of the game
   // in a plain box - so what proves it drew is the heading of the picker, which
   // the skeleton that waits in its place does not have.
   { name: "a level, before a difficulty is chosen", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3" },
-  { name: "a quiz, with the first question on screen", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy"] },
+  // The four shapes of question the quiz draws, one screen each. A run opens on
+  // the chronology and the matching - the when and the who of the lesson, built
+  // from the lesson rather than written as a question - and then asks the band
+  // the difficulty draws on; so the matching is reached by answering the
+  // chronology, the four answers by answering both, and the exam is the fourth
+  // setting of the picker, which opens the same run with the verdict held back.
+  { name: "a quiz, on the chronology question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy"], then: "text=Check my order" },
+  { name: "a quiz, on the matching question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy", "text=Check my order", "text=Continue"], then: "[role=radiogroup]" },
+  { name: "a quiz, on a question with four answers", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy", "text=Check my order", "text=Continue", "all=[role=radiogroup] > button:nth-child(1)", "text=Check my matches", "text=Continue"], then: "button[aria-label='Hint']" },
+  { name: "the hint sheet, over a question", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Easy", "text=Check my order", "text=Continue", "all=[role=radiogroup] > button:nth-child(1)", "text=Check my matches", "text=Continue", "button[aria-label='Hint']"], then: "[role=dialog]" },
+  { name: "a quiz set as an exam", url: "/QuizPage?levelId=1", seed: PLAYED, wait: "h3", clicks: ["text=Exam mode"], then: "text=Continue" },
   { name: "the review session", url: "/", seed: REVIEWING, wait: "main button", clicks: ["main button"] },
   { name: "the about page", url: "/About", seed: LANGUAGE, wait: "main" },
   { name: "the privacy notice", url: "/PrivacyPolicy", seed: LANGUAGE, wait: "main" },
   { name: "the terms of use", url: "/TermsOfService", seed: LANGUAGE, wait: "main" },
   { name: "the photograph credits", url: "/PhotoCredits", seed: LANGUAGE, wait: "main" },
+  // The credits list a picture as a button that opens it at the size it was made,
+  // in a viewer over the list: one more reading per photograph shown that way.
+  { name: "a photograph, opened from the credits", url: "/PhotoCredits", seed: LANGUAGE, wait: "main button", clicks: ["main button"], then: "[role=dialog]" },
   { name: "the bibliography", url: "/Bibliography", seed: LANGUAGE, wait: "main" },
   { name: "the page that installs the Android app", url: "/Android", seed: LANGUAGE, wait: "main" },
   { name: "the teacher space", url: "/TeacherPage", seed: LANGUAGE, wait: "main" },
@@ -417,13 +437,21 @@ async function until(session, expression, timeoutMs = STEP_TIMEOUT_MS) {
  * there instead, and the run says what it looked for and what it found.
  */
 function pressScript(spec) {
-  return `(() => {
+  return `(async () => {
     const wanted = ${JSON.stringify(spec)};
     const controls = () => [...document.querySelectorAll("button, a[href], [role=button], label")];
-    const target = wanted.startsWith("text=")
-      ? controls().find((element) => (element.textContent || "").includes(wanted.slice(5))) || null
-      : document.querySelector(wanted);
-    if (!target) {
+    // A step can name every control a selector reaches rather than one. Giving
+    // each row of a matching question a description is one action to a reader
+    // and one press per row, and a single click cannot make it.
+    const all = wanted.startsWith("all=") ? [...document.querySelectorAll(wanted.slice(4))] : null;
+    const found = all
+      ? all
+      : wanted.startsWith("text=")
+        ? controls().filter((element) =>
+            ((element.getAttribute("aria-label") || "") + " " + (element.textContent || "")).includes(wanted.slice(5))
+          ).slice(0, 1)
+        : [document.querySelector(wanted)].filter(Boolean);
+    if (found.length === 0) {
       return {
         pressed: false,
         screen: controls().slice(0, 14).map((element) =>
@@ -431,10 +459,55 @@ function pressScript(spec) {
         ),
       };
     }
-    target.scrollIntoView({ block: "center" });
-    target.click();
+    for (const target of found) {
+      target.scrollIntoView({ block: "center" });
+      target.click();
+      // A rest between the presses. Every one of these is a React handler that
+      // reads the screen as it was drawn and writes the answer it decides on,
+      // so two presses in the same turn of the event loop both compute from the
+      // state before the first of them and the first is lost. A person's taps
+      // are never in the same turn; this gives the loop what a hand has.
+      if (found.length > 1) await new Promise((done) => setTimeout(done, 60));
+    }
     return { pressed: true, screen: [] };
   })()`;
+}
+
+/**
+ * The expression that proves a step arrived, from the way the step writes it.
+ *
+ * A plain string is a CSS selector, which is what a screen drawn once can be
+ * asked for. `text=` asks for the words instead, which is how the steps name a
+ * control a reader would call by its name: the third question of a run is the
+ * button that says "Continue", and where that button sits in the document is
+ * not something a step should have to know.
+ */
+function findScript(spec) {
+  if (spec.startsWith("text=")) {
+    const wanted = JSON.stringify(spec.slice(5));
+    return `[...document.querySelectorAll("button, a[href], [role=button], label, h1, h2, h3")].some((element) =>
+      ((element.getAttribute("aria-label") || "") + " " + (element.textContent || "")).includes(${wanted}))`;
+  }
+  return `document.querySelector(${JSON.stringify(spec)})`;
+}
+
+/**
+ * Press a control, waiting for it to be there.
+ *
+ * The application renders, fetches, renders again: the control a step names may
+ * belong to the second frame rather than the first, and a press that misses it
+ * would leave the walk reading the screen before it. So a press that finds
+ * nothing is tried again until the wait runs out, and only then is it a step the
+ * walk could not make.
+ */
+async function pressWhenThere(session, spec, timeoutMs = STEP_TIMEOUT_MS) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const answer = await session.evaluate(pressScript(spec));
+    if (answer.pressed) return answer;
+    if (Date.now() >= deadline) return answer;
+    await pause(100);
+  }
 }
 
 /**
@@ -627,12 +700,13 @@ function axeLines(violations, severe) {
 
 /**
  * One screen, opened and read: the profile it starts from, the route it is at,
- * what is pressed to reach it, and then both readings of what was drawn.
+ * what is pressed to reach it, what has to be there once it has been, and then
+ * both readings of what was drawn.
  */
 async function readScreen(session, origin, step) {
   await seedInto(session, origin, step.seed);
   await session.send("Page.navigate", { url: `${origin}${step.url}` }, session.sessionId);
-  const arrived = await until(session, `document.querySelector(${JSON.stringify(step.wait)})`);
+  const arrived = await until(session, findScript(step.wait));
   if (!arrived) {
     return {
       faults: [{ rule: "the screen never drew", what: `nothing matched ${step.wait} within ${STEP_TIMEOUT_MS}ms at ${step.url}` }],
@@ -641,7 +715,7 @@ async function readScreen(session, origin, step) {
   }
 
   for (const click of step.clicks || []) {
-    const answer = await session.evaluate(pressScript(click));
+    const answer = await pressWhenThere(session, click);
     if (!answer.pressed) {
       return {
         faults: [
@@ -654,6 +728,23 @@ async function readScreen(session, origin, step) {
       };
     }
     await pause(SETTLE_MS);
+  }
+
+  // And the screen a press opened may not be the one the first wait named: a
+  // sheet over the screen, the second question of a run. That is what `then` is
+  // for, and it is not a formality - without it an unopened sheet would be read
+  // as the screen under it, and the walk would report on a screen it never
+  // reached.
+  if (step.then && !(await until(session, findScript(step.then)))) {
+    return {
+      faults: [
+        {
+          rule: "the walk could not reach the screen",
+          what: `nothing matched ${step.then} within ${STEP_TIMEOUT_MS}ms after pressing ${(step.clicks || []).join(", ") || "nothing"}`,
+        },
+      ],
+      notes: [],
+    };
   }
   await pause(SETTLE_MS);
 

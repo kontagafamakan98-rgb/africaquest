@@ -105,12 +105,13 @@ file that travels with the work.
   screen there: axe with every rule it has, including the two that need a layout engine and are
   therefore switched off in the check that runs on every verification, and then the geometry no
   rule expresses - a page that scrolls sideways, an element that hangs off the screen, words cut
-  off by the box that holds them, two pieces of text drawn on each other. At each width it then
-  puts the pointer away and walks the game with the keyboard alone, Tab, Shift and Tab and Enter,
-  from the bottom bar to the study list, a lesson, the difficulty picker and a quiz, reading the
-  order the focus takes, whether the ring can be seen when it arrives, and whether pressing a
-  control does what that control promised. Outside the verification, since a browser is a heavy
-  thing to hand a check that runs on every push.
+  off by the box that holds them, two pieces of text drawn on each other. The screens it reads are
+  the inventory of what a reader can open, each of the four shapes of quiz question and each sheet
+  and viewer among them. At each width it then puts the pointer away and walks the game with the
+  keyboard alone, Tab, Shift and Tab and Enter, from the bottom bar to the study list, a lesson,
+  the difficulty picker and a quiz, reading the order the focus takes, whether the ring can be seen
+  when it arrives, and whether pressing a control does what that control promised. Outside the
+  verification, since a browser is a heavy thing to hand a check that runs on every push.
 - `npm run weights:record` records this build as the pass the next one is compared with.
 - `npm run stress` walks the newest and the heaviest progress record the application accepts
   and holds every path that has to read one to a budget, outside the verification.
@@ -427,7 +428,7 @@ the rectangle of every element is zero, so the rules axe marks as needing a layo
 switched off there rather than run - the contrast of a word against what is really behind it, and
 the size of a target in real pixels - and nothing else ran them either. A second job does.
 `.github/workflows/layout.yml` builds the site and opens it in the browser a phone has:
-`npm run audit:layout` reads nineteen screens at 320 and 390 pixels wide, hands each one to axe
+`npm run audit:layout` reads twenty-four screens at 320 and 390 pixels wide, hands each one to axe
 with every rule it has, and then measures what no rule expresses - a page that scrolls sideways,
 an element that hangs off the screen, words cut off by the box that holds them, and two pieces of
 text drawn on each other. A fault ends the run. The rules of that measuring are in
@@ -435,6 +436,16 @@ text drawn on each other. A fault ends the run. The rules of that measuring are 
 things it then fixed: the Android screen could no longer read the newest release, because the
 policy written just before it allowed no address but the site itself, and two lists scrolled with
 no keyboard access at all.
+
+The list of screens is the inventory of what a reader can open, and it is written out rather than
+discovered, so a screen added to the game without a line here is a screen this pass quietly
+stopped covering. That is why each of the four shapes of question the quiz draws is a screen of
+its own - the chronology, the matching, a question with four answers, and the exam - and why every
+sheet and viewer that opens over a screen is read as one: the settings sheet, the hint sheet, the
+photograph viewer, and the offer to keep a backup a device that never played opens on. A step that
+presses its way to a screen also names what has to be there once it has: without that, a sheet that
+never opened would be read as the screen underneath it, and the report would describe a screen the
+walk never reached.
 
 And at each width, once every screen has been read that way, it puts the mouse away. A journey of
 nothing but Tab, Shift and Tab and Enter starts at the bottom bar, opens the study list and the
