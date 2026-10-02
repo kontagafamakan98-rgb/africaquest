@@ -20,7 +20,7 @@ const CONTENT = {
     title: "About",
     back: "Back to the game",
     intro:
-      "Africa History Quest is a free quiz game that helps young learners explore the history of Africa, from human origins to the continent today. Twenty-six levels, more than two hundred questions, in English and in French.",
+      "Africa History Quest is a free quiz game that helps young learners explore the history of Africa, from human origins to the continent today. Twenty-six levels, five hundred and forty-six questions, in English and in French.",
     whoHeading: "Who publishes it",
     whoBody:
       "The application is edited and published by the person below. It is an independent project, not a school or a ministry, and it answers to no one but its readers.",
@@ -46,7 +46,7 @@ const CONTENT = {
     title: "À propos",
     back: "Retour au jeu",
     intro:
-      "Africa History Quest est un jeu de quiz gratuit qui aide les jeunes à découvrir l'histoire de l'Afrique, des origines de l'humanité au continent d'aujourd'hui. Vingt-six niveaux, plus de deux cents questions, en français et en anglais.",
+      "Africa History Quest est un jeu de quiz gratuit qui aide les jeunes à découvrir l'histoire de l'Afrique, des origines de l'humanité au continent d'aujourd'hui. Vingt-six niveaux, cinq cent quarante-six questions, en français et en anglais.",
     whoHeading: "Qui l'édite",
     whoBody:
       "L'application est éditée et publiée par la personne ci-dessous. C'est un projet indépendant, ni une école ni un ministère, et il ne rend de comptes qu'à ses lecteurs.",
