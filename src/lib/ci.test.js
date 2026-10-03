@@ -98,6 +98,30 @@ test("the verification runs on every pull request and on every push to main", ()
   assert.match(scripts.verify, /scripts\/verify\.mjs/, "and it is the script a developer runs");
 });
 
+test("the same verification runs on Windows, where the installer is built", () => {
+  // The installer is assembled on a Windows runner, and Windows checks a file
+  // out differently: a path is folded with a backslash, a text file arrives with
+  // CRLF unless it is told otherwise, and a script that reads a committed file
+  // for a newline meets bytes the writer never put there. None of that is
+  // visible to the Linux job, so the same command runs on Windows as well, on
+  // the same two events. It earns its place: the first Windows build of the
+  // installer failed at a check that was green on Linux, over a line ending.
+  const at = workflow.indexOf("verify-windows:");
+  assert.ok(at > 0, "nothing verifies the project on Windows");
+
+  const job = workflow.slice(at);
+  assert.match(job, /runs-on: windows-latest/, "the Windows check does not run on Windows");
+  assert.match(job, /run: npm ci/, "the Windows check does not install from the lockfile");
+  assert.match(job, /run: npm run verify/, "the Windows check does not run the verification");
+  assert.match(job, /timeout-minutes:\s*\d+/, "a hung Windows check cannot hold a runner for hours");
+
+  // The events are the workflow's own, so the Windows check watches the same two
+  // as the Linux one rather than a schedule of its own.
+  const triggers = triggerBlock(workflow);
+  assert.match(triggers, /^ {2}pull_request:/m, "a pull request is not verified on Windows");
+  assert.match(triggers, /^ {2}push:/m, "a push is not verified on Windows");
+});
+
 test("the workflow runs on the Node version the app is developed on", () => {
   assert.match(nvmrc, /^\d+(\.\d+){0,2}$/, ".nvmrc names one version");
   assert.match(workflow, /node-version-file:\s*\.nvmrc/, "the workflow reads that same file");
